@@ -1,0 +1,4 @@
+# D: A + optical flow at 50 Hz
+EK3_SRC1_POSZ 1
+EK3_RNG_USE_HGT 70
+SIM_FLOW_RATE 50

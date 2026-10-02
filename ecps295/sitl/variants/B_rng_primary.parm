@@ -1,0 +1,3 @@
+# B: rangefinder primary (= fhb_delta default since S7c)
+EK3_SRC1_POSZ 2
+EK3_RNG_USE_HGT -1

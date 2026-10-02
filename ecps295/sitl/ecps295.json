@@ -1,0 +1,42 @@
+# ECPS295 FHB v1 twin: MOD-L 4in, XING2 1404 3800KV, Gemfan 4024, Zeee 2S 2200 (TechRoute v2.2 §5.4)
+# All values PRIOR (estimates) until weighed / first-flight log (§11).
+{
+    # kg, weight budget §11.2 nominal
+    "mass" : 0.295,
+    # m, wheelbase (measure after build)
+    "diagonal_size" : 0.16,
+    # m/s  [estimate] drag reference
+    "refSpd" : 8.0,
+    # deg  [estimate]
+    "refAngle" : 30.0,
+    # V, 2S nominal under load
+    "refVoltage" : 7.8,
+    # A    [estimate]
+    "refCurrent" : 12.0,
+    # m AMSL (Irvine)
+    "refAlt" : 50,
+    "refTempC" : 25,
+    # ohm, 2S 50C ~10-15 mohm/cell
+    "refBatRes" : 0.025,
+    # 2S full
+    "maxVoltage" : 8.4,
+    "battCapacityAh" : 2.2,
+    # course MOT_THST_EXPO
+    "propExpo" : 0.52,
+    # deg/s [estimate]
+    "refRotRate" : 360,
+    # course 0.287 x mass ratio [estimate]
+    "hoverThrOut" : 0.32,
+    "pwmMin" : 1000,
+    "pwmMax" : 2000,
+    # course MOT_SPIN_MIN
+    "spin_min" : 0.15,
+    # course MOT_SPIN_MAX
+    "spin_max" : 0.95,
+    # 4 x pi x 0.0508^2
+    "disc_area" : 0.0324,
+    "mdrag_coef" : 0.10,
+    # kg m^2 point-mass estimate
+    "moment_inertia" : [0.00020, 0.00020, 0.00035],
+    "num_motors" : 4
+}
