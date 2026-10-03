@@ -42,6 +42,7 @@ ap.add_argument("--max-forward", type=float, default=0.6, help="approach: safety
 ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--gif", default="", help="render the brain dashboard to this GIF after the flight")
 ap.add_argument("--gif-every", type=int, default=3)
+ap.add_argument("--record-frames", default="", help="save the colour drone camera as JPEG each tick (pil_replay.py input)")
 ap.add_argument("--live", action="store_true", help="start monitor.py (dashboard + Gazebo view) unless it is running")
 ap.add_argument("--port", type=int, default=5799, help="tick stream for monitor.py; 0 = off")
 ap.add_argument("--layout", default="", help="<world>.layout.json from make_quad.py: draws the obstacles in ROOM")
@@ -138,10 +139,23 @@ infos: list = []
 pos = {"x": 0.0, "y": 0.0}
 
 
+rec = None
+if a.record_frames:
+    import cv2
+    from shm_frames import ShmFrame
+
+    Path(a.record_frames).mkdir(parents=True, exist_ok=True)
+    rec = ShmFrame("/dev/shm/ecps295_cam_rgb")
+
+
 def tick(t: float, dt: float, phase: str):
     c0 = time.perf_counter()
     info = pilot.tick(t, dt)
     compute_ms = (time.perf_counter() - c0) * 1000
+    if rec is not None:
+        rec.read()
+        if rec.img is not None:  # ELP streams MJPEG: store as JPEG so the replay also pays the decode
+            cv2.imwrite(f"{a.record_frames}/{len(rows):05d}.jpg", rec.img[..., ::-1], [cv2.IMWRITE_JPEG_QUALITY, 85])
     tel = info.tel
     lp = drone.m.messages.get("LOCAL_POSITION_NED")
     if lp is not None:
