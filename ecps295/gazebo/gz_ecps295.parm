@@ -1,0 +1,3 @@
+# SITL params specific to the Gazebo (JSON) backend for ecps295_quad
+# 2S pack (JSON backend otherwise simulates 12.6 V)
+SIM_BATT_VOLTAGE 8.4

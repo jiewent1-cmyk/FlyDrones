@@ -56,3 +56,20 @@ python $P/s7_compare.py ~/sim/runs/s7
 
 `sitl/fhb_delta.parm` reflects the S7c results: rangefinder as primary height (`EK3_SRC1_POSZ 2`),
 altitude-only fence (circle fence blocks arming without GPS) and `FENCE_MARGIN 0.3` (soft ceiling 1.0 m, hard fence 1.3 m).
+
+### G1: `ecps295_quad` (Gazebo airframe)
+
+`gazebo/make_quad.py` generates `gazebo/models/ecps295_quad/` and `gazebo/worlds/ecps295_flat.sdf` (edit the generator,
+not the SDF). Same structure as Iris (blade LiftDrag + ArduPilotPlugin rotor velocity loop) sized from the twin:
+295 g, 0.16 m wheelbase, 4" props, rotor loop tau 16 ms. Run with `scripts/gz_exp.sh` and SITL params
+`sitl/course_base.parm gazebo/gz_ecps295.parm`.
+
+| check (2026-10-03) | SITL twin (`ecps295.json`) | Gazebo `ecps295_quad` |
+|---|---|---|
+| learned MOT_THST_HOVER (target 0.32) | 0.338 | 0.323 |
+| hover SD at 0.6 m | 0.013 m | 0.002 m |
+| tau x / z / yaw | 0.60 / 0.35 / 0.12 s | 0.53 / 0.44 / 0.11 s |
+| RTF | - | 1.000 |
+
+Known gaps: thrust is quadratic in rotor speed (real ESC/prop curve is closer to MOT_THST_EXPO 0.52),
+max rotor speed 838 rad/s is the Iris value (real 4" ~2300 rad/s), no battery current model under JSON.
