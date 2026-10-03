@@ -73,3 +73,18 @@ not the SDF). Same structure as Iris (blade LiftDrag + ArduPilotPlugin rotor vel
 
 Known gaps: thrust is quadratic in rotor speed (real ESC/prop curve is closer to MOT_THST_EXPO 0.52),
 max rotor speed 838 rad/s is the Iris value (real 4" ~2300 rad/s), no battery current model under JSON.
+
+### G2: front camera (ELP OV7725 twin)
+
+`make_quad.py --camera wide` (default) adds a `wideanglecamera` with an equidistant lens to `base_link`:
+120 deg hfov, 640x480, 60 Hz, gaussian noise 0.007, 12 deg nose-down, 30 mm ahead of the front motors and
+15 mm below the prop plane (§4.2 estimate). Topic `/ecps295/camera`. Checked 2026-10-03:
+
+- Harmonic 8.15 / gz-rendering8 ogre2 supports wideanglecamera + equidistant; straight edges bend as expected.
+- 62.7 Hz in sim time with RTF 1.000 on the RTX 3070; hover still learns MOT_THST_HOVER 0.322.
+- Props: at this mount they stay out of frame; with the camera level with the motors they fill both upper corners.
+- Sensors live on `base_link`: a 10 g camera link on a `fixed` joint made the vehicle hover at 15% less thrust.
+
+Watch it on the ROG desktop: `bash ecps295/gazebo/gz_view.sh` (3D chase view + docked camera, demo flight from
+`demo_flight.py`; `--no-demo` to fly yourself). Grab frames headless: `/usr/bin/python3 gazebo/gz_grab.py`.
+Only one ArduPilot Gazebo instance at a time for now (plugin port 9002 is fixed).

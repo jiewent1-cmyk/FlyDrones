@@ -4,7 +4,7 @@
   <model name="ecps295_quad">
     <pose>0 0 0.03 0 0 0</pose>
     <link name="base_link">
-      <inertial><mass>0.2820</mass><inertia><ixx>2.000e-04</ixx><ixy>0</ixy><ixz>0</ixz><iyy>2.000e-04</iyy><iyz>0</iyz><izz>3.500e-04</izz></inertia></inertial>
+      <inertial><pose>0.0031 0 0 0 0 0</pose><mass>0.2830</mass><inertia><ixx>2.000e-04</ixx><ixy>0</ixy><ixz>0</ixz><iyy>2.000e-04</iyy><iyz>0</iyz><izz>3.500e-04</izz></inertia></inertial>
       <collision name="body"><geometry><box><size>0.09 0.05 0.04</size></box></geometry></collision>
       <collision name="legs"><pose>0 0 -0.02 0 0 0</pose><geometry><box><size>0.10 0.10 0.005</size></box></geometry></collision>
       <visual name="body"><geometry><box><size>0.09 0.05 0.035</size></box></geometry>
@@ -17,23 +17,33 @@
         <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
       <visual name="nose"><pose>0.05 0 0 0 0 0</pose><geometry><box><size>0.01 0.02 0.02</size></box></geometry>
         <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse></material></visual>
-    </link>
-    <link name="imu_link">
-      <inertial><mass>0.001</mass><inertia><ixx>1.000e-08</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1.000e-08</iyy><iyz>0</iyz><izz>1.000e-08</izz></inertia></inertial>
       <sensor name="imu_sensor" type="imu">
-        <gz_frame_id>imu_link</gz_frame_id>
+        <gz_frame_id>base_link</gz_frame_id>
         <pose degrees="true">0 0 0 180 0 0</pose>
         <always_on>1</always_on><update_rate>1000.0</update_rate>
       </sensor>
+
+      <visual name="cam"><pose>0.0866 0 0.0050 0 0 0</pose><geometry><box><size>0.012 0.03 0.03</size></box></geometry>
+        <material><ambient>0 0.6 0 1</ambient><diffuse>0 0.6 0 1</diffuse></material></visual>
+      <sensor name="front_camera" type="wideanglecamera">
+        <pose>0.0926 0 0.0050 0 0.20944 0</pose>
+        <always_on>1</always_on><update_rate>60.0</update_rate><topic>ecps295/camera</topic>
+        <camera>
+          <horizontal_fov>2.09440</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.02</near><far>200</far></clip>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.007</stddev></noise>
+          <lens><type>equidistant</type><scale_to_hfov>true</scale_to_hfov><cutoff_angle>1.5708</cutoff_angle><env_texture_size>1024</env_texture_size></lens>
+        </camera>
+      </sensor>
     </link>
-    <joint name="imu_joint" type="fixed"><child>imu_link</child><parent>base_link</parent></joint>
 
     <link name="rotor_0">
       <pose>0.0566 -0.0566 0.02 0 0 0</pose>
       <inertial><mass>0.003</mass><inertia><ixx>8.000e-07</ixx><ixy>0</ixy><ixz>0</ixz><iyy>8.000e-07</iyy><iyz>0</iyz><izz>1.600e-06</izz></inertia></inertial>
       <collision name="collision"><geometry><cylinder><length>0.003</length><radius>0.0508</radius></cylinder></geometry></collision>
-      <visual name="disc"><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
-        <material><ambient>0.1 0.4 1 1</ambient><diffuse>0.1 0.4 1 1</diffuse><transparency>0.5</transparency></material></visual>
+      <visual name="disc"><transparency>0.75</transparency><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
+        <material><ambient>0.1 0.4 1 1</ambient><diffuse>0.1 0.4 1 1</diffuse></material></visual>
       <visual name="blade"><geometry><box><size>0.1016 0.008 0.003</size></box></geometry>
         <material><ambient>0.1 0.4 1 1</ambient><diffuse>0.1 0.4 1 1</diffuse></material></visual>
     </link>
@@ -45,8 +55,8 @@
       <pose>-0.0566 0.0566 0.02 0 0 0</pose>
       <inertial><mass>0.003</mass><inertia><ixx>8.000e-07</ixx><ixy>0</ixy><ixz>0</ixz><iyy>8.000e-07</iyy><iyz>0</iyz><izz>1.600e-06</izz></inertia></inertial>
       <collision name="collision"><geometry><cylinder><length>0.003</length><radius>0.0508</radius></cylinder></geometry></collision>
-      <visual name="disc"><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
-        <material><ambient>0.1 0.4 1 1</ambient><diffuse>0.1 0.4 1 1</diffuse><transparency>0.5</transparency></material></visual>
+      <visual name="disc"><transparency>0.75</transparency><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
+        <material><ambient>0.1 0.4 1 1</ambient><diffuse>0.1 0.4 1 1</diffuse></material></visual>
       <visual name="blade"><geometry><box><size>0.1016 0.008 0.003</size></box></geometry>
         <material><ambient>0.1 0.4 1 1</ambient><diffuse>0.1 0.4 1 1</diffuse></material></visual>
     </link>
@@ -58,8 +68,8 @@
       <pose>0.0566 0.0566 0.02 0 0 0</pose>
       <inertial><mass>0.003</mass><inertia><ixx>8.000e-07</ixx><ixy>0</ixy><ixz>0</ixz><iyy>8.000e-07</iyy><iyz>0</iyz><izz>1.600e-06</izz></inertia></inertial>
       <collision name="collision"><geometry><cylinder><length>0.003</length><radius>0.0508</radius></cylinder></geometry></collision>
-      <visual name="disc"><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
-        <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse><transparency>0.5</transparency></material></visual>
+      <visual name="disc"><transparency>0.75</transparency><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
+        <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
       <visual name="blade"><geometry><box><size>0.1016 0.008 0.003</size></box></geometry>
         <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
     </link>
@@ -71,8 +81,8 @@
       <pose>-0.0566 -0.0566 0.02 0 0 0</pose>
       <inertial><mass>0.003</mass><inertia><ixx>8.000e-07</ixx><ixy>0</ixy><ixz>0</ixz><iyy>8.000e-07</iyy><iyz>0</iyz><izz>1.600e-06</izz></inertia></inertial>
       <collision name="collision"><geometry><cylinder><length>0.003</length><radius>0.0508</radius></cylinder></geometry></collision>
-      <visual name="disc"><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
-        <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse><transparency>0.5</transparency></material></visual>
+      <visual name="disc"><transparency>0.75</transparency><geometry><cylinder><length>0.002</length><radius>0.0508</radius></cylinder></geometry>
+        <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
       <visual name="blade"><geometry><box><size>0.1016 0.008 0.003</size></box></geometry>
         <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
     </link>
@@ -160,7 +170,7 @@
       <have_32_channels>0</have_32_channels>
       <modelXYZToAirplaneXForwardZDown degrees="true">0 0 0 180 0 0</modelXYZToAirplaneXForwardZDown>
       <gazeboXYZToNED degrees="true">0 0 0 180 0 90</gazeboXYZToNED>
-      <imuName>imu_link::imu_sensor</imuName>
+      <imuName>base_link::imu_sensor</imuName>
 
       <control channel="0">
         <jointName>rotor_0_joint</jointName><useForce>1</useForce>
