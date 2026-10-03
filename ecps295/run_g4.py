@@ -13,11 +13,13 @@ needs gazebo/cam_bridge.py running (gz_g4.sh starts everything)
 from __future__ import annotations
 
 import argparse
-import copy
 import csv
 import json
 import math
+import multiprocessing as mp
+import queue
 import time
+import types
 
 import numpy as np
 
@@ -25,6 +27,7 @@ import sitl_util as su
 from envs import ECPS295_DYN, ECPS295_SAFETY_20FT, TAKEOFF_ALT_M
 from flydrones.brain import Brain, load_connectome
 from flydrones.config import load_config
+from flydrones.drones.sim import Box, Room
 from flydrones.motor.command import FlightCommand
 from flydrones.runtime import Pilot
 from gz_camera_drone import GazeboCameraMavlinkDrone
@@ -38,6 +41,8 @@ ap.add_argument("--max-forward", type=float, default=0.6, help="approach: safety
 ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--gif", default="", help="render the brain dashboard to this GIF after the flight")
 ap.add_argument("--gif-every", type=int, default=3)
+ap.add_argument("--live", action="store_true", help="show the brain dashboard in a window while flying")
+ap.add_argument("--layout", default="", help="<world>.layout.json from make_quad.py: draws the obstacles in ROOM")
 ap.add_argument("--out", default="g4")
 a = ap.parse_args()
 
@@ -50,9 +55,73 @@ dyn = {k: ECPS295_DYN[k] for k in ("v_max", "vz_max", "yaw_rate_max_dps")}
 drone = GazeboCameraMavlinkDrone(a.url, passive=(a.mode == "probe"), takeoff_alt=TAKEOFF_ALT_M, **dyn)
 pilot = Pilot(brain, drone, cfg)
 HZ = cfg["control"]["hz"]
+
+
+def room_from_layout(path: str) -> Room:
+    """Gazebo ENU obstacles -> flydrones Room in the telemetry frame (x = north, y = east, as LOCAL_POSITION_NED)."""
+    lay = json.load(open(path))
+    boxes = []
+    for b in lay["boxes"]:
+        (e, n, z), (se, sn, sz) = b["center_enu"], b["size_enu"]
+        boxes.append(Box((n - sn / 2, e - se / 2, z - sz / 2), (n + sn / 2, e + se / 2, z + sz / 2), 0.2, b["name"]))
+    return Room(size_x=lay["floor_m"], size_y=lay["floor_m"], height=3.0, boxes=boxes)
+
+
+if a.layout:
+    drone.room = room_from_layout(a.layout)   # read by the dashboard ROOM panel
+
+
+def _viewer(q, cfg_v: dict, title: str, layout: str) -> None:
+    """Child process: owns the dashboard and the OpenCV window, so the control loop never draws or holds the GIL."""
+    from flydrones.viz import Dashboard, LiveWindow
+
+    brain_v = Brain(load_connectome(cfg_v["brain"]["source"]), cfg_v)   # same seed -> same recorded neurons/layout
+    stub = types.SimpleNamespace(name="fly-1", drone=types.SimpleNamespace(room=room_from_layout(layout) if layout else None))
+    dash = Dashboard(brain_v, [stub], title=title)
+    win = LiveWindow("MiniFly brain (Gazebo)")
+    done = False
+    while not done:
+        items = [q.get()]
+        while True:
+            try:
+                items.append(q.get_nowait())
+            except queue.Empty:
+                break
+        if None in items:
+            done = True
+            items = [i for i in items if i is not None]
+        if not items:
+            break
+        for it in items[:-1]:
+            dash.push([it])
+        if not win.show(dash.render([items[-1]])):
+            break
+    if win.cv2 is not None:
+        win.cv2.waitKey(1500)
+    win.close()
+
+
+class LiveDashboard:
+    def __init__(self):
+        self.q = mp.get_context("fork").Queue()
+        self.proc = mp.get_context("fork").Process(
+            target=_viewer, args=(self.q, cfg, f"MiniFly in Gazebo ({a.mode})", a.layout), daemon=True)
+        self.proc.start()
+        self.rendered = -1   # counted in the child
+
+    def put(self, info) -> None:
+        self.q.put(info)
+
+    def stop(self) -> None:
+        self.q.put(None)
+        self.proc.join(timeout=10)
+
+
+live = LiveDashboard() if a.live else None   # fork before any pymavlink / brain threads exist
 DT = 1.0 / HZ
 
 rows: list[dict] = []
+tick_dt_ms: list[float] = []
 infos: list = []
 pos = {"x": 0.0, "y": 0.0}
 
@@ -71,6 +140,8 @@ def tick(t: float, dt: float, phase: str):
                  "brain_rtf": info.rtf, **{k: round(v, 2) for k, v in info.rates.items() if k.startswith("DN")}})
     if a.gif:
         infos.append(info)
+    if live:
+        live.put(info)
     return info
 
 
@@ -81,6 +152,7 @@ def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0, t_base=[0
     while time.monotonic() < t_end:
         now = time.monotonic()
         dt = min(0.25, max(1e-3, now - last))
+        tick_dt_ms.append((now - last) * 1000)
         last = now
         if a.mode == "probe":
             su.send_vel(drone.m, vx, 0, -vz_up, math.radians(yaw_dps))
@@ -129,7 +201,11 @@ summary = {"mode": a.mode, "ticks": len(rows), "frames_new": drone.frames_new, "
            "brain_rtf_min": float(min(r["brain_rtf"] for r in rows if r["brain_rtf"] == r["brain_rtf"])),
            "alt_min": min(alts), "alt_max": max(alts), "north_max": max(r["north"] for r in rows),
            "escapes": sum(1 for p, q in zip(rows, rows[1:]) if q["escape"] and not p["escape"]),
-           "safety_events": pilot.safety.events}
+           "safety_events": pilot.safety.events,
+           "tick_interval_ms_p50_p95_max": [round(float(np.percentile(tick_dt_ms[1:], q)), 1) for q in (50, 95, 100)],
+           "live_frames_rendered": live.rendered if live else 0}
+if live:
+    live.stop()
 
 if a.mode == "probe":
     # compare each motion phase with the hover just before it

@@ -1,4 +1,4 @@
-# usage: gz_g4.sh <world.sdf> <tag> "<run_g4.py args>" [--gui]
+# usage: gz_g4.sh <world.sdf> <tag> "<run_g4.py args>" [--gui]   (add --live to the args for the brain window)
 # Gazebo (headless, or GUI on the ROG desktop with --gui) + camera bridge + ArduPilot SITL + run_g4.py
 WORLD=$1; TAG=$2; ARGS=$3; GUI=$4
 E=~/sim/FlyDrones/ecps295
@@ -25,6 +25,8 @@ DP=~/sim/ardupilot/Tools/autotest/default_params
   --defaults "$DP/copter.parm,$E/sitl/course_base.parm,$G/gz_ecps295.parm" > sitl.out 2>&1 &
 SP=$!
 sleep 3
+LAYOUT=$G/worlds/$(basename $WORLD .sdf).layout.json
+[ -f "$LAYOUT" ] && ARGS="$ARGS --layout $LAYOUT"
 source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
 PYTHONPATH=$E MPLBACKEND=Agg timeout 900 python $E/run_g4.py $ARGS 2>&1 | grep -v "EOF on TCP" > exp.log
 kill $SP $BR; sleep 1

@@ -104,4 +104,9 @@ Results 2026-10-03 (MiniFly synthetic, default config, camtest worlds):
   DNp03 >= 20 Hz at 0.74 m, escape onset only at 0.23 m (decoder GF filter)
 - closed loop: hover 40 s at 0.60-0.88 m with no safety events; approach at ~0.25 m/s brakes from 0.7 m,
   escapes (climb) at ~0.1 m and clears the 0.5 m box by 0.15 m; geofence stops it at 2.16 m
-- the ROOM panel of the dashboard is meaningless for Gazebo runs (it assumes a SimDrone room)
+- ROOM panel: `make_quad.py` writes `worlds/<world>.layout.json`; `gz_g4.sh` passes it so the obstacles are drawn
+
+Live view: add `--live` to the run_g4 args and `--gui` to gz_g4.sh, e.g.
+`bash ~/sim/gz_g4.sh ecps295_camtest_tape.sdf g4_live "--mode approach --seconds 40 --cruise 0.5 --live --out live" --gui`.
+The dashboard renders in a forked child process: control timing is unchanged (tick p50/p95/max 50.1/50.1/50.8 ms,
+frame age p95 9.7 ms). A render thread instead dropped the loop to ~14 Hz (p95 125 ms, frame age 114 ms).

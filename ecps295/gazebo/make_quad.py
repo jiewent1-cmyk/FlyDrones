@@ -10,6 +10,7 @@ motor curve (MOT_THST_EXPO 0.52, MOT_SPIN_MIN/MAX 0.15/0.95) hovers at MOT_THST_
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import pathlib
 
@@ -288,15 +289,29 @@ def checker_floor(n=10, tile=0.61, lo=0.30, hi=0.55):
 CARDBOARD = (0.65, 0.48, 0.30)
 
 
+# (name, centre ENU [m], size [m], colour, cardboard?) -- also exported as <world>.layout.json for the dashboard
+CAMTEST_OBJECTS = [
+    ("box_a", (0.0, 1.5, 0.25), (0.5, 0.5, 0.5), CARDBOARD, True),
+    ("box_b", (1.0, 2.2, 0.30), (0.6, 0.45, 0.6), CARDBOARD, True),
+    ("box_c", (-1.2, 2.6, 0.25), (0.45, 0.6, 0.5), CARDBOARD, True),
+    ("pole", (0.6, 1.0, 1.0), (0.04, 0.04, 2.0), (0.9, 0.1, 0.1), False),
+    ("marker_left", (-2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.3, 0.9), False),
+    ("marker_right", (2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.8, 0.2), False),
+]
+FLOOR_M = 10 * 0.61
+
+
 def camtest_extra(tape: bool) -> str:
-    return (checker_floor()
-            + box("box_a", (0.0, 1.5, 0.25), (0.5, 0.5, 0.5), CARDBOARD, tape=tape)
-            + box("box_b", (1.0, 2.2, 0.30), (0.6, 0.45, 0.6), CARDBOARD, tape=tape)
-            + box("box_c", (-1.2, 2.6, 0.25), (0.45, 0.6, 0.5), CARDBOARD, tape=tape)
-            + box("pole", (0.6, 1.0, 1.0), (0.04, 0.04, 2.0), (0.9, 0.1, 0.1))
-            + box("marker_left", (-2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.3, 0.9))
-            + box("marker_right", (2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.8, 0.2)))
+    return checker_floor() + "".join(box(n, c, sz, rgb, tape=tape and cb) for n, c, sz, rgb, cb in CAMTEST_OBJECTS)
+
+
+def write_layout(wname: str, objects) -> None:
+    """Obstacles for flydrones' dashboard ROOM panel; the drone spawns at the origin, so ENU here = SITL local ENU."""
+    lay = {"world": wname, "floor_m": FLOOR_M,
+           "boxes": [{"name": n, "center_enu": c, "size_enu": sz} for n, c, sz, _, _ in objects]}
+    (HERE / "worlds" / f"{wname}.layout.json").write_text(json.dumps(lay, indent=1))
 (HERE / "worlds" / "ecps295_flat.sdf").write_text(WORLD_TMPL.replace("NAME", "ecps295_flat").replace("EXTRA", ""))
 for wname, tape in (("ecps295_camtest", False), ("ecps295_camtest_tape", True)):
     (HERE / "worlds" / f"{wname}.sdf").write_text(WORLD_TMPL.replace("NAME", wname).replace("EXTRA", camtest_extra(tape)))
+    write_layout(wname, CAMTEST_OBJECTS)
 print("wrote", mdir, "and worlds/ecps295_flat.sdf, ecps295_camtest.sdf, ecps295_camtest_tape.sdf")
