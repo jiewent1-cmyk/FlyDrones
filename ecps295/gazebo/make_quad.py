@@ -410,4 +410,18 @@ def write_world(wname: str, extra_fn, objects=()) -> None:
 write_world("ecps295_flat", lambda: overview_camera((-2.0, -2.0, 1.6), (0.0, 0.0, 0.5)))
 write_world("ecps295_camtest", lambda: camtest_extra(False), CAMTEST_OBJECTS)
 write_world("ecps295_camtest_tape", lambda: camtest_extra(True), CAMTEST_OBJECTS)
-print("wrote models", [v[0] for v in VARIANTS], "and worlds ecps295_{flat,camtest,camtest_tape}[_monitor].sdf")
+
+# flight-test walls: 1.5 m tall (above the 1.0 m ceiling, so climbing over is not an option), face 1.7 m ahead
+SIDE_MARKERS = [o for o in CAMTEST_OBJECTS if o[0].startswith("marker")]
+
+
+def wall_objects(east: float, tape: bool):
+    return [("wall", (east, 1.85, 0.75), (1.2, 0.3, 1.5), CARDBOARD, tape), *SIDE_MARKERS]
+
+
+for wname, east, tape in (("ecps295_wall_tape", 0.0, True), ("ecps295_wall_plain", 0.0, False),
+                          ("ecps295_wall_offset", 0.45, True)):
+    objs = wall_objects(east, tape)
+    write_world(wname, lambda objs=objs: checker_floor() + "".join(box(n, c, sz, rgb, tape=cb) for n, c, sz, rgb, cb in objs)
+                + overview_camera((-2.2, -1.6, 1.9), (0.0, 1.2, 0.6)), objs)
+print("wrote models", [v[0] for v in VARIANTS], "and worlds ecps295_{flat,camtest,camtest_tape,wall_*}[_monitor].sdf")

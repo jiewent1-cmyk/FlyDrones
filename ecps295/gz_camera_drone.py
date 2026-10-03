@@ -21,6 +21,7 @@ class GazeboCameraMavlinkDrone(Ecps295MavlinkDrone):
         super().__init__(*args, **kw)
         self.cam = ShmFrame(shm)
         self.passive = passive
+        self.frozen = False  # fault injection: keep returning the last frame (camera / USB hang)
         self._last_new_wall = 0.0
         self.frames_new = 0
         self.frames_repeated = 0
@@ -31,6 +32,9 @@ class GazeboCameraMavlinkDrone(Ecps295MavlinkDrone):
         return self.cam.stamp
 
     def frame(self) -> np.ndarray | None:
+        if self.frozen and self.cam.img is not None:
+            self.frames_repeated += 1
+            return self.cam.img
         if self.cam.img is None:
             t0 = time.time()
             while not self.cam.read():

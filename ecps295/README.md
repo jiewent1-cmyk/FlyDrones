@@ -122,3 +122,24 @@ One window: MiniFly dashboard on the left, live Gazebo view on the right (keys: 
   `ecps295_quad_monitor` model and `*_monitor` worlds that gz_g4.sh picks with `--live`; plain worlds stay at 1.000.
 - Monitor run 2026-10-03: control tick p50/p95/max 50.1/50.1/51.0 ms, frame age p95 8.6 ms, RTF mean 0.946
   (one 0.14 stall sample; gz_g4.sh now also reports the median).
+
+### G4 flight-test suite (`scripts/g4_suite.sh`, 2026-10-03)
+
+Upstream synthetic MiniFly, default config, headless plain worlds (RTF 1.000, control tick p95 50.1 ms). Tall walls
+(1.5 m, above the 1.0 m ceiling) 1.7 m ahead. Clearance = prop tip to surface; negative = contact.
+
+| test | setup | contact | brake onset | escape onset | note |
+|---|---|---|---|---|---|
+| T1_v015 | taped wall, 0.15 m/s | yes | 0.23 m | 0.06 m | slow approach looms late |
+| T1_v025 | taped wall, 0.25 m/s | yes | 0.44 m | 0.40 m | |
+| T1_v035 | taped wall, 0.35 m/s | yes | 1.01 m | 0.50 m | stops at 0.33 m after escape, then creeps in |
+| T2_plain | plain wall, 0.25 m/s | yes | 0.28 m | - | never escapes |
+| T3_offset | taped wall 0.45 m right | yes | 0.31 m | 0.15 m | 3 escapes, no turn-away |
+| T4_freeze | taped, camera frozen at 3 s | yes | 0.02 m | - | no frame-staleness check anywhere |
+| T5_hover | 90 s hover | no | - | - | 0.60-0.98 m, no safety events |
+
+Failure mechanism (T1_v035 trace, `suite_trace.py`): looming only signals expansion. Once the drone has stopped, the
+wall fills the view, nothing expands, DNp03 goes silent, the brake memory (x0.93 per tick) fades and the cruise
+pushes it into the wall. Needs: brake/escape memory or a no-advance state after a scare, a near-obstacle cue that
+does not depend on expansion (S2), and a camera staleness watchdog next to F2 (S6).
+

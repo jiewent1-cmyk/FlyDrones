@@ -1,0 +1,45 @@
+{
+ "world": "ecps295_wall_tape_monitor",
+ "floor_m": 6.1,
+ "boxes": [
+  {
+   "name": "wall",
+   "center_enu": [
+    0.0,
+    1.85,
+    0.75
+   ],
+   "size_enu": [
+    1.2,
+    0.3,
+    1.5
+   ]
+  },
+  {
+   "name": "marker_left",
+   "center_enu": [
+    -2.4,
+    1.2,
+    0.5
+   ],
+   "size_enu": [
+    0.2,
+    0.2,
+    1.0
+   ]
+  },
+  {
+   "name": "marker_right",
+   "center_enu": [
+    2.4,
+    1.2,
+    0.5
+   ],
+   "size_enu": [
+    0.2,
+    0.2,
+    1.0
+   ]
+  }
+ ]
+}

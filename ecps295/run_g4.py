@@ -42,6 +42,7 @@ ap.add_argument("--max-forward", type=float, default=0.6, help="approach: safety
 ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--gif", default="", help="render the brain dashboard to this GIF after the flight")
 ap.add_argument("--gif-every", type=int, default=3)
+ap.add_argument("--freeze-cam-at", type=float, default=-1, help="fault injection: camera stops updating at t [s]")
 ap.add_argument("--record-frames", default="", help="save the colour drone camera as JPEG each tick (pil_replay.py input)")
 ap.add_argument("--live", action="store_true", help="start monitor.py (dashboard + Gazebo view) unless it is running")
 ap.add_argument("--port", type=int, default=5799, help="tick stream for monitor.py; 0 = off")
@@ -61,6 +62,21 @@ HZ = cfg["control"]["hz"]
 
 if a.layout:
     drone.room = room_from_layout(a.layout)  # read by the dashboard ROOM panel
+
+PROP_TIP_R = 0.13  # body centre to prop tip: 0.08 m arm diagonal + 0.0508 m prop radius
+
+
+def clearance(north: float, east: float, alt: float) -> float:
+    """Horizontal gap between the prop disc and the nearest obstacle that reaches the drone's height (NED room)."""
+    room = getattr(drone, "room", None)
+    best = float("inf")
+    for b in room.boxes if room else []:
+        if b.hi[2] < alt - 0.03:  # drone is above it
+            continue
+        dx = max(b.lo[0] - north, 0.0, north - b.hi[0])
+        dy = max(b.lo[1] - east, 0.0, east - b.hi[1])
+        best = min(best, (dx * dx + dy * dy) ** 0.5 - PROP_TIP_R)
+    return best
 
 
 def _publish(q, port: int, hello: dict) -> None:
@@ -149,6 +165,9 @@ if a.record_frames:
 
 
 def tick(t: float, dt: float, phase: str):
+    if 0 <= a.freeze_cam_at <= t and not drone.frozen:
+        drone.frozen = True
+        print(f"fault injection: camera frozen at t={t:.1f} s", flush=True)
     c0 = time.perf_counter()
     info = pilot.tick(t, dt)
     compute_ms = (time.perf_counter() - c0) * 1000
@@ -177,6 +196,8 @@ def tick(t: float, dt: float, phase: str):
             "escape": int(info.cmd.escape),
             "frame_age_ms": round(drone.frame_age_s() * 1000, 1),
             "brain_rtf": info.rtf,
+            "clearance": round(clearance(pos["x"], pos["y"], tel.alt_m or 0.0), 3),
+            "frozen": int(drone.frozen),
             "compute_ms": round(compute_ms, 2),  # whole Pilot.tick: frame, retina, brain, decoder, safety, send
             "brain_ms": round(dt * 1000 / info.rtf, 2) if info.rtf > 0 else float("nan"),
             **{k: round(v, 2) for k, v in info.rates.items() if k.startswith("DN")},
@@ -255,8 +276,33 @@ with open(f"{a.out}.csv", "w", newline="") as f:
     w.writerows(rows)
 
 alts = [r["alt"] for r in rows if r["alt"] is not None]
+
+
+def flight_metrics() -> dict:
+    """Obstacle clearances from the layout (prop tip to surface, m); negative = contact."""
+    cl = [r["clearance"] for r in rows]
+    if not cl or cl[0] == float("inf"):
+        return {}
+    cruise_cmd = min(cfg["decoder"]["cruise"], cfg["safety"]["max_forward"])
+
+    def first(cond):
+        r = next((r for r in rows if cond(r)), None)
+        return None if r is None else round(r["clearance"], 3)
+
+    return {
+        "min_clearance_m": round(min(cl), 3),
+        "contact": min(cl) < 0,
+        "brake_onset_clearance_m": first(lambda r: r["clearance"] < 1.2 and r["cmd_forward"] < 0.5 * cruise_cmd)
+        if cruise_cmd > 0
+        else None,
+        "escape_onset_clearance_m": first(lambda r: r["escape"]),
+        "final_clearance_m": round(cl[-1], 3),
+    }
+
+
 summary = {
     "mode": a.mode,
+    "world": (Path(a.layout).name.removesuffix(".layout.json") if a.layout else ""),
     "ticks": len(rows),
     "frames_new": drone.frames_new,
     "frames_repeated": drone.frames_repeated,
@@ -266,6 +312,7 @@ summary = {
     "alt_max": max(alts),
     "north_max": max(r["north"] for r in rows),
     "escapes": sum(1 for p, q in zip(rows, rows[1:]) if q["escape"] and not p["escape"]),
+    **flight_metrics(),
     "safety_events": pilot.safety.events,
     "tick_interval_ms_p50_p95_max": [round(float(np.percentile(tick_dt_ms[1:], q)), 1) for q in (50, 95, 100)],
     # compute budget per 50 ms tick (TechRoute §7.1: <= 25 ms on the Orange Pi)
