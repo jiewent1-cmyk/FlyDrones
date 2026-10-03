@@ -1,11 +1,15 @@
-"""Gazebo camera -> shared memory bridge (TechRoute §6A G4, option B variant).
+"""Gazebo camera topics -> shared memory (TechRoute §6A G4).
 
-gz.transport13 bindings only exist for the system python, FlyDrones runs in conda, so this process (system python)
-subscribes to the Gazebo image topic, converts to grayscale, area-downsamples (§4.2 C7: render high, then average)
-and publishes the latest frame in a seqlock-protected shared-memory file read by gz_camera_drone.py.
+gz.transport13 bindings only exist for the system python while FlyDrones runs in conda, so this process (system
+python) subscribes to Gazebo image topics and publishes the latest frame of each in a seqlock-protected
+shared-memory file:
+  - the drone camera for the brain: grayscale, area-downsampled (§4.2 C7: render high, then average)
+  - monitor views (chase / overview cameras): RGB, as rendered
 
-layout: header <QdII = seq (odd while writing), sim stamp [s], width, height; then width*height uint8
-    /usr/bin/python3 cam_bridge.py --topic /ecps295/camera --size 192 144
+layout per file: header <QdIII = seq (odd while writing), sim stamp [s], width, height, channels; then pixels (uint8)
+
+    /usr/bin/python3 cam_bridge.py                                  # default: drone camera + both monitor views
+    /usr/bin/python3 cam_bridge.py --stream /ecps295/camera:/dev/shm/ecps295_cam:192x144:gray
 """
 
 import argparse
@@ -20,45 +24,61 @@ from gz.msgs10.image_pb2 import Image
 from gz.transport13 import Node
 from PIL import Image as PILImage
 
-HDR = struct.Struct("<QdII")
+HDR = struct.Struct("<QdIII")
+DEFAULT_STREAMS = [
+    "/ecps295/camera:/dev/shm/ecps295_cam:192x144:gray",
+    "/ecps295/chase_camera:/dev/shm/ecps295_chase:960x540:rgb",
+    "/ecps295/overview_camera:/dev/shm/ecps295_overview:960x540:rgb",
+]
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--topic", default="/ecps295/camera")
-ap.add_argument("--size", type=int, nargs=2, default=[192, 144])
-ap.add_argument("--shm", default="/dev/shm/ecps295_cam")
+ap.add_argument("--stream", action="append", help="topic:shm_path:WxH:gray|rgb (repeatable)")
 a = ap.parse_args()
 
-W, H = a.size
-fd = os.open(a.shm, os.O_CREAT | os.O_RDWR, 0o644)
-os.ftruncate(fd, HDR.size + W * H)
-mm = mmap.mmap(fd, HDR.size + W * H)
-seq = 0
-mm[: HDR.size] = HDR.pack(seq, 0.0, W, H)
-count = {"n": 0}
 
+class Stream:
+    def __init__(self, spec: str):
+        self.topic, self.path, size, self.mode = spec.split(":")
+        self.w, self.h = (int(v) for v in size.split("x"))
+        self.c = 1 if self.mode == "gray" else 3
+        n = HDR.size + self.w * self.h * self.c
+        fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o644)
+        os.ftruncate(fd, n)
+        self.mm = mmap.mmap(fd, n)
+        self.seq = 0
+        self.mm[: HDR.size] = HDR.pack(0, 0.0, self.w, self.h, self.c)
+        self.count = 0
 
-def on_image(msg: Image) -> None:
-    global seq
-    rgb = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, 3)
-    gray = PILImage.fromarray(rgb).convert("L").resize((W, H), PILImage.Resampling.BOX)
-    stamp = msg.header.stamp.sec + msg.header.stamp.nsec * 1e-9
-    seq += 1                                   # odd: writer active
-    mm[:8] = struct.pack("<Q", seq)
-    mm[HDR.size:] = gray.tobytes()
-    seq += 1                                   # even: frame complete
-    mm[: HDR.size] = HDR.pack(seq, stamp, W, H)
-    count["n"] += 1
+    def on_image(self, msg: Image) -> None:
+        rgb = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, 3)
+        img = PILImage.fromarray(rgb)
+        if self.mode == "gray":
+            img = img.convert("L")
+        if img.size != (self.w, self.h):
+            img = img.resize((self.w, self.h), PILImage.Resampling.BOX)
+        stamp = msg.header.stamp.sec + msg.header.stamp.nsec * 1e-9
+        self.seq += 1  # odd: writer active
+        self.mm[:8] = struct.pack("<Q", self.seq)
+        self.mm[HDR.size :] = img.tobytes()
+        self.seq += 1  # even: frame complete
+        self.mm[: HDR.size] = HDR.pack(self.seq, stamp, self.w, self.h, self.c)
+        self.count += 1
 
 
 node = Node()
-if not node.subscribe(Image, a.topic, on_image):
-    raise SystemExit(f"cannot subscribe to {a.topic}")
-print(f"bridging {a.topic} -> {a.shm} as {W}x{H} gray", flush=True)
+streams = [Stream(s) for s in (a.stream or DEFAULT_STREAMS)]
+for st in streams:
+    if not node.subscribe(Image, st.topic, st.on_image):
+        raise SystemExit(f"cannot subscribe to {st.topic}")
+    print(f"bridging {st.topic} -> {st.path} as {st.w}x{st.h} {st.mode}", flush=True)
 running = True
 signal.signal(signal.SIGTERM, lambda *_: globals().update(running=False))
-last, t_last = 0, time.time()
+last, t_last = [0] * len(streams), time.time()
 while running:
     time.sleep(5)
-    n = count["n"]
-    print(f"{(n - last) / (time.time() - t_last):.1f} frames/s wall", flush=True)
-    last, t_last = n, time.time()
+    now = time.time()
+    print(
+        "  ".join(f"{st.topic.rsplit('/', 1)[-1]} {(st.count - prev) / (now - t_last):.1f}/s" for st, prev in zip(streams, last)),
+        flush=True,
+    )
+    last, t_last = [st.count for st in streams], now

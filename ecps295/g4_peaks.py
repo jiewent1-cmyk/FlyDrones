@@ -9,7 +9,7 @@ for path in sys.argv[1:]:
     i0 = rows.index(seg[0])
     win = rows[i0:i0 + len(seg) + 20]   # approach + 1 s after
 
-    def pk(k):
+    def pk(k, win=win):
         return max(float(r[k]) for r in win)
 
     closest = BOX_FACE_N - CAM_X - max(float(r["north"]) for r in win)

@@ -1,0 +1,84 @@
+{
+ "world": "ecps295_camtest_monitor",
+ "floor_m": 6.1,
+ "boxes": [
+  {
+   "name": "box_a",
+   "center_enu": [
+    0.0,
+    1.5,
+    0.25
+   ],
+   "size_enu": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  {
+   "name": "box_b",
+   "center_enu": [
+    1.0,
+    2.2,
+    0.3
+   ],
+   "size_enu": [
+    0.6,
+    0.45,
+    0.6
+   ]
+  },
+  {
+   "name": "box_c",
+   "center_enu": [
+    -1.2,
+    2.6,
+    0.25
+   ],
+   "size_enu": [
+    0.45,
+    0.6,
+    0.5
+   ]
+  },
+  {
+   "name": "pole",
+   "center_enu": [
+    0.6,
+    1.0,
+    1.0
+   ],
+   "size_enu": [
+    0.04,
+    0.04,
+    2.0
+   ]
+  },
+  {
+   "name": "marker_left",
+   "center_enu": [
+    -2.4,
+    1.2,
+    0.5
+   ],
+   "size_enu": [
+    0.2,
+    0.2,
+    1.0
+   ]
+  },
+  {
+   "name": "marker_right",
+   "center_enu": [
+    2.4,
+    1.2,
+    0.5
+   ],
+   "size_enu": [
+    0.2,
+    0.2,
+    1.0
+   ]
+  }
+ ]
+}

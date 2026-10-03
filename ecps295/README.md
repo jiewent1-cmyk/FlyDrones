@@ -106,7 +106,19 @@ Results 2026-10-03 (MiniFly synthetic, default config, camtest worlds):
   escapes (climb) at ~0.1 m and clears the 0.5 m box by 0.15 m; geofence stops it at 2.16 m
 - ROOM panel: `make_quad.py` writes `worlds/<world>.layout.json`; `gz_g4.sh` passes it so the obstacles are drawn
 
-Live view: add `--live` to the run_g4 args and `--gui` to gz_g4.sh, e.g.
-`bash ~/sim/gz_g4.sh ecps295_camtest_tape.sdf g4_live "--mode approach --seconds 40 --cruise 0.5 --live --out live" --gui`.
-The dashboard renders in a forked child process: control timing is unchanged (tick p50/p95/max 50.1/50.1/50.8 ms,
-frame age p95 9.7 ms). A render thread instead dropped the loop to ~14 Hz (p95 125 ms, frame age 114 ms).
+### Monitor window (`monitor.py`)
+
+One window: MiniFly dashboard on the left, live Gazebo view on the right (keys: `c` switch camera, `q` quit).
+
+    bash ~/sim/gz_g4.sh ecps295_camtest_tape.sdf g4_watch "--mode approach --seconds 40 --cruise 0.5 --live --out watch"
+
+- `run_g4.py` publishes every tick on 127.0.0.1:5799 from a forked child (ticks are dropped when no monitor is
+  connected); `--live` starts `monitor.py` unless it is already running. The monitor outlives runs and reconnects.
+- The right panel is rendered by Gazebo: a chase camera rigid behind the drone (and optionally a fixed overview
+  camera). cam_bridge.py publishes it to /dev/shm next to the drone camera.
+- Each extra camera sensor costs ~4-6% RTF under lockstep, almost independent of size and rate:
+  none 1.000, chase 640x360@30 0.957, chase+overview 640x360@15 0.916, both 960x540@30 0.879
+  (a 512 instead of 1024 wide-angle cube map did not help). So the view cameras only exist in the
+  `ecps295_quad_monitor` model and `*_monitor` worlds that gz_g4.sh picks with `--live`; plain worlds stay at 1.000.
+- Monitor run 2026-10-03: control tick p50/p95/max 50.1/50.1/51.0 ms, frame age p95 8.6 ms, RTF mean 0.946
+  (one 0.14 stall sample; gz_g4.sh now also reports the median).

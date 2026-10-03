@@ -17,45 +17,63 @@ import pathlib
 HERE = pathlib.Path(__file__).parent
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--mass", type=float, default=0.295)            # kg, §11.2 nominal
-ap.add_argument("--wheelbase", type=float, default=0.16)        # m, motor-to-motor diagonal
+ap.add_argument("--mass", type=float, default=0.295)  # kg, §11.2 nominal
+ap.add_argument("--wheelbase", type=float, default=0.16)  # m, motor-to-motor diagonal
 ap.add_argument("--inertia", type=float, nargs=3, default=[0.00020, 0.00020, 0.00035])
-ap.add_argument("--prop-radius", type=float, default=0.0508)    # 4 in
-ap.add_argument("--max-omega", type=float, default=838.0)       # rad/s at full PWM (Iris value; numerically proven)
-ap.add_argument("--hover-thr", type=float, default=0.32)        # target learned MOT_THST_HOVER
-ap.add_argument("--expo", type=float, default=0.52)             # MOT_THST_EXPO (course)
+ap.add_argument("--prop-radius", type=float, default=0.0508)  # 4 in
+ap.add_argument("--max-omega", type=float, default=838.0)  # rad/s at full PWM (Iris value; numerically proven)
+ap.add_argument("--hover-thr", type=float, default=0.32)  # target learned MOT_THST_HOVER
+ap.add_argument("--expo", type=float, default=0.52)  # MOT_THST_EXPO (course)
 ap.add_argument("--spin", type=float, nargs=2, default=[0.15, 0.95])  # MOT_SPIN_MIN/MAX (course)
-ap.add_argument("--motor-tau", type=float, default=0.016)       # s, rotor speed loop time constant
+ap.add_argument("--motor-tau", type=float, default=0.016)  # s, rotor speed loop time constant
 # The solved area (0.00205) hovered at learned MOT_THST_HOVER 0.371 (P-only rotor loop error + blade inflow);
 # 0.00240 gives 0.323 with course_base.parm + gz_ecps295.parm (G1, 2026-10-03). Pass 0 to use the solved value.
 ap.add_argument("--blade-area", type=float, default=0.00240, help="blade area in m^2; 0 = solve from hover point")
 # G2: ELP OV7725 front camera (§1 FHB, §4.2 C1/C2)
-ap.add_argument("--camera", choices=["wide", "pinhole", "none"], default="wide",
-                help="wide = wideanglecamera with equidistant lens (C1); pinhole = plain camera for comparison")
-ap.add_argument("--cam-hfov", type=float, default=120.0)        # deg
-ap.add_argument("--cam-tilt", type=float, default=12.0)         # deg, nose-down mount (C2)
+ap.add_argument(
+    "--camera",
+    choices=["wide", "pinhole", "none"],
+    default="wide",
+    help="wide = wideanglecamera with equidistant lens (C1); pinhole = plain camera for comparison",
+)
+ap.add_argument("--cam-hfov", type=float, default=120.0)  # deg
+ap.add_argument("--cam-tilt", type=float, default=12.0)  # deg, nose-down mount (C2)
 ap.add_argument("--cam-res", type=int, nargs=2, default=[640, 480])
-ap.add_argument("--cam-rate", type=float, default=60.0)         # Hz (MJPEG 60 fps)
-ap.add_argument("--cam-noise", type=float, default=0.007)       # gaussian stddev on [0,1] pixel values
+ap.add_argument("--cam-rate", type=float, default=60.0)  # Hz (MJPEG 60 fps)
+ap.add_argument("--cam-env-tex", type=int, default=1024, help="wide-angle cube map face size (512 did not raise RTF)")
+ap.add_argument("--cam-noise", type=float, default=0.007)  # gaussian stddev on [0,1] pixel values
+# monitor views (not seen by the brain): chase camera rigid behind the drone + a fixed overview camera per world
+# Rendering is lockstepped with physics: every extra camera costs a render pass. With the 60 Hz wide-angle drone
+# camera, two 960x540@30 views dropped RTF to 0.88 and two 640x360@15 to 0.92 (rates not dividing 60 interleave).
+ap.add_argument(
+    "--view-cams",
+    choices=["chase", "overview", "both", "none"],
+    default="chase",
+    help="views in the *_monitor model/worlds for monitor.py (the brain never sees them); "
+    "the plain ecps295_quad and worlds never have them, so experiment runs keep RTF 1.0",
+)
+ap.add_argument("--view-res", type=int, nargs=2, default=[640, 360])
+ap.add_argument("--view-hz", type=float, default=30.0, help="keep it a divisor of --cam-rate")
 # mount position (§4.2 C4 estimate): ~30 mm ahead of the front motor line, ~15 mm below the prop plane
-ap.add_argument("--cam-ahead", type=float, default=0.030)       # m ahead of the front motors
-ap.add_argument("--cam-below", type=float, default=0.015)       # m below the prop plane
+ap.add_argument("--cam-ahead", type=float, default=0.030)  # m ahead of the front motors
+ap.add_argument("--cam-below", type=float, default=0.015)  # m below the prop plane
 a = ap.parse_args()
+a.views_active = "none"  # set per generated variant
 
 RHO = 1.2041
-A0, CLA, CDA = 0.3, 4.25, 0.10      # blade incidence / lift / drag slopes (Iris values)
+A0, CLA, CDA = 0.3, 4.25, 0.10  # blade incidence / lift / drag slopes (Iris values)
 CL = CLA * A0
-R_CP = 0.7 * a.prop_radius           # blade centre of pressure
+R_CP = 0.7 * a.prop_radius  # blade centre of pressure
 ARM = a.wheelbase / 2 / math.sqrt(2)  # motor x/y offset
-ROTOR_M = 0.003                       # prop + bell
-ROTOR_IZZ = 1.6e-6                    # 4" prop + bell, kg m^2
-Z_ROTOR = 0.02                        # prop plane above the body origin
-CAM_M = 0.010 if a.camera != "none" else 0.0   # ELP board after trimming the cable, 8-12 g (§11.2)
+ROTOR_M = 0.003  # prop + bell
+ROTOR_IZZ = 1.6e-6  # 4" prop + bell, kg m^2
+Z_ROTOR = 0.02  # prop plane above the body origin
+CAM_M = 0.010 if a.camera != "none" else 0.0  # ELP board after trimming the cable, 8-12 g (§11.2)
 # IMU and camera sensors sit on base_link itself. A 10 g camera link on a `fixed` joint made the vehicle hover at
 # 15% less thrust (MOT_THST_HOVER 0.283 vs 0.323, same total mass) -- a joint-constraint artefact, so no extra links.
 BASE_M = a.mass - 4 * ROTOR_M
 CAM_X, CAM_Z = ARM + a.cam_ahead, Z_ROTOR - a.cam_below
-CG_X = CAM_M * CAM_X / BASE_M                  # camera shifts the body CG forward a little
+CG_X = CAM_M * CAM_X / BASE_M  # camera shifts the body CG forward a little
 CAM_TOPIC = "ecps295/camera"
 
 # hover PWM fraction from the ArduPilot motor curve: thrust t -> actuator x with (1-e) x + e x^2 = t
@@ -63,21 +81,22 @@ e, t = a.expo, a.hover_thr
 x = (-(1 - e) + math.sqrt((1 - e) ** 2 + 4 * e * t)) / (2 * e)
 pwm_hover = a.spin[0] + (a.spin[1] - a.spin[0]) * x
 omega_hover = pwm_hover * a.max_omega
-blade_lift = a.mass * 9.80665 / 8   # 4 rotors x 2 blades
+blade_lift = a.mass * 9.80665 / 8  # 4 rotors x 2 blades
 area = a.blade_area or blade_lift / (0.5 * RHO * (omega_hover * R_CP) ** 2 * CL)
 drag_torque = 2 * 0.5 * RHO * (omega_hover * R_CP) ** 2 * area * CDA * A0 * R_CP
 p_gain = ROTOR_IZZ / a.motor_tau
-print(f"hover PWM fraction {pwm_hover:.3f}, omega {omega_hover:.0f} rad/s, blade area {area:.5f} m^2, "
-      f"rotor drag torque {drag_torque:.2e} N m -> P-only speed error {drag_torque / p_gain:.1f} rad/s; "
-      f"thrust/weight at full PWM {(1 / pwm_hover) ** 2:.2f}")
+print(
+    f"hover PWM fraction {pwm_hover:.3f}, omega {omega_hover:.0f} rad/s, blade area {area:.5f} m^2, "
+    f"rotor drag torque {drag_torque:.2e} N m -> P-only speed error {drag_torque / p_gain:.1f} rad/s; "
+    f"thrust/weight at full PWM {(1 / pwm_hover) ** 2:.2f}"
+)
 
 # rotor i: (x, y, spin sign) -- ArduPilot quad-X order, same as Iris: 0 FR ccw, 1 BL ccw, 2 FL cw, 3 BR cw
 ROTORS = [(ARM, -ARM, 1), (-ARM, ARM, 1), (ARM, ARM, -1), (-ARM, -ARM, -1)]
 
 
 def inertia(ixx, iyy, izz):
-    return (f"<inertia><ixx>{ixx:.3e}</ixx><ixy>0</ixy><ixz>0</ixz><iyy>{iyy:.3e}</iyy><iyz>0</iyz>"
-            f"<izz>{izz:.3e}</izz></inertia>")
+    return f"<inertia><ixx>{ixx:.3e}</ixx><ixy>0</ixy><ixz>0</ixz><iyy>{iyy:.3e}</iyy><iyz>0</iyz><izz>{izz:.3e}</izz></inertia>"
 
 
 def rotor_link(i, x, y, s):
@@ -98,6 +117,41 @@ def rotor_link(i, x, y, s):
     </joint>"""
 
 
+def view_camera(name: str, pose: str, hfov_deg: float) -> str:
+    """Plain RGB camera for the monitor window (no noise); not part of the drone twin."""
+    return f"""
+      <sensor name="{name}" type="camera">
+        <pose>{pose}</pose>
+        <always_on>1</always_on><update_rate>{a.view_hz}</update_rate><topic>ecps295/{name}</topic>
+        <camera>
+          <horizontal_fov>{math.radians(hfov_deg):.5f}</horizontal_fov>
+          <image><width>{a.view_res[0]}</width><height>{a.view_res[1]}</height><format>R8G8B8</format></image>
+          <clip><near>0.05</near><far>200</far></clip>
+        </camera>
+      </sensor>"""
+
+
+def chase_camera() -> str:
+    # 0.9 m behind, 0.45 m above, looking 24 deg down at the drone; rigid, so it yaws (and tilts) with the drone
+    return (
+        ""
+        if a.views_active not in ("chase", "both")
+        else view_camera("chase_camera", f"-0.9 0 0.45 0 {math.radians(24):.4f} 0", 75)
+    )
+
+
+def overview_camera(xyz, look_at) -> str:
+    if a.views_active not in ("overview", "both"):
+        return ""
+    dx, dy, dz = (look_at[i] - xyz[i] for i in range(3))
+    yaw, pitch = math.atan2(dy, dx), math.atan2(-dz, math.hypot(dx, dy))
+    return f"""
+    <model name="overview_cam"><static>true</static><pose>{xyz[0]} {xyz[1]} {xyz[2]} 0 {pitch:.4f} {yaw:.4f}</pose>
+      <link name="link">{view_camera("overview_camera", "0 0 0 0 0 0", 70)}
+      </link>
+    </model>"""
+
+
 def camera_parts():
     if a.camera == "none":
         return ""
@@ -105,8 +159,10 @@ def camera_parts():
     if a.camera == "wide":
         sensor_type = "wideanglecamera"
         # equidistant r = f*theta (fisheye, §4.2 C1); scale_to_hfov keeps the requested hfov across the image width
-        lens = ("<lens><type>equidistant</type><scale_to_hfov>true</scale_to_hfov>"
-                f"<cutoff_angle>{math.radians(90):.4f}</cutoff_angle><env_texture_size>1024</env_texture_size></lens>")
+        lens = (
+            "<lens><type>equidistant</type><scale_to_hfov>true</scale_to_hfov>"
+            f"<cutoff_angle>{math.radians(90):.4f}</cutoff_angle><env_texture_size>{a.cam_env_tex}</env_texture_size></lens>"
+        )
     else:
         sensor_type, lens = "camera", ""
     return f"""
@@ -151,10 +207,11 @@ def control(i, s):
       </control>"""
 
 
-model = f"""<?xml version="1.0"?>
+def build_model(name: str) -> str:
+    return f"""<?xml version="1.0"?>
 <!-- generated by ecps295/gazebo/make_quad.py; edit the generator, not this file -->
 <sdf version="1.9">
-  <model name="ecps295_quad">
+  <model name="{name}">
     <pose>0 0 0.03 0 0 0</pose>
     <link name="base_link">
       <inertial><pose>{CG_X:.4f} 0 0 0 0 0</pose><mass>{BASE_M:.4f}</mass>{inertia(*a.inertia)}</inertial>
@@ -164,9 +221,13 @@ model = f"""<?xml version="1.0"?>
         <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material></visual>
       <visual name="battery"><pose>0 0 -0.03 0 0 0</pose><geometry><box><size>0.075 0.035 0.02</size></box></geometry>
         <material><ambient>0.8 0.6 0.1 1</ambient><diffuse>0.8 0.6 0.1 1</diffuse></material></visual>
-      <visual name="arm_a"><pose>0 0 0.01 0 0 {math.pi / 4:.5f}</pose><geometry><box><size>{a.wheelbase} 0.012 0.004</size></box></geometry>
+      <visual name="arm_a"><pose>0 0 0.01 0 0 {math.pi / 4:.5f}</pose><geometry><box><size>{
+        a.wheelbase
+    } 0.012 0.004</size></box></geometry>
         <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
-      <visual name="arm_b"><pose>0 0 0.01 0 0 {-math.pi / 4:.5f}</pose><geometry><box><size>{a.wheelbase} 0.012 0.004</size></box></geometry>
+      <visual name="arm_b"><pose>0 0 0.01 0 0 {-math.pi / 4:.5f}</pose><geometry><box><size>{
+        a.wheelbase
+    } 0.012 0.004</size></box></geometry>
         <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
       <visual name="nose"><pose>0.05 0 0 0 0 0</pose><geometry><box><size>0.01 0.02 0.02</size></box></geometry>
         <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse></material></visual>
@@ -176,14 +237,20 @@ model = f"""<?xml version="1.0"?>
         <always_on>1</always_on><update_rate>1000.0</update_rate>
       </sensor>
 {camera_parts()}
+{chase_camera()}
     </link>
 {"".join(rotor_link(i, x, y, s) for i, (x, y, s) in enumerate(ROTORS))}
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher"/>
 {"".join(lift_drag(i, s, side) for i, (_, _, s) in enumerate(ROTORS) for side in (1, -1))}
-{"".join(f'''
+{
+        "".join(
+            f'''
     <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
       <joint_name>rotor_{i}_joint</joint_name>
-    </plugin>''' for i in range(4))}
+    </plugin>'''
+            for i in range(4)
+        )
+    }
     <plugin name="ArduPilotPlugin" filename="ArduPilotPlugin">
       <fdm_addr>127.0.0.1</fdm_addr>
       <fdm_port_in>9002</fdm_port_in>
@@ -200,14 +267,17 @@ model = f"""<?xml version="1.0"?>
 </sdf>
 """
 
-config = """<?xml version="1.0"?>
+
+def build_config(name: str) -> str:
+    return f"""<?xml version="1.0"?>
 <model>
-  <name>ecps295_quad</name>
+  <name>{name}</name>
   <version>1.0</version>
   <sdf version="1.9">model.sdf</sdf>
   <description>ECPS 295 course drone twin: MOD-L 4in X, 295 g, 2S (generated by make_quad.py)</description>
 </model>
 """
+
 
 WORLD_TMPL = """<?xml version="1.0"?>
 <!-- generated by ecps295/gazebo/make_quad.py: NAME; UCI coordinates to match SITL --home -->
@@ -235,15 +305,18 @@ WORLD_TMPL = """<?xml version="1.0"?>
       </link>
     </model>
 EXTRA
-    <include><uri>model://ecps295_quad</uri><pose degrees="true">0 0 0.03 0 0 90</pose></include>
+    <include><uri>model://MODEL</uri><pose degrees="true">0 0 0.03 0 0 90</pose></include>
   </world>
 </sdf>
 """
 
-mdir = HERE / "models" / "ecps295_quad"
-mdir.mkdir(parents=True, exist_ok=True)
-(mdir / "model.sdf").write_text(model)
-(mdir / "model.config").write_text(config)
+VARIANTS = (("ecps295_quad", "", "none"), ("ecps295_quad_monitor", "_monitor", a.view_cams))
+for mname, _, views in VARIANTS:
+    a.views_active = views
+    mdir = HERE / "models" / mname
+    mdir.mkdir(parents=True, exist_ok=True)
+    (mdir / "model.sdf").write_text(build_model(mname))
+    (mdir / "model.config").write_text(build_config(mname))
 (HERE / "worlds").mkdir(exist_ok=True)
 
 
@@ -257,18 +330,21 @@ def tape_bands(size, w=0.05, shade=0.18):
         bands.append((f"ring{k}", (0, 0, f * sz), (sx + e, sy + e, w)))
         bands.append((f"bx{k}", (f * sx, 0, 0), (w, sy + e, sz + e)))
         bands.append((f"by{k}", (0, f * sy, 0), (sx + e, w, sz + e)))
-    return "".join(f"""
+    return "".join(
+        f"""
         <visual name="tape_{n}"><pose>{p[0]:.3f} {p[1]:.3f} {p[2]:.3f} 0 0 0</pose><geometry><box><size>{q[0]:.3f} {q[1]:.3f} {q[2]:.3f}</size></box></geometry>
-          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>""" for n, p, q in bands)
+          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>"""
+        for n, p, q in bands
+    )
 
 
 def box(name, xyz, size, rgb, static=True, tape=False):
     c = " ".join(f"{v:.2f}" for v in rgb)
-    return (f"""
+    return f"""
     <model name="{name}"><static>{str(static).lower()}</static><pose>{xyz[0]} {xyz[1]} {xyz[2]} 0 0 0</pose>
       <link name="link"><collision name="c"><geometry><box><size>{size[0]} {size[1]} {size[2]}</size></box></geometry></collision>
         <visual name="v"><geometry><box><size>{size[0]} {size[1]} {size[2]}</size></box></geometry>
-          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>{tape_bands(size) if tape else ""}</link></model>""")
+          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>{tape_bands(size) if tape else ""}</link></model>"""
 
 
 def checker_floor(n=10, tile=0.61, lo=0.30, hi=0.55):
@@ -302,16 +378,36 @@ FLOOR_M = 10 * 0.61
 
 
 def camtest_extra(tape: bool) -> str:
-    return checker_floor() + "".join(box(n, c, sz, rgb, tape=tape and cb) for n, c, sz, rgb, cb in CAMTEST_OBJECTS)
+    return (
+        checker_floor()
+        + "".join(box(n, c, sz, rgb, tape=tape and cb) for n, c, sz, rgb, cb in CAMTEST_OBJECTS)
+        + overview_camera((-2.2, -1.6, 1.9), (0.0, 1.0, 0.4))
+    )
 
 
 def write_layout(wname: str, objects) -> None:
     """Obstacles for flydrones' dashboard ROOM panel; the drone spawns at the origin, so ENU here = SITL local ENU."""
-    lay = {"world": wname, "floor_m": FLOOR_M,
-           "boxes": [{"name": n, "center_enu": c, "size_enu": sz} for n, c, sz, _, _ in objects]}
+    lay = {
+        "world": wname,
+        "floor_m": FLOOR_M,
+        "boxes": [{"name": n, "center_enu": c, "size_enu": sz} for n, c, sz, _, _ in objects],
+    }
     (HERE / "worlds" / f"{wname}.layout.json").write_text(json.dumps(lay, indent=1))
-(HERE / "worlds" / "ecps295_flat.sdf").write_text(WORLD_TMPL.replace("NAME", "ecps295_flat").replace("EXTRA", ""))
-for wname, tape in (("ecps295_camtest", False), ("ecps295_camtest_tape", True)):
-    (HERE / "worlds" / f"{wname}.sdf").write_text(WORLD_TMPL.replace("NAME", wname).replace("EXTRA", camtest_extra(tape)))
-    write_layout(wname, CAMTEST_OBJECTS)
-print("wrote", mdir, "and worlds/ecps295_flat.sdf, ecps295_camtest.sdf, ecps295_camtest_tape.sdf")
+
+
+def write_world(wname: str, extra_fn, objects=()) -> None:
+    """Plain world (twin only) and *_monitor variant (monitor model + overview camera if selected)."""
+    for mname, suffix, views in VARIANTS:
+        a.views_active = views
+        name = wname + suffix
+        (HERE / "worlds" / f"{name}.sdf").write_text(
+            WORLD_TMPL.replace("NAME", name).replace("MODEL", mname).replace("EXTRA", extra_fn())
+        )
+        if objects:
+            write_layout(name, objects)
+
+
+write_world("ecps295_flat", lambda: overview_camera((-2.0, -2.0, 1.6), (0.0, 0.0, 0.5)))
+write_world("ecps295_camtest", lambda: camtest_extra(False), CAMTEST_OBJECTS)
+write_world("ecps295_camtest_tape", lambda: camtest_extra(True), CAMTEST_OBJECTS)
+print("wrote models", [v[0] for v in VARIANTS], "and worlds ecps295_{flat,camtest,camtest_tape}[_monitor].sdf")
