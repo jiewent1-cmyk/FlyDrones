@@ -246,13 +246,28 @@ mdir.mkdir(parents=True, exist_ok=True)
 (HERE / "worlds").mkdir(exist_ok=True)
 
 
-def box(name, xyz, size, rgb, static=True):
+def tape_bands(size, w=0.05, shade=0.18):
+    """Dark tape: two horizontal rings and two vertical bands each way, i.e. a grid on every face."""
+    sx, sy, sz = size
+    e = 0.004
+    c = f"{shade} {shade} {shade}"
+    bands = []
+    for k, f in enumerate((-0.25, 0.25)):
+        bands.append((f"ring{k}", (0, 0, f * sz), (sx + e, sy + e, w)))
+        bands.append((f"bx{k}", (f * sx, 0, 0), (w, sy + e, sz + e)))
+        bands.append((f"by{k}", (0, f * sy, 0), (sx + e, w, sz + e)))
+    return "".join(f"""
+        <visual name="tape_{n}"><pose>{p[0]:.3f} {p[1]:.3f} {p[2]:.3f} 0 0 0</pose><geometry><box><size>{q[0]:.3f} {q[1]:.3f} {q[2]:.3f}</size></box></geometry>
+          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>""" for n, p, q in bands)
+
+
+def box(name, xyz, size, rgb, static=True, tape=False):
     c = " ".join(f"{v:.2f}" for v in rgb)
     return (f"""
     <model name="{name}"><static>{str(static).lower()}</static><pose>{xyz[0]} {xyz[1]} {xyz[2]} 0 0 0</pose>
       <link name="link"><collision name="c"><geometry><box><size>{size[0]} {size[1]} {size[2]}</size></box></geometry></collision>
         <visual name="v"><geometry><box><size>{size[0]} {size[1]} {size[2]}</size></box></geometry>
-          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual></link></model>""")
+          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>{tape_bands(size) if tape else ""}</link></model>""")
 
 
 def checker_floor(n=10, tile=0.61, lo=0.30, hi=0.55):
@@ -271,13 +286,17 @@ def checker_floor(n=10, tile=0.61, lo=0.30, hi=0.55):
 
 # camera test: drone faces world +y; cardboard boxes ahead, a pole to show fisheye bending, coloured markers at the edges
 CARDBOARD = (0.65, 0.48, 0.30)
-camtest_extra = (checker_floor()
-                 + box("box_a", (0.0, 1.5, 0.25), (0.5, 0.5, 0.5), CARDBOARD)
-                 + box("box_b", (1.0, 2.2, 0.30), (0.6, 0.45, 0.6), CARDBOARD)
-                 + box("box_c", (-1.2, 2.6, 0.25), (0.45, 0.6, 0.5), CARDBOARD)
-                 + box("pole", (0.6, 1.0, 1.0), (0.04, 0.04, 2.0), (0.9, 0.1, 0.1))
-                 + box("marker_left", (-2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.3, 0.9))
-                 + box("marker_right", (2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.8, 0.2)))
+
+
+def camtest_extra(tape: bool) -> str:
+    return (checker_floor()
+            + box("box_a", (0.0, 1.5, 0.25), (0.5, 0.5, 0.5), CARDBOARD, tape=tape)
+            + box("box_b", (1.0, 2.2, 0.30), (0.6, 0.45, 0.6), CARDBOARD, tape=tape)
+            + box("box_c", (-1.2, 2.6, 0.25), (0.45, 0.6, 0.5), CARDBOARD, tape=tape)
+            + box("pole", (0.6, 1.0, 1.0), (0.04, 0.04, 2.0), (0.9, 0.1, 0.1))
+            + box("marker_left", (-2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.3, 0.9))
+            + box("marker_right", (2.4, 1.2, 0.5), (0.2, 0.2, 1.0), (0.1, 0.8, 0.2)))
 (HERE / "worlds" / "ecps295_flat.sdf").write_text(WORLD_TMPL.replace("NAME", "ecps295_flat").replace("EXTRA", ""))
-(HERE / "worlds" / "ecps295_camtest.sdf").write_text(WORLD_TMPL.replace("NAME", "ecps295_camtest").replace("EXTRA", camtest_extra))
-print("wrote", mdir, "and worlds/ecps295_flat.sdf, worlds/ecps295_camtest.sdf")
+for wname, tape in (("ecps295_camtest", False), ("ecps295_camtest_tape", True)):
+    (HERE / "worlds" / f"{wname}.sdf").write_text(WORLD_TMPL.replace("NAME", wname).replace("EXTRA", camtest_extra(tape)))
+print("wrote", mdir, "and worlds/ecps295_flat.sdf, ecps295_camtest.sdf, ecps295_camtest_tape.sdf")

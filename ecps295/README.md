@@ -88,3 +88,20 @@ max rotor speed 838 rad/s is the Iris value (real 4" ~2300 rad/s), no battery cu
 Watch it on the ROG desktop: `bash ecps295/gazebo/gz_view.sh` (3D chase view + docked camera, demo flight from
 `demo_flight.py`; `--no-demo` to fly yourself). Grab frames headless: `/usr/bin/python3 gazebo/gz_grab.py`.
 Only one ArduPilot Gazebo instance at a time for now (plugin port 9002 is fixed).
+
+### G4: MiniFly flies by the Gazebo camera
+
+`gazebo/cam_bridge.py` (system python, has the gz bindings) converts `/ecps295/camera` to 192x144 grayscale and
+publishes it in `/dev/shm/ecps295_cam`; `gz_camera_drone.py::GazeboCameraMavlinkDrone` serves it as `frame()`.
+`scripts/gz_g4.sh <world> <tag> "<run_g4.py args>" [--gui]` starts Gazebo, the bridge, SITL and `run_g4.py`.
+Results 2026-10-03 (MiniFly synthetic, default config, camtest worlds):
+
+- bridge 62 frames/s, frame age p95 8.8 ms, brain >= 2.2x real time
+- probe (open loop): yaw right/left, climb, descend all produce an opposing command (optomotor stabilisation OK);
+  side effects: yawing also raises throttle (+0.2), flying forward 0.3 m/s commands descent (-0.09, same size as a
+  real 0.2 m/s climb), so S8-d is a real concern
+- looming needs texture: plain cardboard box peaks DNp03/DNp01 10/20 Hz (no escape); taped box 60/40 Hz,
+  DNp03 >= 20 Hz at 0.74 m, escape onset only at 0.23 m (decoder GF filter)
+- closed loop: hover 40 s at 0.60-0.88 m with no safety events; approach at ~0.25 m/s brakes from 0.7 m,
+  escapes (climb) at ~0.1 m and clears the 0.5 m box by 0.15 m; geofence stops it at 2.16 m
+- the ROOM panel of the dashboard is meaningless for Gazebo runs (it assumes a SimDrone room)
