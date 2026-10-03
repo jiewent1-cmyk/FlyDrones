@@ -36,7 +36,11 @@ a = ap.parse_args()
 
 
 def text(img, s, xy, scale=0.6, color=FG, thick=1):
-    cv2.putText(img, s, xy, cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), thick + 3, cv2.LINE_AA)
+    """Text on a semi-transparent dark band (an outline smears when the window is scaled down)."""
+    (tw, th), base = cv2.getTextSize(s, cv2.FONT_HERSHEY_SIMPLEX, scale, thick)
+    x, y = xy
+    x0, y0, x1, y1 = max(0, x - 6), max(0, y - th - 6), min(img.shape[1], x + tw + 6), min(img.shape[0], y + base + 4)
+    img[y0:y1, x0:x1] = (img[y0:y1, x0:x1] * 0.35).astype(np.uint8)
     cv2.putText(img, s, xy, cv2.FONT_HERSHEY_SIMPLEX, scale, color, thick, cv2.LINE_AA)
 
 
@@ -110,6 +114,23 @@ def connect(port: int):
     return (conn, hello) if kind == "hello" else (None, None)
 
 
+def letterbox(img: np.ndarray, window: str) -> np.ndarray:
+    """Fit img into the current window size on a dark canvas (Qt would pad with white)."""
+    try:
+        _, _, ww, wh = cv2.getWindowImageRect(window)
+    except cv2.error:
+        return img
+    if ww < 50 or wh < 50:
+        return img
+    s = min(ww / img.shape[1], wh / img.shape[0])
+    w, h = max(1, int(img.shape[1] * s)), max(1, int(img.shape[0] * s))
+    canvas = np.full((wh, ww, 3), BG, np.uint8)
+    x0, y0 = (ww - w) // 2, (wh - h) // 2
+    interp = cv2.INTER_AREA if s < 1 else cv2.INTER_LINEAR
+    canvas[y0 : y0 + h, x0 : x0 + w] = cv2.resize(img, (w, h), interpolation=interp)
+    return canvas
+
+
 def placeholder(w: int, msg: str) -> np.ndarray:
     img = np.full((H, w, 3), BG, np.uint8)
     text(img, msg, (30, H // 2), 0.7, MUTED)
@@ -121,7 +142,7 @@ view = a.view
 session: Session | None = None
 last_try = 0.0
 win = "ECPS295 monitor - MiniFly brain | Gazebo"
-cv2.namedWindow(win, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_NORMAL)  # resizable, no Qt toolbar
+cv2.namedWindow(win, cv2.WINDOW_NORMAL | cv2.WINDOW_FREERATIO | cv2.WINDOW_GUI_NORMAL)  # resizable, no Qt toolbar
 cv2.resizeWindow(win, 1280 + 960, H)
 period = 1.0 / a.fps
 while True:
@@ -156,7 +177,7 @@ while True:
                 text(right, "ESCAPE", (right.shape[1] - 150, 60), 1.0, WARN, 2)
     else:
         right = placeholder(960, f"no Gazebo {view} camera frames yet")
-    cv2.imshow(win, np.hstack([left, right]))
+    cv2.imshow(win, letterbox(np.hstack([left, right]), win))
     key = cv2.waitKey(max(1, int((period - (time.monotonic() - t0)) * 1000))) & 0xFF
     if key == ord("q") or cv2.getWindowProperty(win, cv2.WND_PROP_VISIBLE) < 1:
         break
