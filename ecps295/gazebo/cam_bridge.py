@@ -27,6 +27,7 @@ from PIL import Image as PILImage
 HDR = struct.Struct("<QdIII")
 DEFAULT_STREAMS = [
     "/ecps295/camera:/dev/shm/ecps295_cam:192x144:gray",
+    "/ecps295/camera:/dev/shm/ecps295_cam_rgb:640x480:rgb",  # same topic, colour, for monitor.py only
     "/ecps295/chase_camera:/dev/shm/ecps295_chase:960x540:rgb",
     "/ecps295/overview_camera:/dev/shm/ecps295_overview:960x540:rgb",
 ]
@@ -67,10 +68,13 @@ class Stream:
 
 node = Node()
 streams = [Stream(s) for s in (a.stream or DEFAULT_STREAMS)]
+by_topic: dict[str, list[Stream]] = {}
 for st in streams:
-    if not node.subscribe(Image, st.topic, st.on_image):
-        raise SystemExit(f"cannot subscribe to {st.topic}")
+    by_topic.setdefault(st.topic, []).append(st)
     print(f"bridging {st.topic} -> {st.path} as {st.w}x{st.h} {st.mode}", flush=True)
+for topic, group in by_topic.items():  # a node subscribes once per topic; fan out to every stream on it
+    if not node.subscribe(Image, topic, lambda msg, group=group: [st.on_image(msg) for st in group]):
+        raise SystemExit(f"cannot subscribe to {topic}")
 running = True
 signal.signal(signal.SIGTERM, lambda *_: globals().update(running=False))
 last, t_last = [0] * len(streams), time.time()
@@ -78,7 +82,7 @@ while running:
     time.sleep(5)
     now = time.time()
     print(
-        "  ".join(f"{st.topic.rsplit('/', 1)[-1]} {(st.count - prev) / (now - t_last):.1f}/s" for st, prev in zip(streams, last)),
+        "  ".join(f"{st.path.rsplit('/', 1)[-1]} {(st.count - prev) / (now - t_last):.1f}/s" for st, prev in zip(streams, last)),
         flush=True,
     )
     last, t_last = [st.count for st in streams], now

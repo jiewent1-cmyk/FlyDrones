@@ -139,7 +139,9 @@ pos = {"x": 0.0, "y": 0.0}
 
 
 def tick(t: float, dt: float, phase: str):
+    c0 = time.perf_counter()
     info = pilot.tick(t, dt)
+    compute_ms = (time.perf_counter() - c0) * 1000
     tel = info.tel
     lp = drone.m.messages.get("LOCAL_POSITION_NED")
     if lp is not None:
@@ -161,6 +163,8 @@ def tick(t: float, dt: float, phase: str):
             "escape": int(info.cmd.escape),
             "frame_age_ms": round(drone.frame_age_s() * 1000, 1),
             "brain_rtf": info.rtf,
+            "compute_ms": round(compute_ms, 2),  # whole Pilot.tick: frame, retina, brain, decoder, safety, send
+            "brain_ms": round(dt * 1000 / info.rtf, 2) if info.rtf > 0 else float("nan"),
             **{k: round(v, 2) for k, v in info.rates.items() if k.startswith("DN")},
         }
     )
@@ -250,6 +254,9 @@ summary = {
     "escapes": sum(1 for p, q in zip(rows, rows[1:]) if q["escape"] and not p["escape"]),
     "safety_events": pilot.safety.events,
     "tick_interval_ms_p50_p95_max": [round(float(np.percentile(tick_dt_ms[1:], q)), 1) for q in (50, 95, 100)],
+    # compute budget per 50 ms tick (TechRoute §7.1: <= 25 ms on the Orange Pi)
+    "compute_ms_p50_p95_max": [round(float(np.percentile([r["compute_ms"] for r in rows], q)), 2) for q in (50, 95, 100)],
+    "brain_ms_p50_p95_max": [round(float(np.nanpercentile([r["brain_ms"] for r in rows], q)), 2) for q in (50, 95, 100)],
 }
 if pub:
     pub.close(summary)
