@@ -385,17 +385,17 @@ def camtest_extra(tape: bool) -> str:
     )
 
 
-def write_layout(wname: str, objects) -> None:
+def write_layout(wname: str, objects, floor_m: float = FLOOR_M) -> None:
     """Obstacles for flydrones' dashboard ROOM panel; the drone spawns at the origin, so ENU here = SITL local ENU."""
     lay = {
         "world": wname,
-        "floor_m": FLOOR_M,
+        "floor_m": floor_m,
         "boxes": [{"name": n, "center_enu": c, "size_enu": sz} for n, c, sz, _, _ in objects],
     }
     (HERE / "worlds" / f"{wname}.layout.json").write_text(json.dumps(lay, indent=1))
 
 
-def write_world(wname: str, extra_fn, objects=()) -> None:
+def write_world(wname: str, extra_fn, objects=(), floor_m: float = FLOOR_M) -> None:
     """Plain world (twin only) and *_monitor variant (monitor model + overview camera if selected)."""
     for mname, suffix, views in VARIANTS:
         a.views_active = views
@@ -404,7 +404,7 @@ def write_world(wname: str, extra_fn, objects=()) -> None:
             WORLD_TMPL.replace("NAME", name).replace("MODEL", mname).replace("EXTRA", extra_fn())
         )
         if objects:
-            write_layout(name, objects)
+            write_layout(name, objects, floor_m)
 
 
 write_world("ecps295_flat", lambda: overview_camera((-2.0, -2.0, 1.6), (0.0, 0.0, 0.5)))
@@ -419,9 +419,175 @@ def wall_objects(east: float, tape: bool):
     return [("wall", (east, 1.85, 0.75), (1.2, 0.3, 1.5), CARDBOARD, tape), *SIDE_MARKERS]
 
 
-for wname, east, tape in (("ecps295_wall_tape", 0.0, True), ("ecps295_wall_plain", 0.0, False),
-                          ("ecps295_wall_offset", 0.45, True)):
+for wname, east, tape in (
+    ("ecps295_wall_tape", 0.0, True),
+    ("ecps295_wall_plain", 0.0, False),
+    ("ecps295_wall_offset", 0.45, True),
+):
     objs = wall_objects(east, tape)
-    write_world(wname, lambda objs=objs: checker_floor() + "".join(box(n, c, sz, rgb, tape=cb) for n, c, sz, rgb, cb in objs)
-                + overview_camera((-2.2, -1.6, 1.9), (0.0, 1.2, 0.6)), objs)
-print("wrote models", [v[0] for v in VARIANTS], "and worlds ecps295_{flat,camtest,camtest_tape,wall_*}[_monitor].sdf")
+    write_world(
+        wname,
+        lambda objs=objs: (
+            checker_floor()
+            + "".join(box(n, c, sz, rgb, tape=cb) for n, c, sz, rgb, cb in objs)
+            + overview_camera((-2.2, -1.6, 1.9), (0.0, 1.2, 0.6))
+        ),
+        objs,
+    )
+
+
+# ----------------------------------------------------------------------------------------------- G3: course cages
+# TechRoute §4.3 / §6A G3. The cage is centred on the take-off point (FlyDrones' geofence is a radius around it).
+ALU = (0.72, 0.72, 0.74)
+NET = (0.16, 0.16, 0.16)
+
+
+def static_visuals(name: str, visuals: list[str], collision: str = "") -> str:
+    return f"""
+    <model name="{name}"><static>true</static><link name="link">{collision}{"".join(visuals)}
+      </link></model>"""
+
+
+def vbox(vname, xyz, size, rgb, yaw=0.0) -> str:
+    c = " ".join(f"{v:.2f}" for v in rgb)
+    return (
+        f"""
+        <visual name="{vname}"><pose>{xyz[0]:.3f} {xyz[1]:.3f} {xyz[2]:.3f} 0 0 {yaw:.4f}</pose>"""
+        f"""<geometry><box><size>{size[0]:.3f} {size[1]:.3f} {size[2]:.3f}</size></box></geometry>
+          <material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse></material></visual>"""
+    )
+
+
+def net_wall(name, center, along, length, height, spacing=0.10, strand=0.004) -> str:
+    """Knotted netting as real strands (4 mm on a 10 cm grid): nearly see-through, as §4.3 describes."""
+    cx, cy = center
+    vis = []
+    for k in range(int(length / spacing) + 1):
+        o = -length / 2 + k * spacing
+        xyz = (cx + o, cy, height / 2) if along == "x" else (cx, cy + o, height / 2)
+        vis.append(vbox(f"v{k}", xyz, (strand, strand, height), NET))
+    for k in range(1, int(height / spacing) + 1):
+        z = k * spacing
+        size = (length, strand, strand) if along == "x" else (strand, length, strand)
+        vis.append(vbox(f"h{k}", (cx, cy, z), size, NET))
+    csize = (length, 0.02, height) if along == "x" else (0.02, length, height)
+    col = (
+        f"""<collision name="c"><pose>{cx:.3f} {cy:.3f} {height / 2:.3f} 0 0 0</pose>"""
+        f"""<geometry><box><size>{csize[0]:.3f} {csize[1]:.3f} {csize[2]:.3f}</size></box></geometry></collision>"""
+    )
+    return static_visuals(name, vis, col)
+
+
+def cage_frame(side: float, height: float) -> str:
+    """5 cm aluminium posts every <= 3.05 m and top rails."""
+    h = side / 2
+    n = max(1, round(side / 3.05))
+    ticks = [-h + k * side / n for k in range(n + 1)]
+    vis = []
+    for i, x in enumerate(ticks):
+        for j, y in enumerate(ticks):
+            if x in (-h, h) or y in (-h, h):
+                vis.append(vbox(f"post{i}_{j}", (x, y, height / 2), (0.05, 0.05, height), ALU))
+    for k, v in enumerate((-h, h)):
+        vis.append(vbox(f"railx{k}", (0, v, height), (side, 0.05, 0.05), ALU))
+        vis.append(vbox(f"raily{k}", (v, 0, height), (0.05, side, 0.05), ALU))
+    return static_visuals("cage_frame", vis)
+
+
+def floor_tape(side: float, n: int = 10, seed: int = 7) -> str:
+    """Random strips of light tape on the EVA mat (§4.3)."""
+    import random
+
+    rnd = random.Random(seed)
+    vis = []
+    for k in range(n):
+        x, y = rnd.uniform(-side / 2 + 0.3, side / 2 - 0.3), rnd.uniform(-side / 2 + 0.3, side / 2 - 0.3)
+        vis.append(
+            vbox(f"tape{k}", (x, y, 0.0025), (rnd.uniform(0.5, 1.4), 0.05, 0.001), (0.82, 0.80, 0.74), rnd.uniform(0, math.pi))
+        )
+    return static_visuals("floor_tape", vis)
+
+
+def scenery(seed: int = 3) -> str:
+    """Far buildings and trees seen through the net (30-60 m)."""
+    import random
+
+    rnd = random.Random(seed)
+    vis = []
+    for k in range(10):
+        a, r = rnd.uniform(0, 2 * math.pi), rnd.uniform(30, 60)
+        w, d, hgt = rnd.uniform(8, 22), rnd.uniform(8, 20), rnd.uniform(6, 22)
+        g = rnd.uniform(0.45, 0.8)
+        vis.append(vbox(f"bldg{k}", (r * math.cos(a), r * math.sin(a), hgt / 2), (w, d, hgt), (g, g * 0.97, g * 0.92), a))
+    for k in range(14):
+        a, r = rnd.uniform(0, 2 * math.pi), rnd.uniform(18, 40)
+        x, y, hgt = r * math.cos(a), r * math.sin(a), rnd.uniform(4, 9)
+        vis.append(
+            f"""
+        <visual name="trunk{k}"><pose>{x:.2f} {y:.2f} {hgt * 0.3:.2f} 0 0 0</pose><geometry><cylinder><radius>0.25</radius>"""
+            f"""<length>{hgt * 0.6:.2f}</length></cylinder></geometry>
+          <material><ambient>0.35 0.25 0.15 1</ambient><diffuse>0.35 0.25 0.15 1</diffuse></material></visual>
+        <visual name="crown{k}"><pose>{x:.2f} {y:.2f} {hgt * 0.75:.2f} 0 0 0</pose><geometry><sphere><radius>{hgt * 0.3:.2f}"""
+            f"""</radius></sphere></geometry>
+          <material><ambient>0.18 0.4 0.15 1</ambient><diffuse>0.18 0.4 0.15 1</diffuse></material></visual>"""
+        )
+    return static_visuals("scenery", vis)
+
+
+def lab_lights(side: float, height: float) -> str:
+    return "".join(
+        f"""
+    <light type="point" name="lamp{k}"><cast_shadows>false</cast_shadows><pose>{x:.2f} {y:.2f} {height + 1.0:.2f} 0 0 0</pose>
+      <diffuse>0.55 0.55 0.52 1</diffuse><specular>0.1 0.1 0.1 1</specular>
+      <attenuation><range>15</range><constant>0.6</constant><linear>0.05</linear><quadratic>0.01</quadratic></attenuation>
+    </light>"""
+        for k, (x, y) in enumerate(((-side / 4, -side / 4), (side / 4, side / 4), (-side / 4, side / 4), (side / 4, -side / 4)))
+    )
+
+
+# obstacles (name, centre ENU, size, colour, taped?) -- the drone starts at the cage centre facing north (+y)
+CAGE20_OBJECTS = [
+    ("stack_low", (0.0, 1.9, 0.275), (0.55, 0.55, 0.55), CARDBOARD, True),  # two 22" boxes stacked: 1.1 m,
+    ("stack_high", (0.0, 1.9, 0.825), (0.55, 0.55, 0.55), CARDBOARD, True),  # above the 1.0 m ceiling
+    ("box_w", (-1.6, 0.6, 0.23), (0.46, 0.46, 0.46), CARDBOARD, False),  # 18" plain
+    ("box_e", (1.7, -0.8, 0.3), (0.6, 0.6, 0.6), CARDBOARD, True),  # 24" taped
+    ("box_sw", (-1.0, -1.9, 0.25), (0.5, 0.5, 0.5), CARDBOARD, False),
+]
+CAGE10_OBJECTS = [("box_n", (0.25, 0.95, 0.3), (0.6, 0.6, 0.6), CARDBOARD, True)]
+
+
+def cage_walls(side: float, height: float):
+    """Net walls as layout obstacles (thin boxes) so the ROOM panel and the clearance metric see them."""
+    h = side / 2
+    return [
+        ("net_n", (0, h, height / 2), (side, 0.02, height), NET, False),
+        ("net_s", (0, -h, height / 2), (side, 0.02, height), NET, False),
+        ("net_e", (h, 0, height / 2), (0.02, side, height), NET, False),
+        ("net_w", (-h, 0, height / 2), (0.02, side, height), NET, False),
+    ]
+
+
+def cage_extra(side: float, height: float, objects) -> str:
+    h = side / 2
+    return (
+        checker_floor(n=round(side / 0.61))
+        + floor_tape(side)
+        + cage_frame(side, height)
+        + net_wall("net_n", (0, h), "x", side, height)
+        + net_wall("net_s", (0, -h), "x", side, height)
+        + net_wall("net_e", (h, 0), "y", side, height)
+        + net_wall("net_w", (-h, 0), "y", side, height)
+        + "".join(box(n, c, sz, rgb, tape=cb) for n, c, sz, rgb, cb in objects)
+        + scenery()
+        + lab_lights(side, height)
+        + overview_camera((-h + 0.25, -h + 0.25, height - 0.3), (0.3, 0.6, 0.4))
+    )
+
+
+for wname, side, objs in (("ecps295_cage20", 6.1, CAGE20_OBJECTS), ("ecps295_cage10", 3.05, CAGE10_OBJECTS)):
+    write_world(
+        wname, lambda side=side, objs=objs: cage_extra(side, 3.05, objs), objs + cage_walls(side, 3.05), floor_m=side + 0.4
+    )
+print(
+    "wrote models", [v[0] for v in VARIANTS], "and worlds ecps295_{flat,camtest,camtest_tape,wall_*,cage10,cage20}[_monitor].sdf"
+)
