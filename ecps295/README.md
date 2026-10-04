@@ -254,6 +254,7 @@ VL53L0X ToF, both facing down). `NAV=flow bash ~/sim/gz_g4.sh ...` flies that co
 - Flow is still SITL's (`SIM_FLOW_*`). `sitl/ardupilot_sitl.patch` (apply before building SITL):
   - Copter-4.7.0's JSON backend tested the wrong received bits for `rng_1..6` (bits 7-12 instead of 10-15 after
     latitude/longitude/altitude were added to the keytable), so no Gazebo range ever reached the rangefinder.
+    Fixed on master by ArduPilot#33342; backport to ArduPilot-4.7 proposed in ArduPilot#34610.
   - Over an obstacle (ToF more than 10 cm shorter than the height above the floor) SITL flow is scaled by the measured
     range, as the real sensor's would be.
 - `fhb_delta.parm` fixes: `SIM_FLOW_DELAY` counts samples, not ms (10 was 500 ms at 20 Hz; the S7 "flow rate is
