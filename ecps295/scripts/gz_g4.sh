@@ -10,6 +10,12 @@ export GZ_VERSION=harmonic
 export GZ_SIM_SYSTEM_PLUGIN_PATH=$HOME/sim/ardupilot_gazebo/build
 export GZ_SIM_RESOURCE_PATH=$G/models:$G/worlds:$HOME/sim/ardupilot_gazebo/models:$HOME/sim/ardupilot_gazebo/worlds
 export __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia
+# a previous run that has not finished tearing down holds SITL tcp 5760 / plugin udp 9002 / tick stream 5799 and
+# leaves a second Gazebo server publishing the same camera topic (seen: "bind failed on port 5760", 97 frames/s)
+ports_busy() { ss -ltnu 2>/dev/null | grep -qE ":(5760|9002|5799) "; }
+pkill -x arducopter 2>/dev/null; pkill -f "^gz sim -s" 2>/dev/null; pkill -f "^/usr/bin/python3 .*cam_bridge.py" 2>/dev/null
+for i in $(seq 1 30); do ports_busy || break; sleep 0.5; done
+ports_busy && { echo "ports 5760/9002/5799 still busy, giving up" >&2; exit 1; }
 D=~/sim/runs/$TAG; rm -rf $D; mkdir -p $D; cd $D
 if [ "$GUI" = "--gui" ]; then
   export DISPLAY=${DISPLAY:-:1}
@@ -36,6 +42,7 @@ WN=$(basename $WORLD .sdf)
   | awk '{v[NR]=$1; s+=$1} END {if (NR) printf "RTF mean %.3f median %.3f min %.3f over %d samples\n", s/NR, v[int((NR+1)/2)], v[1], NR}' > rtf.log) &
 source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
 PYTHONPATH=$E MPLBACKEND=Agg timeout 900 python $E/run_g4.py $ARGS 2>&1 | grep -v "EOF on TCP" > exp.log
-kill $SP $BR; sleep 1
-if [ "$GUI" != "--gui" ]; then kill $GZ; sleep 2; fi
+wait_gone() { for i in $(seq 1 20); do kill -0 "$@" 2>/dev/null || return 0; sleep 0.5; done; kill -9 "$@" 2>/dev/null; }
+kill $SP $BR 2>/dev/null; wait_gone $SP $BR
+if [ "$GUI" != "--gui" ]; then kill $GZ 2>/dev/null; wait_gone $GZ; pkill -f "^gz sim -s" 2>/dev/null; fi
 cat exp.log rtf.log 2>/dev/null

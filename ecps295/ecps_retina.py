@@ -27,8 +27,11 @@ class EcpsRetina(Retina):
         r.blank_min = float(b.get("min_frac", 0.55))  # absolute share needed before it counts
         r.blank_tau = float(b.get("baseline_s", 6.0))
         r.blank_hz = float(b.get("hz", 20.0))
+        # v2 saturated both eyes, so the saccade side was a coin flip. The level says "something blank ahead", the
+        # side comes from the textureless share across each whole eye (like upstream looming's loom_by_eye).
+        r.blank_side_gain = float(b.get("side_gain", 0.0))  # 0 = v2 behaviour
         r._blank_base = {"L": None, "R": None}
-        r.last_blank = {"L": 0.0, "R": 0.0, "frac_L": 0.0, "frac_R": 0.0}
+        r.last_blank = {"L": 0.0, "R": 0.0, "frac_L": 0.0, "frac_R": 0.0, "side_L": 0.5}
         return r
 
     def encode(self, frame):
@@ -47,6 +50,7 @@ class EcpsRetina(Retina):
         half = self.cols // 2
         central = {"L": e[r0:r1, half : self.cols], "R": e[r0:r1, self.cols : self.cols + half]}  # next to the midline
         a = 1.0 / max(1.0, self.blank_tau * self.blank_hz)
+        levels = {}
         for eye, cells in central.items():
             frac = float((cells < self.blank_thr).mean())
             base = self._blank_base[eye]
@@ -58,8 +62,18 @@ class EcpsRetina(Retina):
             if level < 0.2:  # adapt only while nothing alarming is in front
                 base = (1 - a) * base + a * frac
             self._blank_base[eye] = base
-            self.last_blank[eye], self.last_blank[f"frac_{eye}"] = level, frac
-            vf.eyes[eye].grids["blank"] = np.full((self.rows, self.cols), level, np.float32)
+            levels[eye] = level
+            self.last_blank[f"frac_{eye}"] = frac
+        if self.blank_side_gain > 0:
+            whole = {"L": e[r0:r1, : self.cols], "R": e[r0:r1, self.cols : ncols]}
+            fl, fr = (float((whole[k] < self.blank_thr).mean()) for k in "LR")
+            side_l = float(np.clip(0.5 + (fl - fr) * self.blank_side_gain, 0.0, 1.0))
+            level = max(levels.values())
+            levels = {"L": level * min(1.0, 2 * side_l), "R": level * min(1.0, 2 * (1 - side_l))}
+            self.last_blank["side_L"] = side_l
+        for eye in "LR":
+            self.last_blank[eye] = levels[eye]
+            vf.eyes[eye].grids["blank"] = np.full((self.rows, self.cols), levels[eye], np.float32)
         return vf
 
 

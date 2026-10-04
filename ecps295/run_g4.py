@@ -34,7 +34,7 @@ from flydrones.motor.command import FlightCommand
 from flydrones.runtime import Pilot
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--mode", choices=["probe", "hover", "approach"], required=True)
+ap.add_argument("--mode", choices=["probe", "hover", "approach", "patrol"], required=True)
 ap.add_argument("--url", default="tcp:127.0.0.1:5760")
 ap.add_argument("--seconds", type=float, default=40)
 ap.add_argument("--cruise", type=float, default=0.5, help="approach: decoder.cruise (x safety max_forward x v_max)")
@@ -43,6 +43,7 @@ ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--config", default="", help="MiniFly variant YAML (ecps295/minifly/v*.yaml), merged over defaults")
 ap.add_argument("--decoder", choices=["upstream", "ecps"], default="upstream", help="ecps = ecps_decoder.EcpsDecoder")
 ap.add_argument("--pilot", choices=["upstream", "ecps"], default="upstream", help="ecps = ecps_pilot.EcpsPilot (watchdogs)")
+ap.add_argument("--fence-turn", action="store_true", help="EcpsPilot: yaw back toward the centre at the geofence")
 ap.add_argument("--retina", choices=["upstream", "ecps"], default="upstream", help="ecps = ecps_retina.EcpsRetina (+blank)")
 ap.add_argument("--gif", default="", help="render the brain dashboard to this GIF after the flight")
 ap.add_argument("--gif-every", type=int, default=3)
@@ -58,7 +59,7 @@ cfg = load_config(a.config or None, {"safety": dict(ECPS295_SAFETY_20FT), "brain
 _src = str(cfg["brain"]["source"])
 if a.config and _src.endswith(".npz") and not Path(_src).is_absolute():  # brain file next to the variant YAML
     cfg["brain"]["source"] = str(Path(a.config).resolve().parent / _src)
-if a.mode == "approach":
+if a.mode in ("approach", "patrol"):
     cfg["decoder"]["cruise"] = a.cruise
     cfg["safety"]["max_forward"] = a.max_forward
 brain = Brain(load_connectome(cfg["brain"]["source"]), cfg)
@@ -68,7 +69,7 @@ drone = GazeboCameraMavlinkDrone(a.url, passive=(a.mode == "probe"), takeoff_alt
 if a.pilot == "ecps":
     from ecps_pilot import EcpsPilot
 
-    pilot = EcpsPilot(brain, drone, cfg)
+    pilot = EcpsPilot(brain, drone, cfg, fence_turn=a.fence_turn)
 else:
     pilot = Pilot(brain, drone, cfg)
 if a.retina == "ecps":
@@ -318,6 +319,26 @@ def flight_metrics() -> dict:
         else None,
         "escape_onset_clearance_m": first(lambda r: r["escape"]),
         "final_clearance_m": round(cl[-1], 3),
+        **patrol_metrics(cl),
+    }
+
+
+def patrol_metrics(cl: list) -> dict:
+    """Collision episodes, near misses, path and coverage (0.5 m cells inside the geofence)."""
+    episodes = sum(1 for p, q in zip(cl, cl[1:]) if p >= 0 > q) + (1 if cl[0] < 0 else 0)
+    near = sum(1 for p, q in zip(cl, cl[1:]) if p >= 0.1 > q)
+    pts = [(r["north"], r["east"]) for r in rows]
+    path = sum(math.hypot(b[0] - a_[0], b[1] - a_[1]) for a_, b in zip(pts, pts[1:]))
+    fence, cell = cfg["safety"]["geofence_radius_m"], 0.5
+    k = int(math.ceil(fence / cell))
+    allowed = {(i, j) for i in range(-k, k) for j in range(-k, k) if math.hypot((i + 0.5) * cell, (j + 0.5) * cell) <= fence}
+    visited = {(math.floor(n / cell), math.floor(e / cell)) for n, e in pts} & allowed
+    return {
+        "contact_episodes": episodes,
+        "near_miss_episodes": near,
+        "path_m": round(path, 1),
+        "coverage": round(len(visited) / max(1, len(allowed)), 3),
+        "fence_turn_s": round(getattr(pilot, "fence_turn_ticks", 0) / HZ, 1),
     }
 
 

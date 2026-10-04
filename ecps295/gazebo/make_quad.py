@@ -423,6 +423,7 @@ for wname, east, tape in (
     ("ecps295_wall_tape", 0.0, True),
     ("ecps295_wall_plain", 0.0, False),
     ("ecps295_wall_offset", 0.45, True),
+    ("ecps295_wall_offset_plain", 0.45, False),
 ):
     objs = wall_objects(east, tape)
     write_world(

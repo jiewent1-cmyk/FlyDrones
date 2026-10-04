@@ -42,7 +42,7 @@ for spec in a.runs:
             last = t
             print(
                 f"t={t:5.1f} clr={float(r['clearance']):6.2f} alt={float(r['alt']):.2f} fwd={float(r['cmd_forward']):+.2f} "
-                f"blank L/R {b['L']:.2f}/{b['R']:.2f}  frac L/R {b['frac_L']:.2f}/{b['frac_R']:.2f}"
+                f"blank L/R {b['L']:.2f}/{b['R']:.2f}  frac L/R {b['frac_L']:.2f}/{b['frac_R']:.2f}  side_L {b['side_L']:.2f}"
             )
     arr = np.array(levels)
     far = arr[arr[:, 0] > 1.2]

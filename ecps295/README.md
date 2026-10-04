@@ -186,3 +186,25 @@ v2 details: plain wall saccade at 1.36 m (min clearance 0.56 m); `blank` offline
 flight false descent -0.086 -> -0.044. Open: on the offset wall v2 turns toward the side the wall extends (blank
 saturates in both eyes, so the side is a coin flip) - keep the per-eye difference in the next variant.
 
+### v2.1 turn direction and the patrol test (2026-10-03)
+
+v2.1 (`minifly/v2_1.yaml`, `vision.ecps_blank.side_gain: 2.0`): the blank level still comes from the central band, the
+side from the textureless share across each whole eye, like upstream looming's loom_by_eye. Offline (`blank_eval.py`)
+on a plain wall offset 0.45 m right: right eye 1.0 / left eye 0.0 from 1.23 m; head-on plain wall still fires both
+eyes from ~1.26 m; 20' cage hover stays 0.
+
+First saccade direction on walls offset to the right, 3 brain seeds each (no contact in any of the 12 runs):
+v2 plain L L L, taped R R L (4/6 correct); v2.1 plain L L L, taped R L L (5/6). Remaining wrong turn on the taped
+wall: its left edge expands into the left eye, so edge-based looming reports a left threat. Candidate v3: a
+centering pathway (steer away from the stronger translational flow, as bees and flies do); note that the upstream
+optomotor wiring turns TOWARD the side with stronger front-to-back flow.
+
+T7_patrol: 120 s free cruise (~0.25 m/s) in the 20' cage with `--fence-turn` (safety layer in EcpsPilot: near the
+geofence and heading out, yaw back toward the centre; upstream only zeroes forward there, so the drone parks).
+v2.1: 0 contact episodes, 3 near misses (< 0.1 m, min 0.037 m, all at the corner of the 1.1 m box stack during a
+saccade turn in place), path 21.9 m, coverage 63.5 % of 0.5 m cells inside the fence, 5 saccades, 12.1 s of fence
+turn-back. `patrol_report.py` draws the map and lists near misses.
+
+`gz_g4.sh` now clears leftover SITL / Gazebo / bridge processes and waits for ports 5760, 9002 and 5799 before
+starting, and waits for its own processes to exit afterwards: back-to-back runs sometimes found the previous SITL
+still bound to 5760 and two Gazebo servers publishing the camera (97 frames/s).
