@@ -55,5 +55,7 @@ with lock:
 if len(s) < 2:
     raise SystemExit(f"no frames on {a.topic}")
 dt = np.diff(s)
-print(f"{len(s)} frames in {s[-1] - s[0]:.2f} s sim time -> {1 / dt.mean():.1f} Hz (dt p95 {np.percentile(dt, 95) * 1000:.1f} ms); "
-      f"size {msg.width}x{msg.height}; saved {saved} to {out}/")
+print(
+    f"{len(s)} frames in {s[-1] - s[0]:.2f} s sim time -> {1 / dt.mean():.1f} Hz (dt p95 {np.percentile(dt, 95) * 1000:.1f} ms); "
+    f"size {msg.width}x{msg.height}; saved {saved} to {out}/"
+)

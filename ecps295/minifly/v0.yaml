@@ -1,0 +1,3 @@
+# MiniFly v0: upstream synthetic MiniFly and read-out, unchanged (baseline for S2)
+brain:
+  source: minifly

@@ -40,6 +40,10 @@ ap.add_argument("--seconds", type=float, default=40)
 ap.add_argument("--cruise", type=float, default=0.5, help="approach: decoder.cruise (x safety max_forward x v_max)")
 ap.add_argument("--max-forward", type=float, default=0.6, help="approach: safety.max_forward")
 ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--config", default="", help="MiniFly variant YAML (ecps295/minifly/v*.yaml), merged over defaults")
+ap.add_argument("--decoder", choices=["upstream", "ecps"], default="upstream", help="ecps = ecps_decoder.EcpsDecoder")
+ap.add_argument("--pilot", choices=["upstream", "ecps"], default="upstream", help="ecps = ecps_pilot.EcpsPilot (watchdogs)")
+ap.add_argument("--retina", choices=["upstream", "ecps"], default="upstream", help="ecps = ecps_retina.EcpsRetina (+blank)")
 ap.add_argument("--gif", default="", help="render the brain dashboard to this GIF after the flight")
 ap.add_argument("--gif-every", type=int, default=3)
 ap.add_argument("--freeze-cam-at", type=float, default=-1, help="fault injection: camera stops updating at t [s]")
@@ -50,14 +54,31 @@ ap.add_argument("--layout", default="", help="<world>.layout.json from make_quad
 ap.add_argument("--out", default="g4")
 a = ap.parse_args()
 
-cfg = load_config(None, {"safety": dict(ECPS295_SAFETY_20FT), "brain": {"seed": a.seed}})
+cfg = load_config(a.config or None, {"safety": dict(ECPS295_SAFETY_20FT), "brain": {"seed": a.seed}})
+_src = str(cfg["brain"]["source"])
+if a.config and _src.endswith(".npz") and not Path(_src).is_absolute():  # brain file next to the variant YAML
+    cfg["brain"]["source"] = str(Path(a.config).resolve().parent / _src)
 if a.mode == "approach":
     cfg["decoder"]["cruise"] = a.cruise
     cfg["safety"]["max_forward"] = a.max_forward
 brain = Brain(load_connectome(cfg["brain"]["source"]), cfg)
 dyn = {k: ECPS295_DYN[k] for k in ("v_max", "vz_max", "yaw_rate_max_dps")}
+dyn.update(cfg.get("ecps_drone", {}) or {})  # e.g. a faster yaw limit for saccades
 drone = GazeboCameraMavlinkDrone(a.url, passive=(a.mode == "probe"), takeoff_alt=TAKEOFF_ALT_M, **dyn)
-pilot = Pilot(brain, drone, cfg)
+if a.pilot == "ecps":
+    from ecps_pilot import EcpsPilot
+
+    pilot = EcpsPilot(brain, drone, cfg)
+else:
+    pilot = Pilot(brain, drone, cfg)
+if a.retina == "ecps":
+    from ecps_retina import EcpsRetina
+
+    pilot.retina = EcpsRetina.from_config(cfg)
+if a.decoder == "ecps":
+    from ecps_decoder import EcpsDecoder
+
+    pilot.decoder = EcpsDecoder(cfg)
 HZ = cfg["control"]["hz"]
 
 if a.layout:
@@ -314,6 +335,12 @@ summary = {
     "escapes": sum(1 for p, q in zip(rows, rows[1:]) if q["escape"] and not p["escape"]),
     **flight_metrics(),
     "safety_events": pilot.safety.events,
+    "variant": Path(a.config).stem if a.config else "v0",
+    "decoder": a.decoder,
+    "escape_log": getattr(pilot.decoder, "escapes", []),
+    "watchdog_events": getattr(pilot, "watchdog_events", []),
+    "pilot": a.pilot,
+    "retina": a.retina,
     "tick_interval_ms_p50_p95_max": [round(float(np.percentile(tick_dt_ms[1:], q)), 1) for q in (50, 95, 100)],
     # compute budget per 50 ms tick (TechRoute §7.1: <= 25 ms on the Orange Pi)
     "compute_ms_p50_p95_max": [round(float(np.percentile([r["compute_ms"] for r in rows], q)), 2) for q in (50, 95, 100)],

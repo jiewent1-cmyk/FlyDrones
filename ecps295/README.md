@@ -156,3 +156,33 @@ layout, so the ROOM panel draws the cage and the clearance metric includes them.
 9.1 ms. Approach toward the stack at 0.25 m/s reproduces the wall-suite failure (escape at 0.24 m, stops, creeps in).
 Still open from §6A G3: real EVA mat photo texture and light levels from a lux measurement in the cage.
 
+## S2: custom MiniFly (2026-10-03)
+
+Upstream code untouched. Variants are YAML files in `minifly/`; v2 adds neurons via `my_minifly.py` (upstream block
+bit-identical, calibrate R^2 unchanged: throttle 0.912, yaw 0.812).
+
+| file | role |
+|---|---|
+| `ecps_decoder.py` | `EcpsDecoder`: saccade escape (turn away + back-off) triggered by DNp01, DNp03 or a hard brake; caution period; slower brake memory; efference copy (throttle per forward); yaw/throttle decoupling |
+| `ecps_pilot.py` | `EcpsPilot`: F2 brain-age watchdog actually wired in; camera staleness -> hover, -> land after 3 s |
+| `ecps_retina.py` | `EcpsRetina`: `blank` feature, sudden loss of texture in the central field per eye |
+| `my_minifly.py` | v2 connectome: 24 LCb cells per side, LCb -> PVLP (8), -> DNp01 (2), -> contralateral PVLP_inh (2) |
+| `blank_eval.py` | offline check of `blank` on recorded frames |
+
+Run: `run_g4.py --config minifly/v2.yaml --decoder ecps --pilot ecps --retina ecps`,
+suite: `VARIANT=v2 DECODER=ecps PILOT=ecps RETINA=ecps bash g4_suite.sh`.
+
+| version | change | wall-suite contacts (6 approach tests) |
+|---|---|---|
+| v0 | upstream | 6/6 |
+| v1 | saccade escape, caution, efference copy, yaw decoupling, 60 deg/s yaw | 3/6 (slow 0.15 m/s, plain wall, frozen camera) |
+| v1.1 | saccade threshold 15 Hz, caution on brake, EcpsPilot watchdogs | frozen camera fixed; 0.15 m/s still creeps in after the caution |
+| v1.2 | a hard brake also triggers the saccade | 0.15 m/s fixed; offset wall regressed (decayed brake re-triggered toward the wall) |
+| v1.3 | brake trigger on the current tick only, 1 s refractory, keep turn direction | taped walls and offset pass |
+| v2 | + LCb frontal blanking cells | **0/6**, plus probe, 60 s hover and 20' cage pass |
+
+v2 details: plain wall saccade at 1.36 m (min clearance 0.56 m); `blank` offline: 1.0 from 1.11 m on the plain wall,
+0 on the taped wall approach and in 20' cage hover. Probe after v1: yaw->throttle coupling +0.17 -> +0.005, forward
+flight false descent -0.086 -> -0.044. Open: on the offset wall v2 turns toward the side the wall extends (blank
+saturates in both eyes, so the side is a coin flip) - keep the per-eye difference in the next variant.
+

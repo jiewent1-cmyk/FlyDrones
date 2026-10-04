@@ -1,0 +1,31 @@
+# MiniFly v1 "brake-escape" (TechRoute S2): upstream wiring, ECPS295 read-out (run_g4.py --decoder ecps)
+# Fixes found by the G4 suite: climb escape impossible under the 1.0 m ceiling, escape too late, creeping into
+# the wall once looming goes quiet, forward flight read as climbing, yaw read as climbing.
+brain:
+  source: minifly
+safety:
+  max_yaw: 1.0                 # saccades use the full range ...
+decoder:
+  axes:
+    yaw:                       # ... so the normal read-out is halved: same 30 deg/s as before at 60 deg/s full scale
+      gain: 0.025
+      terms: {DNg02_R: 1.0, DNg02_L: -1.0, DNp03_L: 0.8, DNp03_R: -0.8}
+  escape:
+    mode: saccade              # DNp01 giant fibre still triggers, but now as a saccade
+  ecps:
+    brake_decay: 0.97          # ~1.1 s half-life (upstream 0.93, ~0.5 s)
+    saccade:
+      enabled: true
+      terms: [DNp03_L, DNp03_R]
+      threshold_hz: 20         # DNp03 crossed 20 Hz at ~0.74 m in the G4 probe
+      duration_s: 1.5          # ~90 deg at 60 deg/s
+      yaw: 1.0
+      backoff: 0.3
+      backoff_s: 0.6
+    caution:
+      hold_s: 2.0
+      ramp_s: 2.0
+    throttle_per_forward: 0.14 # G4 probe: forward 0.6 -> throttle -0.086
+    throttle_yaw_decouple: 0.011  # G4 probe: one-sided DNg02 +17 Hz -> throttle +0.175
+ecps_drone:
+  yaw_rate_max_dps: 60
