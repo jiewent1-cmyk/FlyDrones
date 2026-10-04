@@ -42,6 +42,8 @@ ap.add_argument("--threads", default=None)
 ap.add_argument("--repeat", type=int, default=1)
 ap.add_argument("--hz", type=float, default=20)
 ap.add_argument("--out", default="pil_replay.json")
+ap.add_argument("--config", default="", help="MiniFly variant YAML (minifly/v*.yaml)")
+ap.add_argument("--retina", choices=["upstream", "ecps"], default="upstream")
 ap.add_argument(
     "--prep",
     choices=["none", "reduced"],
@@ -71,9 +73,17 @@ n = min(len(jpegs), len(tel_rows))
 if n == 0:
     raise SystemExit("no frames")
 
-cfg = load_config(None, {"safety": dict(ECPS295_SAFETY_20FT)})
+cfg = load_config(a.config or None, {"safety": dict(ECPS295_SAFETY_20FT)})
+_src = str(cfg["brain"]["source"])
+if a.config and _src.endswith(".npz") and not os.path.isabs(_src):
+    cfg["brain"]["source"] = os.path.join(os.path.dirname(os.path.abspath(a.config)), _src)
 brain = Brain(load_connectome(cfg["brain"]["source"]), cfg)
-retina = Retina.from_config(cfg)
+if a.retina == "ecps":
+    from ecps_retina import EcpsRetina
+
+    retina = EcpsRetina.from_config(cfg)
+else:
+    retina = Retina.from_config(cfg)
 encoder = InputEncoder(brain.connectome, cfg)
 decoder = MotorDecoder(cfg)
 safety = SafetyGovernor(cfg)
@@ -146,6 +156,8 @@ res = {
     "numpy": np.__version__,
     "threads": a.threads or "default",
     "prep": a.prep,
+    "variant": os.path.basename(a.config) if a.config else "v0",
+    "neurons": brain.n_neurons,
     "ticks": len(total),
     "frame_size": list(f0.shape[:2][::-1]),
     "budget_ms": 1000 / a.hz,
