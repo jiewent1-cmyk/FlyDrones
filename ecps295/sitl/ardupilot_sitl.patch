@@ -1,16 +1,17 @@
 diff --git a/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp b/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp
-index d238254..82b4300 100644
+index d238254..c917733 100644
 --- a/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp
 +++ b/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp
-@@ -71,6 +71,14 @@ void AP_OpticalFlow_SITL::update(void)
+@@ -71,6 +71,15 @@ void AP_OpticalFlow_SITL::update(void)
          range = 1e38f;
      }
  
 +    // ecps295: a physics backend that reports a range (JSON rng_1, e.g. a Gazebo ToF ray) also sees obstacles
-+    // under the vehicle; height_agl only knows the flat ground. Use the shorter one so flow scales like the real
-+    // sensor when flying over a box (out of range is reported as 2 x max, so it never wins at cage heights).
++    // under the vehicle; height_agl only knows the flat ground. Over an obstacle (range clearly shorter than the
++    // ground) use the measured range so flow scales like the real sensor. Only then: rng_1 arrives at the ray rate
++    // (10 Hz), and using its stale value everywhere corrupted the EKF height during climbs.
 +    const float rng = _sitl->state.rangefinder_m[0];
-+    if (!isnan(rng) && rng > 0.0f && rng < range) {
++    if (!isnan(rng) && rng > 0.0f && rng < range - 0.10f) {
 +        range = rng;
 +    }
 +

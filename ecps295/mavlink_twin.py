@@ -169,7 +169,12 @@ class Ecps295MavlinkDrone(MavlinkDrone):
             raise TakeoffError("could not enter GUIDED on optical flow")
         print(f"flow take-off: GUIDED at {self._tel.alt_m:.2f} m (rangefinder {self.rng_m})", flush=True)
         self._rc_throttle(None)
-        while time.time() < deadline and (self._tel.alt_m or 0.0) < 0.95 * self.takeoff_alt:
+
+        def low() -> bool:  # stop on either: the EKF height lagged the ToF by 0.8 m in a climb and hit the 1.3 m fence
+            rng = self.rangefinder_m()
+            return (self._tel.alt_m or 0.0) < 0.95 * self.takeoff_alt and (rng is None or rng < 0.95 * self.takeoff_alt)
+
+        while time.time() < deadline and low():
             self._send_velocity(0.0, 0.0, -0.3, 0.0)
             self._pump()
         t1 = time.time()

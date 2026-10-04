@@ -243,3 +243,44 @@ regulation (slow down when lateral flow is high, as bees do) so looming has time
 Simulation stall seen once in ~45 runs: telemetry and camera froze mid-flight (SITL/Gazebo lockstep, extra
 "ArduPilot controller has reset"); EcpsPilot's camera watchdog hovered and landed as designed.
 
+### S7d: the 3901-L0X in Gazebo (`NAV=flow`, 2026-10-03/04)
+
+The Gazebo runs above use GPS. The real drone has no GPS: it navigates on the Matek 3901-L0X (PMW3901 optical flow +
+VL53L0X ToF, both facing down). `NAV=flow bash ~/sim/gz_g4.sh ...` flies that configuration (`sitl/fhb_delta.parm`;
+`EXTRA_PARM=a.parm,b.parm` stacks variants on top).
+
+- `make_quad.py`: downward ToF on `base_link` (`gpu_lidar`, 27 deg, 5x5 beams, 2 m, 10 Hz), sent to SITL as `rng_1`.
+  30 Hz cost RTF 1.000 -> 0.906 over whole runs, 10 Hz -> 0.973.
+- Flow is still SITL's (`SIM_FLOW_*`). `sitl/ardupilot_sitl.patch` (apply before building SITL):
+  - Copter-4.7.0's JSON backend tested the wrong received bits for `rng_1..6` (bits 7-12 instead of 10-15 after
+    latitude/longitude/altitude were added to the keytable), so no Gazebo range ever reached the rangefinder.
+  - Over an obstacle (ToF more than 10 cm shorter than the height above the floor) SITL flow is scaled by the measured
+    range, as the real sensor's would be.
+- `fhb_delta.parm` fixes: `SIM_FLOW_DELAY` counts samples, not ms (10 was 500 ms at 20 Hz; the S7 "flow rate is
+  highly sensitive" result was mostly this lag), now 0; `COMPASS_AUTODEC 0` + `COMPASS_DEC` (without GPS the EKF
+  aligned yaw 11 deg off).
+- Take-off without GPS (`mavlink_twin.py`): EKF origin, ALT_HOLD lift-off with an RC throttle override (sent as the GCS
+  sysid 255, the only one ArduPilot accepts overrides from), GUIDED from 0.1 m, climb until ToF or EKF height reaches
+  the target (the EKF height lagged the ToF by up to 0.8 m).
+- `run_g4.py` scores clearance, path and radius on simulator truth (`SIM_STATE`); `ekf_*` columns hold the estimate.
+- `gz_g4.sh` writes `RTF run X over N s` (sim vs wall clock over the flight) to `rtf.log`; the 40-sample window mean
+  ranged 0.56-0.98 for the same setting and is kept only for reference.
+
+120 s patrols in the 20' cage, v3, 5 seeds each, ToF 10 Hz, whole-run RTF 0.97 (`nav_compare.py`):
+
+| configuration | runs with contact | near misses | path m | EKF xy error max (median / max) | runs past the 2 m fence | runs > 1.3 m | runs on the floor |
+|---|---|---|---|---|---|---|---|
+| GPS | 1 | 6 | 25.2 | 0.05 / 0.05 | 0 | 0 | 0 |
+| flow, ToF primary height (`fhb_delta`) | 1 | 9 | 12.6 | 0.42 / 0.77 | 0 | 4 | 4 |
+| flow, baro only (`variants/C_baro_only.parm`) | 0 | 2 | 18.7 | 0.67 / 4.80 | 2 | 2 | 2 |
+| flow, baro + `EK3_TERR_GRAD 0.2`, `EK3_RNG_I_GATE 1000` (`variants/F_baro_terrain_steps.parm`) | 3 | 6 | 18.7 | 0.61 / 1.56 | 2 | 2 | 1 |
+
+Flying low over the 0.46-0.6 m boxes is what breaks optical-flow navigation. The ToF range drops (0.83 -> 0.40 m) and
+the EKF height is pulled down by 0.4-1.0 m: directly with the ToF as primary height, and through the flow fusion's
+terrain state with baro only (baro height `CTUN.BAlt` stays right). The controller climbs, the drone crosses the
+1.3 m hard fence and lands (the short ~6 m runs), or keeps flying low with the bias. The EKF terrain parameters do not
+help. Without GPS the horizontal estimate also drifts enough to carry the drone past the geofence. Contacts are no
+worse than with GPS. Open question: how tall the real cage obstacles are.
+
+`logscan.py` (attitude, flow, rangefinder after arming), `flowcheck.py` (logged flow vs truth), `ctun.py` (altitude
+controller) read the SITL DataFlash logs in each run dir.

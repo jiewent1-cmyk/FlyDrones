@@ -17,7 +17,7 @@ root, groups = sys.argv[1], sys.argv[2:]
 FENCE_R, ALT_HARD = 2.0, 1.3
 print(
     "| group | runs | runs with contact | contacts | near misses | path m (mean) | EKF xy err max m (median / max) "
-    "| true radius max m (max) | runs past fence | runs > 1.3 m | runs on the floor | EKF-truth height min m | RTF mean |"
+    "| true radius max m (max) | runs past fence | runs > 1.3 m | runs on the floor | EKF-truth height min m | RTF whole run |"
 )
 print("|---|" + "---|" * 12)
 for g in groups:
@@ -32,7 +32,7 @@ for g in groups:
     rtf = []
     for d in runs:
         try:
-            rtf.append(float(open(os.path.join(d, "rtf.log")).read().split()[2]))
+            rtf += [float(ln.split()[2]) for ln in open(os.path.join(d, "rtf.log")) if ln.startswith("RTF run")]
         except (FileNotFoundError, IndexError, ValueError):
             pass
     contacts = [j.get("contact_episodes", 0) for j in js]
