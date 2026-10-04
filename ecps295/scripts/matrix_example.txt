@@ -1,0 +1,17 @@
+# batch A: v3 turn direction
+dirA_v3_offset_s0 wall_offset v3 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5
+dirA_v3_offset_s1 wall_offset v3 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5
+dirA_v3_offset_s2 wall_offset v3 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5
+dirA_v3_offsetplain_s0 wall_offset_plain v3 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5
+dirA_v3_headon_s0 wall_tape v3 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5
+# batch B: 120 s patrol in the 20 ft cage, v2.1 vs v3, 5 seeds each
+patrol_v2_1_s0 cage20 v2_1 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v3_s0 cage20 v3 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v2_1_s1 cage20 v2_1 1 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v3_s1 cage20 v3 1 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v2_1_s2 cage20 v2_1 2 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v3_s2 cage20 v3 2 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v2_1_s3 cage20 v2_1 3 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v3_s3 cage20 v3 3 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v2_1_s4 cage20 v2_1 4 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
+patrol_v3_s4 cage20 v3 4 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn
