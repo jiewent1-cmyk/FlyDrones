@@ -52,6 +52,8 @@ ap.add_argument("--record-frames", default="", help="save the colour drone camer
 ap.add_argument("--live", action="store_true", help="start monitor.py (dashboard + Gazebo view) unless it is running")
 ap.add_argument("--port", type=int, default=5799, help="tick stream for monitor.py; 0 = off")
 ap.add_argument("--layout", default="", help="<world>.layout.json from make_quad.py: draws the obstacles in ROOM")
+ap.add_argument("--nav", choices=["gps", "flow"], default="gps", help="flow = 3901-L0X flow + ToF EKF, no GPS (gz_g4.sh NAV=)")
+ap.add_argument("--home", default="33.6430,-117.8420,20", help="SITL --home (Gazebo origin) for SIM_STATE truth")
 ap.add_argument("--out", default="g4")
 a = ap.parse_args()
 
@@ -65,7 +67,14 @@ if a.mode in ("approach", "patrol"):
 brain = Brain(load_connectome(cfg["brain"]["source"]), cfg)
 dyn = {k: ECPS295_DYN[k] for k in ("v_max", "vz_max", "yaw_rate_max_dps")}
 dyn.update(cfg.get("ecps_drone", {}) or {})  # e.g. a faster yaw limit for saccades
-drone = GazeboCameraMavlinkDrone(a.url, passive=(a.mode == "probe"), takeoff_alt=TAKEOFF_ALT_M, **dyn)
+drone = GazeboCameraMavlinkDrone(
+    a.url,
+    passive=(a.mode == "probe"),
+    takeoff_alt=TAKEOFF_ALT_M,
+    nav=a.nav,
+    origin=tuple(float(v) for v in a.home.split(",")[:3]),
+    **dyn,
+)
 if a.pilot == "ecps":
     from ecps_pilot import EcpsPilot
 
@@ -174,7 +183,7 @@ DT = 1.0 / HZ
 rows: list[dict] = []
 tick_dt_ms: list[float] = []
 infos: list = []
-pos = {"x": 0.0, "y": 0.0}
+pos = {"x": 0.0, "y": 0.0}  # EKF estimate (what the pilot and fence see)
 
 
 rec = None
@@ -201,13 +210,21 @@ def tick(t: float, dt: float, phase: str):
     lp = drone.m.messages.get("LOCAL_POSITION_NED")
     if lp is not None:
         pos["x"], pos["y"] = lp.x, lp.y
+    # metrics use simulator truth: under optical flow the EKF position drifts away from where the drone really is
+    tru = drone.truth_ned()
+    tn, te, ta = tru if tru is not None else (pos["x"], pos["y"], tel.alt_m or 0.0)
     rows.append(
         {
             "t": round(t, 3),
             "phase": phase,
-            "alt": tel.alt_m,
-            "north": pos["x"],
-            "east": pos["y"],
+            "alt": round(ta, 3),
+            "north": round(tn, 3),
+            "east": round(te, 3),
+            "ekf_alt": tel.alt_m,
+            "ekf_north": pos["x"],
+            "ekf_east": pos["y"],
+            "ekf_err_xy": round(math.hypot(pos["x"] - tn, pos["y"] - te), 3),
+            "rng": drone.rangefinder_m(),
             "yaw_rate_dps": tel.yaw_rate_dps,
             "raw_throttle": info.raw.throttle,
             "raw_yaw": info.raw.yaw,
@@ -218,7 +235,7 @@ def tick(t: float, dt: float, phase: str):
             "escape": int(info.cmd.escape),
             "frame_age_ms": round(drone.frame_age_s() * 1000, 1),
             "brain_rtf": info.rtf,
-            "clearance": round(clearance(pos["x"], pos["y"], tel.alt_m or 0.0), 3),
+            "clearance": round(clearance(tn, te, ta), 3),
             "frozen": int(drone.frozen),
             "compute_ms": round(compute_ms, 2),  # whole Pilot.tick: frame, retina, brain, decoder, safety, send
             "brain_ms": round(dt * 1000 / info.rtf, 2) if info.rtf > 0 else float("nan"),
@@ -354,6 +371,12 @@ summary = {
     "alt_max": max(alts),
     "north_max": max(r["north"] for r in rows),
     "escapes": sum(1 for p, q in zip(rows, rows[1:]) if q["escape"] and not p["escape"]),
+    "nav": a.nav,
+    # EKF vs truth (flow: integrated drift); radius_true_max vs geofence shows how far the drifting fence lets it go
+    "ekf_err_xy_max_m": round(max(r["ekf_err_xy"] for r in rows), 3),
+    "ekf_err_xy_final_m": rows[-1]["ekf_err_xy"],
+    "ekf_err_alt_max_m": round(max(abs((r["ekf_alt"] or 0.0) - r["alt"]) for r in rows), 3),
+    "radius_true_max_m": round(max(math.hypot(r["north"], r["east"]) for r in rows), 2),
     **flight_metrics(),
     "safety_events": pilot.safety.events,
     "variant": Path(a.config).stem if a.config else "v0",

@@ -17,6 +17,10 @@ EK3_SRC1_POSZ    2
 EK3_RNG_USE_HGT  -1
 EK3_SRC1_VELZ    0
 EK3_SRC1_YAW     1
+# no GPS -> no automatic declination: yaw aligns before the origin is set and stayed 11 deg off (Gazebo, 2026-10-03).
+# Irvine lab ~11.3 deg E; on the real FC set it for the flying site.
+COMPASS_AUTODEC  0
+COMPASS_DEC      0.197
 GPS1_TYPE        0
 # bit3 GPS lock + bit12 GPS configuration
 ARMING_SKIPCHK   4104
@@ -45,6 +49,8 @@ SIM_GPS1_ENABLE  0
 SIM_FLOW_ENABLE  1
 # real MSP output rate unknown -- HIGH sensitivity: 20 Hz -> loiter xy std 0.7-1.4 m, 50 Hz -> 0.1-0.2 m
 SIM_FLOW_RATE    20
-SIM_FLOW_DELAY   10
+# SIM_FLOW_DELAY is documented in ms but AP_OpticalFlow_SITL counts SAMPLES: 10 was 500 ms at 20 Hz (200 ms at 50 Hz),
+# far beyond EK3_FLOW_DELAY 10 ms -> the S7 "flow rate HIGH sensitivity" was mostly this lag. 0 = one-sample latency.
+SIM_FLOW_DELAY   0
 SIM_FLOW_RND     0.05
 SIM_SONAR_RND    0.03

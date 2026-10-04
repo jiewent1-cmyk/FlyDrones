@@ -1,4 +1,7 @@
 # usage: gz_g4.sh <world.sdf> <tag> "<run_g4.py args>" [--gui]   (add --live to the args to open monitor.py)
+#   NAV=gps (default)  GPS + baro EKF (course_base.parm)
+#   NAV=flow           Matek 3901-L0X as on the real drone: optical flow + ToF height, no GPS (sitl/fhb_delta.parm)
+#   EXTRA_PARM=a.parm,b.parm  appended last (e.g. a SIM_FLOW_RATE variant)
 # Gazebo (headless, or GUI on the ROG desktop with --gui) + camera bridge + ArduPilot SITL + run_g4.py
 WORLD=$1; TAG=$2; ARGS=$3; GUI=$4
 E=~/sim/FlyDrones/ecps295
@@ -30,18 +33,31 @@ rm -f /dev/shm/ecps295_cam
 /usr/bin/python3 $G/cam_bridge.py > bridge.log 2>&1 &
 BR=$!
 DP=~/sim/ardupilot/Tools/autotest/default_params
+PARMS="$DP/copter.parm,$E/sitl/course_base.parm,$G/gz_ecps295.parm"
+NAV=${NAV:-gps}
+[ "$NAV" = flow ] && PARMS="$PARMS,$E/sitl/fhb_delta.parm"
+[ -n "$EXTRA_PARM" ] && PARMS="$PARMS,$EXTRA_PARM"
+ARGS="$ARGS --nav $NAV"
+echo "NAV=$NAV params: $PARMS" > params.log
 ~/sim/ardupilot/build/sitl/bin/arducopter --model JSON --speedup 1 -I0 --home 33.6430,-117.8420,20,0 \
-  --defaults "$DP/copter.parm,$E/sitl/course_base.parm,$G/gz_ecps295.parm" > sitl.out 2>&1 &
+  --defaults "$PARMS" > sitl.out 2>&1 &
 SP=$!
 sleep 3
 LAYOUT=$G/worlds/$(basename $WORLD .sdf).layout.json
 [ -f "$LAYOUT" ] && ARGS="$ARGS --layout $LAYOUT"
 # sample Gazebo real-time factor while flying (TechRoute §6A: RTF < 0.95 invalidates a run)
 WN=$(basename $WORLD .sdf)
+# sim and wall clock from one stats message ("<sim s> <real s>"); the whole-run RTF from two of these is the number to
+# trust: the 40-sample window below lasts ~8 s and a single lockstep hiccup moved its mean by 0.1-0.4
+clocks() { timeout 5 gz topic -e -t /world/$WN/stats -n 1 2>/dev/null | awk '/^(sim_time|real_time) \{/ {b=$1} /sec:/ && b {v[b]+=($1=="nsec:")?$2/1e9:$2} /^\}/ {b=""} END {printf "%.3f %.3f", v["sim_time"], v["real_time"]}'; }
+(sleep 40; clocks > clock0.txt) &
 (sleep 60; gz topic -e -t /world/$WN/stats -n 40 2>/dev/null | grep real_time_factor | awk '{print $2}' | sort -g \
   | awk '{v[NR]=$1; s+=$1} END {if (NR) printf "RTF mean %.3f median %.3f min %.3f over %d samples\n", s/NR, v[int((NR+1)/2)], v[1], NR}' > rtf.log) &
 source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
 PYTHONPATH=$E MPLBACKEND=Agg timeout 900 python $E/run_g4.py $ARGS 2>&1 | grep -v "EOF on TCP" > exp.log
+clocks > clock1.txt
+read s0 r0 < clock0.txt 2>/dev/null; read s1 r1 < clock1.txt 2>/dev/null
+[ -n "$r1" ] && [ -n "$r0" ] && awk -v a=$s0 -v b=$s1 -v c=$r0 -v d=$r1 'BEGIN {if (d > c) printf "RTF run %.3f over %.0f s\n", (b-a)/(d-c), d-c}' >> rtf.log
 wait_gone() { for i in $(seq 1 20); do kill -0 "$@" 2>/dev/null || return 0; sleep 0.5; done; kill -9 "$@" 2>/dev/null; }
 kill $SP $BR 2>/dev/null; wait_gone $SP $BR
 if [ "$GUI" != "--gui" ]; then kill $GZ 2>/dev/null; wait_gone $GZ; pkill -f "^gz sim -s" 2>/dev/null; fi

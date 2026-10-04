@@ -18,7 +18,8 @@ Nothing under `src/flydrones/` is modified; everything here subclasses or drives
 git clone --branch Copter-4.7.0 --recurse-submodules --shallow-submodules --depth 1 https://github.com/ArduPilot/ardupilot.git
 conda create -n ardupilot python=3.11 && conda activate ardupilot
 pip install "empy==3.3.4" future pexpect pymavlink MAVProxy dronecan lxml numpy pyserial setuptools
-cd ardupilot && ./waf configure --board sitl && ./waf copter
+cd ardupilot && git apply ../FlyDrones/ecps295/sitl/ardupilot_sitl.patch   # JSON rng_1 + flow over obstacles, see NAV=flow
+./waf configure --board sitl && ./waf copter
 
 # FlyDrones
 conda create -n flydrones python=3.11 && conda activate flydrones

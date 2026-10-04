@@ -1,0 +1,6 @@
+# F: C (baro only) + tolerate terrain steps (boxes under the drone, Gazebo S7d): terrain gradient at the documented max,
+# wider rangefinder innovation gate (500 -> 1000 = 10 SD) so the terrain state follows a box top instead of rejecting it
+EK3_SRC1_POSZ 1
+EK3_RNG_USE_HGT -1
+EK3_TERR_GRAD 0.2
+EK3_RNG_I_GATE 1000

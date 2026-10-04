@@ -37,6 +37,18 @@
         </camera>
       </sensor>
 
+      <visual name="tof_board"><pose>-0.045 0 -0.011 0 0 0</pose><geometry><box><size>0.02 0.02 0.006</size></box></geometry>
+        <material><ambient>0 0 0.6 1</ambient><diffuse>0 0 0.6 1</diffuse></material></visual>
+      <sensor name="tof" type="gpu_lidar">
+        <pose>-0.045 0 -0.015 0 1.57080 0</pose>
+        <always_on>1</always_on><update_rate>10.0</update_rate><topic>ecps295/tof</topic>
+        <lidar>
+          <scan><horizontal><samples>5</samples><resolution>1</resolution><min_angle>-0.2356</min_angle><max_angle>0.2356</max_angle></horizontal><vertical><samples>5</samples><resolution>1</resolution><min_angle>-0.2356</min_angle><max_angle>0.2356</max_angle></vertical></scan>
+          <range><min>0.005</min><max>2.0</max><resolution>0.001</resolution></range>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.01</stddev></noise>
+        </lidar>
+      </sensor>
+
       <sensor name="chase_camera" type="camera">
         <pose>-0.9 0 0.45 0 0.4189 0</pose>
         <always_on>1</always_on><update_rate>30.0</update_rate><topic>ecps295/chase_camera</topic>
@@ -181,6 +193,7 @@
       <modelXYZToAirplaneXForwardZDown degrees="true">0 0 0 180 0 0</modelXYZToAirplaneXForwardZDown>
       <gazeboXYZToNED degrees="true">0 0 0 180 0 90</gazeboXYZToNED>
       <imuName>base_link::imu_sensor</imuName>
+      <sensor><type>range</type><index>1</index><topic>/ecps295/tof</topic></sensor>
 
       <control channel="0">
         <jointName>rotor_0_joint</jointName><useForce>1</useForce>

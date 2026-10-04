@@ -38,6 +38,7 @@ BG = (31, 22, 13)  # BGR, close to the dashboard background
 FG, MUTED, WARN = (240, 240, 240), (150, 150, 150), (80, 80, 255)
 VIEW_AR, CAM_AR = 16 / 9, 4 / 3
 STALE_S = 1.0  # a camera panel without a new frame for this long is not live
+IDLE_PERIOD = 0.5  # s between redraws while no run_g4.py tick stream is connected
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--port", type=int, default=5799)
@@ -252,7 +253,11 @@ while True:
         cv2.waitKey(1)
         cv2.setWindowProperty(win, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN if fullscreen else cv2.WINDOW_NORMAL)
         applied = True
-    key = cv2.waitKey(max(1, int((period - (time.monotonic() - t0)) * 1000))) & 0xFF
+    # no tick stream (experiment runs use --port 0): redraw at 2 Hz. Left running at full rate between watched runs it
+    # took 117% CPU composing full-screen frames from the shm cameras and pulled experiment RTF down to 0.73-0.90.
+    idle = session is None or session.ended
+    wait = (IDLE_PERIOD if idle else period) - (time.monotonic() - t0)
+    key = cv2.waitKey(max(1, int(wait * 1000))) & 0xFF
     if key == ord("q") or cv2.getWindowProperty(win, cv2.WND_PROP_VISIBLE) < 1:
         break
     if key == ord("c"):

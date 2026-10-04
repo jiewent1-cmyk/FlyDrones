@@ -57,6 +57,13 @@ ap.add_argument("--view-hz", type=float, default=30.0, help="keep it a divisor o
 # mount position (§4.2 C4 estimate): ~30 mm ahead of the front motor line, ~15 mm below the prop plane
 ap.add_argument("--cam-ahead", type=float, default=0.030)  # m ahead of the front motors
 ap.add_argument("--cam-below", type=float, default=0.015)  # m below the prop plane
+# Matek 3901-L0X: VL53L0X ToF facing down, sent to SITL as rng_1 (JSON). The PMW3901 flow itself is simulated by
+# SITL (SIM_FLOW_*); sitl/ardupilot_sitl.patch makes it use this range so flow scales with box tops underneath.
+ap.add_argument("--tof", choices=["on", "off"], default="on")
+ap.add_argument("--tof-max", type=float, default=2.0)  # m, Matek spec (RNGFND1_MAX in fhb_delta.parm stays 1.2)
+ap.add_argument("--tof-fov", type=float, default=27.0)  # deg, full cone (Matek 3901-L0X spec)
+ap.add_argument("--tof-rate", type=float, default=10.0)  # Hz; real VL53L0X ~30 Hz, but the GPU ray pass at 30 Hz cost
+# RTF 1.000 -> 0.906 over whole runs (2026-10-03), 10 Hz -> 0.973; the EKF fuses height at <= 10-20 Hz anyway
 a = ap.parse_args()
 a.views_active = "none"  # set per generated variant
 
@@ -181,6 +188,43 @@ def camera_parts():
       </sensor>"""
 
 
+TOF_TOPIC = "ecps295/tof"
+# behind the battery (its visual would block the beam), 15 mm below the body origin: ~8 mm above the floor when
+# landed, which keeps the reading inside the ray's min range (a reading below min is inf and would look like "no
+# ground" to SITL)
+TOF_X, TOF_Z = -0.045, -0.015
+
+
+def tof_parts():
+    if a.tof == "off":
+        return ""
+    half = math.radians(a.tof_fov / 2)
+    scan = lambda tag: (  # noqa: E731
+        f"<{tag}><samples>5</samples><resolution>1</resolution>"
+        f"<min_angle>{-half:.4f}</min_angle><max_angle>{half:.4f}</max_angle></{tag}>"
+    )
+    return f"""
+      <visual name="tof_board"><pose>{TOF_X} 0 {TOF_Z + 0.004} 0 0 0</pose><geometry><box><size>0.02 0.02 0.006</size></box></geometry>
+        <material><ambient>0 0 0.6 1</ambient><diffuse>0 0 0.6 1</diffuse></material></visual>
+      <sensor name="tof" type="gpu_lidar">
+        <pose>{TOF_X} 0 {TOF_Z} 0 {math.pi / 2:.5f} 0</pose>
+        <always_on>1</always_on><update_rate>{a.tof_rate}</update_rate><topic>{TOF_TOPIC}</topic>
+        <lidar>
+          <scan>{scan("horizontal")}{scan("vertical")}</scan>
+          <range><min>0.005</min><max>{a.tof_max}</max><resolution>0.001</resolution></range>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.01</stddev></noise>
+        </lidar>
+      </sensor>"""
+
+
+def tof_plugin_entry():
+    # ArduPilotPlugin takes the minimum over the beams (no return -> 2 x max) and sends it as rng_<index>
+    if a.tof == "off":
+        return ""
+    return f"""
+      <sensor><type>range</type><index>1</index><topic>/{TOF_TOPIC}</topic></sensor>"""
+
+
 def lift_drag(i, s, side):
     # blade at +cp moves along +y for a ccw rotor; mirrored for cw (same convention as Iris)
     fwd = s * side
@@ -237,6 +281,7 @@ def build_model(name: str) -> str:
         <always_on>1</always_on><update_rate>1000.0</update_rate>
       </sensor>
 {camera_parts()}
+{tof_parts()}
 {chase_camera()}
     </link>
 {"".join(rotor_link(i, x, y, s) for i, (x, y, s) in enumerate(ROTORS))}
@@ -260,7 +305,7 @@ def build_model(name: str) -> str:
       <have_32_channels>0</have_32_channels>
       <modelXYZToAirplaneXForwardZDown degrees="true">0 0 0 180 0 0</modelXYZToAirplaneXForwardZDown>
       <gazeboXYZToNED degrees="true">0 0 0 180 0 90</gazeboXYZToNED>
-      <imuName>base_link::imu_sensor</imuName>
+      <imuName>base_link::imu_sensor</imuName>{tof_plugin_entry()}
 {"".join(control(i, s) for i, (_, _, s) in enumerate(ROTORS))}
     </plugin>
   </model>

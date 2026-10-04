@@ -1,0 +1,40 @@
+diff --git a/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp b/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp
+index d238254..82b4300 100644
+--- a/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp
++++ b/libraries/AP_OpticalFlow/AP_OpticalFlow_SITL.cpp
+@@ -71,6 +71,14 @@ void AP_OpticalFlow_SITL::update(void)
+         range = 1e38f;
+     }
+ 
++    // ecps295: a physics backend that reports a range (JSON rng_1, e.g. a Gazebo ToF ray) also sees obstacles
++    // under the vehicle; height_agl only knows the flat ground. Use the shorter one so flow scales like the real
++    // sensor when flying over a box (out of range is reported as 2 x max, so it never wins at cage heights).
++    const float rng = _sitl->state.rangefinder_m[0];
++    if (!isnan(rng) && rng > 0.0f && rng < range) {
++        range = rng;
++    }
++
+     // Calculate relative velocity in sensor frame assuming no misalignment between sensor and vehicle body axes
+     Vector3f relVelSensor = rotmat.mul_transpose(velocity);
+ 
+diff --git a/libraries/SITL/SIM_JSON.cpp b/libraries/SITL/SIM_JSON.cpp
+index dfa9223..f0a438f 100644
+--- a/libraries/SITL/SIM_JSON.cpp
++++ b/libraries/SITL/SIM_JSON.cpp
+@@ -462,11 +462,13 @@ void JSON::recv_fdm(const struct sitl_input &input)
+     update_position();
+ 
+     // update range finder distances
+-    for (uint8_t i=7; i<13; i++) {
+-        if ((received_bitmask &  1ULL << i) == 0) {
++    // ecps295: upstream tested bits 7..12 (attitude, quaternion, velocity, rng_1..3) after latitude/longitude/altitude
++    // were added to the keytable, so rng_1 never reached the rangefinder ("Rangefinder 1: No Data")
++    for (uint8_t i=0; i<6; i++) {
++        if ((received_bitmask & (RNG_1 << i)) == 0) {
+             continue;
+         }
+-        rangefinder_m[i-7] = state.rng[i-7];
++        rangefinder_m[i] = state.rng[i];
+     }
+ 
+     // update wind vane
