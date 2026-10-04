@@ -91,7 +91,28 @@ def v2(seed: int = 7) -> Connectome:
     return b.build("minifly-ecps-v2", {"variant": "v2", "notes": "LCb frontal-blanking input -> PVLP/DNp01"})
 
 
-VARIANTS = {"v2": v2}
+def v3(seed: int = 7) -> Connectome:
+    """v2 + LCn "near side" cells (centering response, EcpsRetina `near`).
+
+    LCn_s -> HS_o: the near side's cells drive the OPPOSITE horizontal system, so the drone yaws away from the side
+    with the stronger translational flow through the existing optomotor premotor path (HS -> DNg02 / LAL_inh). The
+    signature is the same as an ordinary yaw command (one DNg02 up, the other down), so the yaw/throttle decoupling
+    still holds. (A first try, LCn_s -> LAL_inh_s, only pulled one DNg02 down: the mean dropped and the decoupling
+    would have added to it -> a sink of about -0.5 throttle.) Upstream optomotor alone turns TOWARD the near side.
+    LCn_s -> PVLP_inh_o: the opposite DNp03 is held back, so a saccade turns away from the near side too.
+    """
+    b = Builder(v2(seed))  # v2 neurons keep their indices; LCn is appended
+    for s in ("L", "R"):
+        b.add("LCn", 24, s, +1.0)
+    for s in ("L", "R"):
+        o = {"L": "R", "R": "L"}[s]
+        lcn = b.g("LCn", s)
+        b.connect(lcn, b.g("HS", o), 6, p=0.8)  # like T4a -> HS
+        b.connect(lcn, b.g("PVLP_inh", o), 3, p=0.5)
+    return b.build("minifly-ecps-v3", {"variant": "v3", "notes": "v2 + LCn centering cells -> contra HS, contra PVLP_inh"})
+
+
+VARIANTS = {"v2": v2, "v3": v3}
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

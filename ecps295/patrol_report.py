@@ -56,7 +56,7 @@ for r in rows:
 if cur is not None:
     episodes.append(cur)
 print(f"{len(episodes)} episodes below {a.near} m")
-for _c, r in episodes:
+for c, r in episodes:
     d, name = nearest(float(r["north"]), float(r["east"]), float(r["alt"]))
     print(
         f"  t={float(r['t']):6.1f}s clearance {c:.3f} m to {name:10s} at N={float(r['north']):+.2f} E={float(r['east']):+.2f} "

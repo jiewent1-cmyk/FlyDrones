@@ -33,6 +33,8 @@ for spec in a.runs:
     levels, last = [], -1e9
     for i, f in enumerate(files[: len(rows)]):
         frame = cv2.resize(cv2.imread(f, cv2.IMREAD_REDUCED_GRAYSCALE_2), (192, 144), interpolation=cv2.INTER_AREA)
+        if i > 0:  # the gyro reading EcpsPilot would pass (previous tick)
+            ret.yaw_rate_dps = float(rows[i - 1]["yaw_rate_dps"])
         ret.encode(frame)
         b = ret.last_blank
         r = rows[i]
@@ -43,6 +45,7 @@ for spec in a.runs:
             print(
                 f"t={t:5.1f} clr={float(r['clearance']):6.2f} alt={float(r['alt']):.2f} fwd={float(r['cmd_forward']):+.2f} "
                 f"blank L/R {b['L']:.2f}/{b['R']:.2f}  frac L/R {b['frac_L']:.2f}/{b['frac_R']:.2f}  side_L {b['side_L']:.2f}"
+                f"  near L/R {ret.last_near['L']:.2f}/{ret.last_near['R']:.2f} (ftb {ret.last_near['f_L']:+.2f}/{ret.last_near['f_R']:+.2f})"
             )
     arr = np.array(levels)
     far = arr[arr[:, 0] > 1.2]

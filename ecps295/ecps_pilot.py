@@ -4,7 +4,8 @@ F2      Pilot.tick never passed brain_age_s to SafetyGovernor.filter, so the "br
         not fire. Here the age is the wall time since the previous tick finished.
 fence   (optional, fence_turn=True) upstream SafetyGovernor only zeroes the forward command beyond
         geofence_radius_m, so a cruising drone parks on the boundary. Near the fence and heading outward, this
-        safety layer yaws the drone back toward the take-off point (not brain behaviour; logged as such).
+        safety layer yaws the drone back toward the take-off point (not brain behaviour; logged as such). While the
+        brain is in a saccade it only blocks forward motion and leaves the yaw to the saccade.
 camera  a frozen camera (USB hang, driver stuck) went unnoticed and the brain flew blind into the wall
         (G4 T4_freeze). If the drone reports no new frame for stale_s, command hover; after land_after_s, land.
 
@@ -32,6 +33,7 @@ class EcpsPilot(Pilot):
         self.stale_s = stale_s
         self.land_after_s = land_after_s
         self._last_tick_end: float | None = None
+        self._last_yaw_dps = 0.0
         self.watchdog_events: list[tuple[float, str]] = []
 
     def _event(self, t: float, what: str) -> None:
@@ -49,6 +51,10 @@ class EcpsPilot(Pilot):
         if self._turning_back:
             if outward < -0.5 or r < self.safety.fence - 2 * self.fence_margin:
                 self._turning_back = False
+            elif cmd.escape:
+                # the brain is in a saccade: do not fight its yaw (patrol v3/v3.1: both yawing next to the box stack
+                # that sits at the fence edge ended in contact); only keep it from moving outward
+                cmd = FlightCommand(throttle=cmd.throttle, yaw=cmd.yaw, forward=min(cmd.forward, 0.0), escape=True, note=cmd.note)
             else:
                 err = math.atan2(math.sin(out_bearing + math.pi - heading), math.cos(out_bearing + math.pi - heading))
                 cmd = FlightCommand(
@@ -66,12 +72,15 @@ class EcpsPilot(Pilot):
         brain_age = 0.0 if self._last_tick_end is None else now - self._last_tick_end  # F2
         frame = self.drone.frame() if self.drone.has_camera else None
         cam = self.webcam.read() if self.webcam is not None else None
+        if hasattr(self.retina, "yaw_rate_dps"):  # EcpsRetina centering needs the gyro (previous tick)
+            self.retina.yaw_rate_dps = self._last_yaw_dps
         vision = self.retina.encode(frame)
         g = None
         if self.gestures is not None:
             g = self.gestures.read(t, cam)
             vision = self.illusion.apply(vision, g, t)
         tel = self.drone.telemetry()
+        self._last_yaw_dps = tel.yaw_rate_dps or 0.0
         inputs = self.encoder.encode(vision, tel.yaw_rate_dps)
         rates = self.brain.tick(inputs, ms=dt * 1000.0)
         raw = self.decoder.update(rates, dt)

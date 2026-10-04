@@ -208,3 +208,37 @@ turn-back. `patrol_report.py` draws the map and lists near misses.
 `gz_g4.sh` now clears leftover SITL / Gazebo / bridge processes and waits for ports 5760, 9002 and 5799 before
 starting, and waits for its own processes to exit afterwards: back-to-back runs sometimes found the previous SITL
 still bound to 5760 and two Gazebo servers publishing the camera (97 frames/s).
+
+### v3 centering response and patrol statistics (2026-10-03)
+
+v3 (`my_minifly.py v3`, `minifly/v3.yaml`): 24 LCn cells per side fed by EcpsRetina `near` = asymmetry of
+front-to-back flow in the lateral field (outer 3 of 8 columns per eye, rows 2-6), only while both eyes see forward
+translation, the gyro is quiet (EcpsPilot passes the previous tick's yaw rate) and neither side is textureless (plain
+surfaces give no flow and are left to `blank`). LCn_s -> HS_o turns away from the near side through the optomotor
+premotor path (same signature as an ordinary yaw command, so the throttle decoupling holds; LCn_s -> LAL_inh_s
+pulled one DNg02 down and would have sunk the drone); LCn_s -> PVLP_inh_o biases the saccade side. Upstream block
+identical, calibrate R^2 unchanged. Whole-eye `near` picked up frontal edge flow (left/right noise up to 0.5), hence
+the lateral field.
+
+Turn direction, taped wall offset right, first saccade over 3 seeds: v2 R R L, v2.1 R L L, v3 L L L (min clearance
+0.41-0.43 m vs 0.26-0.34 m).
+
+120 s patrols in the 20' cage (`run_matrix.sh`, `matrix_stats.py`, `patrol_report.py`):
+
+| variant | runs | runs with contact | near-miss episodes |
+|---|---|---|---|
+| v2.1 | 5 | 3 | 8 |
+| v3 (fence turn-back overriding saccades) | 4 (+1 sim stall) | 0 | 5 |
+| v3 (fence turn-back yields to saccades) | 5 | 3 | 5 |
+| v3.1 (back-off 0.5 for 0.8 s, brake gains 0.03/0.04) | 5 | 3 | 9 |
+| v3.2 (centering on the outer 5 columns) | 5 | 2 | 12 |
+
+Every v3-family contact is a graze (<= 4 cm) at a corner of the 1.1 m box stack, which sits right at the 2 m geofence.
+The fence turn-back makes the patrol settle into a diamond loop whose north-east leg passes that corner obliquely
+every lap; an obstacle 30-45 deg off the heading makes lateral flow, not expansion, so DNp03 stays at 0 until about
+5 cm. v2.1's extra contacts were at box_e with no escape at all; v3 removed those. Next candidate: optic-flow speed
+regulation (slow down when lateral flow is high, as bees do) so looming has time to fire.
+
+Simulation stall seen once in ~45 runs: telemetry and camera froze mid-flight (SITL/Gazebo lockstep, extra
+"ArduPilot controller has reset"); EcpsPilot's camera watchdog hovered and landed as designed.
+
