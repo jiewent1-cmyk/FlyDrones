@@ -37,6 +37,7 @@ DRONE_CAM = "/dev/shm/ecps295_cam_rgb"
 BG = (31, 22, 13)  # BGR, close to the dashboard background
 FG, MUTED, WARN = (240, 240, 240), (150, 150, 150), (80, 80, 255)
 VIEW_AR, CAM_AR = 16 / 9, 4 / 3
+STALE_S = 1.0  # a camera panel without a new frame for this long is not live
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--port", type=int, default=5799)
@@ -206,12 +207,19 @@ while True:
     else:
         canvas[:, :wl] = placeholder(wl, H, f"waiting for run_g4.py (tick stream 127.0.0.1:{a.port}) ...")
 
-    # right top: Gazebo view
+    # right top: Gazebo view. Plain worlds (experiment runs) have no view camera: fall back to the drone camera
+    # instead of showing a frozen frame; anything without a new frame for STALE_S is marked as such.
     v = views[view]
     v.read()
-    if v.img is not None:
-        canvas[:hv, wl:] = cover(v.img[..., ::-1], wr, hv)
-        text(canvas, f"Gazebo {view} camera   sim t={v.stamp:7.1f} s", (wl + 12, 26), 0.6)
+    drone_cam.read()
+    top, top_label = None, ""
+    if v.img is not None and v.age() < STALE_S:
+        top, top_label = v.img, f"Gazebo {view} camera   sim t={v.stamp:7.1f} s"
+    elif drone_cam.img is not None and drone_cam.age() < STALE_S:
+        top, top_label = drone_cam.img, f"no Gazebo {view} camera in this run (plain world): drone camera shown"
+    if top is not None:
+        canvas[:hv, wl:] = cover(top[..., ::-1], wr, hv)
+        text(canvas, top_label, (wl + 12, 26), 0.55)
         if info is not None:
             tel, c = info.tel, info.cmd
             text(
@@ -223,13 +231,16 @@ while True:
             if c.escape:
                 text(canvas, "ESCAPE", (W - 150, 60), 1.0, WARN, 2)
     else:
-        canvas[:hv, wl:] = placeholder(wr, hv, f"no Gazebo {view} camera frames")
+        msg = "no Gazebo frames - is a run going?" if session is None or session.ended else "Gazebo paused (no new frames)"
+        canvas[:hv, wl:] = placeholder(wr, hv, msg)
 
     # right bottom: the drone camera in colour (same topic the brain uses, before grayscale/downsampling)
-    drone_cam.read()
     if drone_cam.img is not None:
         canvas[hv:, wl:] = cover(drone_cam.img[..., ::-1], wr, hc)
         text(canvas, "drone camera (ELP twin, 120 deg fisheye) - what MiniFly sees", (wl + 12, hv + 26), 0.55)
+        if drone_cam.age() >= STALE_S:
+            canvas[hv:, wl:] = (canvas[hv:, wl:] * 0.4).astype(np.uint8)
+            text(canvas, f"PAUSED - last frame {min(drone_cam.age(), 999):.0f} s ago", (wl + 12, hv + hc // 2), 0.8, WARN, 2)
     else:
         canvas[hv:, wl:] = placeholder(wr, hc, "no drone camera frames")
     cv2.line(canvas, (wl, 0), (wl, H), (70, 70, 70), 1)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import mmap
 import os
 import struct
+import time
 
 import numpy as np
 
@@ -17,6 +18,7 @@ class ShmFrame:
         self._mm = None
         self.seq = 0
         self.stamp = float("nan")
+        self.last_new = 0.0  # time.monotonic() of the last new frame
         self.img: np.ndarray | None = None
 
     def _open(self) -> bool:
@@ -32,6 +34,11 @@ class ShmFrame:
         if self._mm is not None:
             self._mm.close()
         self._mm, self.seq = None, 0
+        self.img, self.stamp, self.last_new = None, float("nan"), 0.0  # an old run's frame must not linger
+
+    def age(self) -> float:
+        """Seconds since the last new frame (inf if none since open/reopen)."""
+        return time.monotonic() - self.last_new if self.last_new else float("inf")
 
     def read(self) -> bool:
         """Refresh self.img; returns True when a new frame arrived."""
@@ -53,5 +60,6 @@ class ShmFrame:
                 return False
             shape = (h, w) if c == 1 else (h, w, c)
             self.img, self.seq, self.stamp = np.frombuffer(data, dtype=np.uint8).reshape(shape), seq, stamp
+            self.last_new = time.monotonic()
             return True
         return False
