@@ -112,7 +112,27 @@ def v3(seed: int = 7) -> Connectome:
     return b.build("minifly-ecps-v3", {"variant": "v3", "notes": "v2 + LCn centering cells -> contra HS, contra PVLP_inh"})
 
 
-VARIANTS = {"v2": v2, "v3": v3}
+def v4(seed: int = 7) -> Connectome:
+    """v3 + LCv "something under me" cells -> MDN "moonwalker" descending neurons (backing up).
+
+    Without GPS the flight controller's height follows the downward ToF (EcpsRetina `ventral`: ToF + baro,
+    ecps_ventral.VentralCue); flying low over a box pulled it down by 0.4-1 m and the drone climbed through the 1.3 m
+    hard fence (S7d). A first v4 sent LCv into the looming integrators (PVLP -> DNp03) like LCb: the drone saccaded
+    in place, stayed over the box for 5 s and the fence still fired. In Drosophila the moonwalker descending neurons
+    (MDN, 2 per side) drive backward walking when the way ahead is blocked; here LCv_s -> MDN_s and EcpsDecoder's
+    retreat backs the drone off along the way it came, then turns. Both sides get the same input (one ToF).
+    """
+    b = Builder(v3(seed))  # v3 neurons keep their indices; LCv and MDN are appended
+    for s in ("L", "R"):
+        b.add("LCv", 16, s, +1.0)
+    for s in ("L", "R"):
+        b.add("MDN", 2, s, +1.0)
+    for s in ("L", "R"):
+        b.connect(b.g("LCv", s), b.g("MDN", s), 6, p=0.8)
+    return b.build("minifly-ecps-v4", {"variant": "v4", "notes": "v3 + LCv ventral obstacle cells -> MDN (retreat)"})
+
+
+VARIANTS = {"v2": v2, "v3": v3, "v4": v4}
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

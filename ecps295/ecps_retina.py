@@ -9,6 +9,7 @@ relative to a slowly adapting baseline, so a large uniform region that has alway
 from __future__ import annotations
 
 import numpy as np
+from ecps_ventral import VentralCue
 
 from flydrones.senses import Retina
 from flydrones.senses.retina import EyeFeatures
@@ -51,7 +52,23 @@ class EcpsRetina(Retina):
         r.yaw_rate_dps = 0.0
         r._near = {"L": 0.0, "R": 0.0}
         r.last_near = {"L": 0.0, "R": 0.0, "f_L": 0.0, "f_R": 0.0}
+        # v4 `ventral`: something under the drone (ecps_ventral.VentralCue on the downward ToF + baro height, both set
+        # by EcpsPilot from the previous tick). Not visual: it rides on the eye grids only to reach the LCv inputs,
+        # the same level in both eyes because the single ToF has no side.
+        v = (cfg.get("vision", {}) or {}).get("ecps_ventral", {}) or {}
+        r.ventral_on = bool(v.get("enabled", False))
+        r.ventral = VentralCue(**{k: v[k] for k in v if k != "enabled"})
+        r.range_m = None
+        r.baro_m = None
+        r._t = 0.0
         return r
+
+    def _ventral_feature(self, vf) -> None:
+        dt = 1.0 / self.blank_hz
+        self._t += dt
+        level = self.ventral.update(self._t, self.range_m, self.baro_m, dt) if self.ventral_on else 0.0
+        for e in "LR":
+            vf.eyes[e].grids["ventral"] = np.full((self.rows, self.cols), level, np.float32)
 
     def _near_feature(self, vf) -> None:
         f = {}
@@ -74,6 +91,7 @@ class EcpsRetina(Retina):
 
     def encode(self, frame):
         vf = super().encode(frame)
+        self._ventral_feature(vf)
         if frame is None or self.prev is None:
             self._near_feature(vf)
             for e in "LR":

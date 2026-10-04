@@ -53,6 +53,11 @@ ap.add_argument("--live", action="store_true", help="start monitor.py (dashboard
 ap.add_argument("--port", type=int, default=5799, help="tick stream for monitor.py; 0 = off")
 ap.add_argument("--layout", default="", help="<world>.layout.json from make_quad.py: draws the obstacles in ROOM")
 ap.add_argument("--nav", choices=["gps", "flow"], default="gps", help="flow = 3901-L0X flow + ToF EKF, no GPS (gz_g4.sh NAV=)")
+ap.add_argument(
+    "--ext-height",
+    action="store_true",
+    help="companion supplies the FC height (VISION_POSITION_ESTIMATE z; needs sitl/variants/G_extnav_height.parm)",
+)
 ap.add_argument("--home", default="33.6430,-117.8420,20", help="SITL --home (Gazebo origin) for SIM_STATE truth")
 ap.add_argument("--out", default="g4")
 a = ap.parse_args()
@@ -72,13 +77,14 @@ drone = GazeboCameraMavlinkDrone(
     passive=(a.mode == "probe"),
     takeoff_alt=TAKEOFF_ALT_M,
     nav=a.nav,
+    ext_height=a.ext_height,
     origin=tuple(float(v) for v in a.home.split(",")[:3]),
     **dyn,
 )
 if a.pilot == "ecps":
     from ecps_pilot import EcpsPilot
 
-    pilot = EcpsPilot(brain, drone, cfg, fence_turn=a.fence_turn)
+    pilot = EcpsPilot(brain, drone, cfg, fence_turn=a.fence_turn, **(cfg.get("ecps_pilot", {}) or {}))
 else:
     pilot = Pilot(brain, drone, cfg)
 if a.retina == "ecps":
@@ -108,6 +114,23 @@ def clearance(north: float, east: float, alt: float) -> float:
         dy = max(b.lo[1] - east, 0.0, east - b.hi[1])
         best = min(best, (dx * dx + dy * dy) ** 0.5 - PROP_TIP_R)
     return best
+
+
+TOF_TAN, TOF_DZ = math.tan(math.radians(13.5)), 0.015  # 27 deg cone, sensor below the body origin
+
+
+def box_under(north: float, east: float, alt: float, min_step: float = 0.12) -> bool:
+    """A box under the ToF cone whose top is >= min_step below the sensor (what corrupts the flow EKF height)."""
+    room = getattr(drone, "room", None)
+    h = alt - TOF_DZ
+    for b in room.boxes if room else []:
+        if (
+            b.hi[2] < h - min_step
+            and math.hypot(max(b.lo[0] - north, 0.0, north - b.hi[0]), max(b.lo[1] - east, 0.0, east - b.hi[1]))
+            <= max(0.0, h) * TOF_TAN
+        ):
+            return True
+    return False
 
 
 def _publish(q, port: int, hello: dict) -> None:
@@ -225,6 +248,13 @@ def tick(t: float, dt: float, phase: str):
             "ekf_east": pos["y"],
             "ekf_err_xy": round(math.hypot(pos["x"] - tn, pos["y"] - te), 3),
             "rng": drone.rangefinder_m(),
+            "baro": drone.baro_m(),
+            "ext_h": None if drone.ext_h_m is None else round(drone.ext_h_m, 3),
+            "ext_src": drone.ext_src,
+            "ventral": round(getattr(pilot.retina, "ventral", None).level, 2) if hasattr(pilot.retina, "ventral") else 0.0,
+            "box_under": int(box_under(tn, te, ta)),
+            "h_est": None if getattr(pilot, "last_height_est", None) is None else round(pilot.last_height_est, 3),
+            "fc_mode": getattr(drone.m.messages.get("HEARTBEAT"), "custom_mode", -1),
             "yaw_rate_dps": tel.yaw_rate_dps,
             "raw_throttle": info.raw.throttle,
             "raw_yaw": info.raw.yaw,
@@ -239,7 +269,7 @@ def tick(t: float, dt: float, phase: str):
             "frozen": int(drone.frozen),
             "compute_ms": round(compute_ms, 2),  # whole Pilot.tick: frame, retina, brain, decoder, safety, send
             "brain_ms": round(dt * 1000 / info.rtf, 2) if info.rtf > 0 else float("nan"),
-            **{k: round(v, 2) for k, v in info.rates.items() if k.startswith("DN")},
+            **{k: round(v, 2) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
         }
     )
     if a.gif:
@@ -377,6 +407,15 @@ summary = {
     "ekf_err_xy_final_m": rows[-1]["ekf_err_xy"],
     "ekf_err_alt_max_m": round(max(abs((r["ekf_alt"] or 0.0) - r["alt"]) for r in rows), 3),
     "radius_true_max_m": round(max(math.hypot(r["north"], r["east"]) for r in rows), 2),
+    # S7d / v4: time over low obstacles (truth), whether the FC took over (LAND = 9, e.g. after the 1.3 m hard fence)
+    "over_box_s": round(sum(r["box_under"] for r in rows) / HZ, 1),
+    "alt_true_max_m": round(max(r["alt"] for r in rows), 2),
+    "fc_land": any(r["fc_mode"] == 9 for r in rows),
+    "height_guard_s": round(getattr(pilot, "hg_ticks", 0) / HZ, 1),
+    "ext_height": a.ext_height,
+    # companion height vs truth (alt = body origin; the ToF sits 15 mm lower)
+    "ext_h_err_max_m": max((abs(r["ext_h"] - (r["alt"] - TOF_DZ)) for r in rows if r["ext_h"] is not None), default=None),
+    "ventral_events": getattr(getattr(pilot.retina, "ventral", None), "events", [])[:40],
     **flight_metrics(),
     "safety_events": pilot.safety.events,
     "variant": Path(a.config).stem if a.config else "v0",

@@ -8,6 +8,11 @@ fence   (optional, fence_turn=True) upstream SafetyGovernor only zeroes the forw
         brain is in a saccade it only blocks forward motion and leaves the yaw to the saccade.
 camera  a frozen camera (USB hang, driver stuck) went unnoticed and the brain flew blind into the wall
         (G4 T4_freeze). If the drone reports no new frame for stale_s, command hover; after land_after_s, land.
+height  (optional, height_guard) without GPS a box under the drone pulls the flow EKF height down and the EKF then
+        rejects the true range as an outlier: after backing off the box it still read 0.75 m at a true 1.23 m, and
+        ArduPilot's own altitude hold carried the drone through the 1.3 m hard fence (v4 smoke test). The ventral
+        cue's height above the floor (baro minus the floor baseline, frozen over obstacles) does not depend on the
+        EKF; above ceiling_m this layer commands a descent, below floor_m a climb. Logged as a watchdog event.
 
 Same sequence as flydrones.runtime.Pilot.tick otherwise (upstream left untouched).
 """
@@ -23,9 +28,23 @@ from flydrones.runtime import Pilot, TickInfo
 
 class EcpsPilot(Pilot):
     def __init__(
-        self, *args, stale_s: float = 0.3, land_after_s: float = 3.0, fence_turn: bool = False, fence_margin_m: float = 0.35, **kw
+        self,
+        *args,
+        stale_s: float = 0.3,
+        land_after_s: float = 3.0,
+        fence_turn: bool = False,
+        fence_margin_m: float = 0.35,
+        height_guard: dict | None = None,
+        **kw,
     ):
         super().__init__(*args, **kw)
+        hg = height_guard or {}
+        self.hg_on = bool(hg.get("enabled", False))
+        self.hg_ceiling = float(hg.get("ceiling_m", 1.0))
+        self.hg_floor = float(hg.get("floor_m", 0.35))
+        self.hg_gain = float(hg.get("gain", 1.5))
+        self.hg_ticks = 0
+        self.last_height_est: float | None = None
         self.fence_turn = fence_turn
         self.fence_margin = fence_margin_m
         self._turning_back = False
@@ -74,6 +93,9 @@ class EcpsPilot(Pilot):
         cam = self.webcam.read() if self.webcam is not None else None
         if hasattr(self.retina, "yaw_rate_dps"):  # EcpsRetina centering needs the gyro (previous tick)
             self.retina.yaw_rate_dps = self._last_yaw_dps
+        if hasattr(self.retina, "range_m"):  # v4 ventral cue: downward ToF + baro height (latest telemetry)
+            self.retina.range_m = getattr(self.drone, "rangefinder_m", lambda: None)()
+            self.retina.baro_m = getattr(self.drone, "baro_m", lambda: None)()
         vision = self.retina.encode(frame)
         g = None
         if self.gestures is not None:
@@ -94,6 +116,19 @@ class EcpsPilot(Pilot):
             if stale > self.land_after_s:
                 self.safety.land_requested = True
                 self._event(t, "camera stale -> land")
+        if self.hg_on and hasattr(self.retina, "ventral"):
+            h = self.retina.ventral.height_above_floor(self.retina.baro_m)
+            self.last_height_est = h
+            if h is not None and h > self.hg_ceiling:
+                thr = max(-1.0, min(cmd.throttle, -0.2 - self.hg_gain * (h - self.hg_ceiling)))
+                cmd = FlightCommand(throttle=thr, yaw=cmd.yaw, forward=cmd.forward, escape=cmd.escape, note="height guard: high")
+                self.hg_ticks += 1
+                self._event(t, "height guard: too high")
+            elif h is not None and h < self.hg_floor:
+                thr = min(1.0, max(cmd.throttle, 0.2 + self.hg_gain * (self.hg_floor - h)))
+                cmd = FlightCommand(throttle=thr, yaw=cmd.yaw, forward=cmd.forward, escape=cmd.escape, note="height guard: low")
+                self.hg_ticks += 1
+                self._event(t, "height guard: too low")
         if self.fence_turn and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
             cmd = self._fence_turn(cmd, tel, t)
         if self.safety.land_requested:

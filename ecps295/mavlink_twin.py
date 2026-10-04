@@ -9,6 +9,13 @@ nav="flow"  no GPS (Matek 3901-L0X flow + ToF, sitl/fhb_delta.parm): set the EKF
     throttle override, switch to GUIDED once flow gives a position (same sequence as s7_flow.py)
 truth  SIM_STATE (simulator ground truth, SITL only) is streamed so runs score clearance on where the drone really is,
     not on the EKF estimate, which drifts under optical flow
+ext_height  (S7e, TechRoute route B) the companion computer supplies the flight controller's height. A box under the
+    drone pulled the flow EKF height down 0.4-1 m and the EKF then rejected the true range as an outlier; ArduPilot's
+    altitude hold climbed through the 1.3 m fence. The companion knows better: height above the FLOOR from the ToF
+    while nothing is under the drone, and baro minus the floor baseline while something is (ecps_ventral.VentralCue,
+    the same cue as the brain's LCv input, own instance). Sent as VISION_POSITION_ESTIMATE z at 20 Hz from connect on;
+    the FC uses it with EK3_SRC1_POSZ 6 (ExternalNav, sitl/variants/G_extnav_height.parm) and falls back to baro by
+    itself if the messages stop for 0.5 s. x/y echo the EKF's own estimate and are not fused (EK3_SRC1_POSXY 0).
 """
 
 from __future__ import annotations
@@ -34,6 +41,7 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         takeoff_timeout_s: float = 90.0,
         nav: str = "gps",
         origin: tuple[float, float, float] = (33.6430, -117.8420, 20.0),
+        ext_height: bool = False,
         **kw,
     ):
         super().__init__(connection, **kw)
@@ -45,6 +53,16 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         self.nav = nav
         self.origin = origin
         self.rng_m: float | None = None
+        self._p0: float | None = None  # first SCALED_PRESSURE (hPa): baro_m() is relative to it
+        self.ext_height = ext_height
+        self._surface = None
+        if ext_height:
+            from ecps_ventral import VentralCue
+
+            self._surface = VentralCue()
+        self._ext_last = 0.0
+        self.ext_h_m: float | None = None  # last height sent to the FC
+        self.ext_src = ""  # "tof" / "baro" / "ground"
 
     # ------------------------------------------------------------------ link
     def connect(self) -> None:
@@ -76,6 +94,7 @@ class Ecps295MavlinkDrone(MavlinkDrone):
             (mav.MAVLINK_MSG_ID_EKF_STATUS_REPORT, 2.0),
             (mav.MAVLINK_MSG_ID_SIM_STATE, self.stream_hz),
             (mav.MAVLINK_MSG_ID_RANGEFINDER, 10.0),
+            (mav.MAVLINK_MSG_ID_SCALED_PRESSURE, self.stream_hz),
             (mav.MAVLINK_MSG_ID_RC_CHANNELS, 2.0),
         ):
             self.m.mav.command_long_send(
@@ -92,6 +111,7 @@ class Ecps295MavlinkDrone(MavlinkDrone):
 
     def _pump(self, timeout: float = 0.1):
         self._heartbeat()
+        self.send_ext_height()
         msg = self.m.recv_match(blocking=True, timeout=timeout)
         if msg is not None:
             k = msg.get_type()
@@ -187,6 +207,15 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         r = self.m.messages.get("RANGEFINDER")
         return r.distance if r is not None else None
 
+    def baro_m(self) -> float | None:
+        """Barometric height (m) relative to the first pressure seen; independent of the ToF and the EKF (v4 LCv)."""
+        p = self.m.messages.get("SCALED_PRESSURE")
+        if p is None or p.press_abs <= 0:
+            return None
+        if self._p0 is None:
+            self._p0 = p.press_abs
+        return 44330.0 * (1.0 - (p.press_abs / self._p0) ** (1 / 5.255))
+
     def truth_ned(self) -> tuple[float, float, float] | None:
         """Simulator ground truth (north, east, height above the origin) from SIM_STATE, or None."""
         s = self.m.messages.get("SIM_STATE")
@@ -251,4 +280,38 @@ class Ecps295MavlinkDrone(MavlinkDrone):
 
     def send(self, cmd) -> None:
         self._heartbeat()
+        self.send_ext_height()
         super().send(cmd)
+
+    def floor_height(self) -> tuple[float | None, str]:
+        """Height of the ToF above the floor: the tilt-corrected range while nothing is under the drone, otherwise
+        (obstacle under it, or out of range) baro minus the floor baseline."""
+        rng, baro = self.rangefinder_m(), self.baro_m()
+        att = self.m.messages.get("ATTITUDE")
+        tilt = math.cos(att.roll) * math.cos(att.pitch) if att is not None else 1.0
+        now = time.monotonic()
+        dt = min(0.2, now - self._ext_last) if self._ext_last else 0.05
+        level = self._surface.update(now, rng, baro, dt)
+        if rng is not None and rng < self._surface.range_valid[0]:
+            return max(0.0, rng * tilt), "ground"  # on the ground (below the cue's valid range)
+        if level == 0.0 and rng is not None and rng <= self._surface.range_valid[1]:
+            return rng * tilt, "tof"
+        h = self._surface.height_above_floor(baro)
+        return (None, "") if h is None else (h, "baro")
+
+    def send_ext_height(self) -> None:
+        if not self.ext_height or self.m is None:
+            return
+        now = time.monotonic()
+        if now - self._ext_last < 0.05:  # 20 Hz
+            return
+        h, src = self.floor_height()
+        self._ext_last = now
+        if h is None:
+            return
+        self.ext_h_m, self.ext_src = h, src
+        lp = self.m.messages.get("LOCAL_POSITION_NED")
+        att = self.m.messages.get("ATTITUDE")
+        x, y = (lp.x, lp.y) if lp is not None else (0.0, 0.0)
+        r, p, yw = (att.roll, att.pitch, att.yaw) if att is not None else (0.0, 0.0, 0.0)
+        self.m.mav.vision_position_estimate_send(int(now * 1e6), x, y, -h, r, p, yw)

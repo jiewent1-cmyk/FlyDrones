@@ -13,6 +13,7 @@ import argparse
 import json
 import math
 import pathlib
+import random
 
 HERE = pathlib.Path(__file__).parent
 
@@ -634,6 +635,36 @@ for wname, side, objs in (("ecps295_cage20", 6.1, CAGE20_OBJECTS), ("ecps295_cag
     write_world(
         wname, lambda side=side, objs=objs: cage_extra(side, 3.05, objs), objs + cage_walls(side, 3.05), floor_m=side + 0.4
     )
+
+
+def lowbox_objects(seed: int, n: int = 6):
+    """S7d/v4: the real cage layout is not known yet, so the ventral (ToF) cue is tested on random low obstacles.
+
+    Mostly boxes 0.2-0.75 m tall, i.e. at or below the 0.6-0.9 m cruise height where flying over them corrupted the
+    flow EKF height; one in four is a 1.1 m stack (above the 1.0 m ceiling) so the camera pathways stay exercised.
+    Footprints 0.3-0.6 m, centres 1.0-2.3 m from the take-off point (0.7 put a 0.56 m box 0.5 m from the spawn: the
+    flow EKF height was off before the brain flew, and the fence landing put the drone on the box), >= 0.5 m apart.
+    """
+    rng = random.Random(1000 + seed)
+    objs, centres = [], []
+    while len(objs) < n:
+        r, th = rng.uniform(1.0, 2.3), rng.uniform(-math.pi, math.pi)
+        x, y = r * math.cos(th), r * math.sin(th)
+        w, d = rng.uniform(0.3, 0.6), rng.uniform(0.3, 0.6)
+        if any(math.hypot(x - cx, y - cy) < 0.5 + 0.5 * (w + cw) for cx, cy, cw in centres):
+            continue
+        h = 1.1 if rng.random() < 0.25 else rng.uniform(0.2, 0.75)
+        centres.append((x, y, max(w, d)))
+        centre, size = (round(x, 2), round(y, 2), round(h / 2, 3)), (round(w, 2), round(d, 2), round(h, 2))
+        objs.append((f"lb{len(objs)}", centre, size, CARDBOARD, rng.random() < 0.5))
+    return objs
+
+
+for k in range(5):
+    objs = lowbox_objects(k)
+    write_world(f"ecps295_lowbox_s{k}", lambda objs=objs: cage_extra(6.1, 3.05, objs), objs + cage_walls(6.1, 3.05), floor_m=6.5)
 print(
-    "wrote models", [v[0] for v in VARIANTS], "and worlds ecps295_{flat,camtest,camtest_tape,wall_*,cage10,cage20}[_monitor].sdf"
+    "wrote models",
+    [v[0] for v in VARIANTS],
+    "and worlds ecps295_{flat,camtest,camtest_tape,wall_*,cage10,cage20,lowbox_s0..4}[_monitor].sdf",
 )

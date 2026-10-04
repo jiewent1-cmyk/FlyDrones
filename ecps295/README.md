@@ -285,3 +285,45 @@ worse than with GPS. Open question: how tall the real cage obstacles are.
 
 `logscan.py` (attitude, flow, rangefinder after arming), `flowcheck.py` (logged flow vs truth), `ctun.py` (altitude
 controller) read the SITL DataFlash logs in each run dir.
+
+### S7e: obstacles under the drone, MiniFly v4 and the companion height (route B, 2026-10-04)
+
+S7d showed that without GPS a low box under the drone breaks the flight controller's height. S7e attacks it from both
+sides, tested on five random low-box cages (`ecps295_lowbox_s0..4`: 6 boxes each, 0.2-0.75 m tall or a 1.1 m stack,
+centres 1.0-2.3 m from take-off; the real cage layout is not known yet).
+
+**Ventral cue** (`ecps_ventral.VentralCue`): surface height T = baro height - ToF range. The drone's own climb or sink
+moves both terms together, so T only changes when the surface under the drone does, abrupt or gradual (a box edge
+entering the 27 deg cone from the side shortens the min-of-cone range at the drone's speed, which a step test on the
+range alone misses). Plus a fast path for steps of >= 0.10 m faster than 0.6 m/s. The flow EKF height is not usable:
+it is what the box corrupts. Offline on the S7d DataFlash logs (`ventral_eval.py`): 90% of box crossings, median
+0.2 s after entering, the remaining alarms mostly at box edges.
+
+**MiniFly v4** (`my_minifly.py v4`, `minifly/v4.yaml`): v3 + 16 LCv cells per side (EcpsRetina `ventral`, both sides
+equal: one ToF) -> 2 MDN per side ("moonwalker" descending neurons, backward walking in Drosophila). EcpsDecoder
+`retreat`: MDN above 20 Hz backs the drone up along the way it came (forward -0.5, no yaw) until MDN has been quiet
+for 1 s (min 1.5 s), then one saccade. A first v4 fed LCv into PVLP like LCb: the drone saccaded in place over the box
+for 5 s. `ventral_probe.py` is the open-loop check.
+
+**Route B, companion height** (`mavlink_twin.py ext_height`, `run_g4.py --ext-height`,
+`sitl/variants/G_extnav_height.parm`): the companion sends its height above the FLOOR to ArduPilot as
+`VISION_POSITION_ESTIMATE` z at 20 Hz (tilt-corrected ToF while nothing is under the drone, baro minus the frozen floor
+baseline while something is or out of range); `EK3_SRC1_POSZ 6`, `VISO_TYPE 1`. ArduPilot falls back to baro on its
+own if the messages stop for 0.5 s; x/y echo the EKF and are not fused. The EKF terrain state then sees the box as
+terrain, which is what it is. An EcpsPilot `height_guard` (descend above 1.0 m by the same estimate) did not work:
+ArduPilot executes velocity commands with the corrupted EKF, so it still climbed over the box and later integrated a
+target that put the drone on the floor; it stays in v4.yaml, disabled.
+
+120 s patrols, `NAV=flow`, 5 worlds per group, whole-run RTF 0.971-0.974 (`lowbox_compare.py`):
+
+| brain | FC height | runs with contact | contacts | near misses | path m | over boxes s | max true height m | FC landings | FC height error max m (median / max) |
+|---|---|---|---|---|---|---|---|---|---|
+| v3 | flow EKF (ToF) | 4 | 5 | 7 | 7.9 | 9.2 | 1.47 | 4 | 1.11 / 1.22 |
+| v4 | flow EKF (ToF) | 1 | 1 | 1 | 7.8 | 3.9 | 1.45 | 4 | 0.71 / 0.81 |
+| v3 | companion (B) | 1 | 1 | 2 | 26.4 | 24.2 | 1.02 | 0 | 0.15 / 0.19 |
+| v4 | companion (B) | 0 | 0 | 4 | 23.6 | 8.3 | 1.00 | 0 | 0.10 / 0.14 |
+
+Route B fixes the height: no fence landings, the FC height within 0.1-0.2 m, paths back to the 20' cage level, the
+drone stays at the 1.0 m soft ceiling. v4 alone halves the time over boxes and the contacts but cannot stop the FC
+from climbing (4/5 landings). Together: no contacts, a third of the time over boxes. Open: companion dropout in flight
+(the baro fallback), real baro noise and prop wash, the ExtNav latency on the Orange Pi.

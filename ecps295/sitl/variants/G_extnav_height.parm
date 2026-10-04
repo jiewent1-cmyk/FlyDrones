@@ -1,0 +1,10 @@
+# G (S7e, route B): the companion computer (Orange Pi) supplies the height above the floor as ExternalNav z.
+# Use with sitl/fhb_delta.parm and run_g4.py --ext-height (mavlink_twin.Ecps295MavlinkDrone ext_height=True).
+# The EKF falls back to baro by itself if VISION_POSITION_ESTIMATE stops for 0.5 s (selectHeightForFusion).
+EK3_SRC1_POSZ    6
+EK3_RNG_USE_HGT  -1
+VISO_TYPE        1
+# observation noise of the companion height (EKF floor 0.1 m)
+VISO_POS_M_NSE   0.1
+# RANGEFINDER at 10 Hz + SCALED_PRESSURE at 20 Hz + 20 Hz send loop
+VISO_DELAY_MS    50

@@ -10,6 +10,10 @@ missing (all switchable from YAML under decoder.ecps, so every change can be A/B
   brake memory     slower decay of the DNp03/DNp01 brake (upstream x0.93 per tick ~ 0.5 s half-life)
   efference copy   throttle += k * forward command: cancels the "rising" flow the floor makes while flying forward
   yaw decoupling   throttle -= k * |DNg02_R - DNg02_L|: turning drives one DNg02 up and should not read as climb
+  retreat (v4)     MDN ("moonwalker" descending neurons, backward walking in Drosophila) above threshold: back up
+                   along the way the drone came, no turn, until MDN has been quiet for hold_s (min min_s), then one
+                   saccade so it does not fly straight back. Driven by LCv (obstacle under the drone): turning in
+                   place, which the saccade does, kept the drone over the box while the flow EKF height drifted
 
 Nothing here changes the connectome; MiniFly variants live in my_minifly.py.
 """
@@ -42,6 +46,18 @@ class EcpsDecoder(MotorDecoder):
         self.caution_hold = float(c.get("hold_s", 0.0))
         self.caution_ramp = float(c.get("ramp_s", 0.0))
         self.caution_on_brake = float(c.get("on_brake", 0.0))  # a brake this strong also starts the caution period
+        r = e.get("retreat", {}) or {}
+        self.ret_on = bool(r.get("enabled", False))
+        self.ret_terms = list(r.get("terms", ["MDN_L", "MDN_R"]))
+        self.ret_threshold = float(r.get("threshold_hz", 20.0))
+        self.ret_speed = float(r.get("speed", 0.5))
+        self.ret_min_s = float(r.get("min_s", 1.0))
+        self.ret_hold_s = float(r.get("hold_s", 0.5))
+        self.ret_then_saccade = bool(r.get("then_saccade", True))
+        self._mdn = 0.0
+        self._ret_start = -1.0
+        self._ret_last = -1e9  # last tick MDN was above threshold
+        self._ret_active = False
         self.k_fwd = float(e.get("throttle_per_forward", 0.0))
         self.k_yaw = float(e.get("throttle_yaw_decouple", 0.0))
         self._d03 = 0.0
@@ -111,6 +127,32 @@ class EcpsDecoder(MotorDecoder):
             refractory = self._elapsed - self._sacc_until < self.sacc_refractory
             if trigger is None and self.sacc_on_brake and brake >= self.sacc_on_brake and not refractory:
                 trigger = "brake"  # this tick's brake, not the decaying memory (v1.2 re-triggered on it)
+        # retreat (v4): MDN -> back up; ends with a saccade (handled as an ordinary trigger below)
+        if self.ret_on:
+            self._mdn = 0.6 * self._mdn + 0.4 * max(rates.get(g, 0.0) for g in self.ret_terms)
+            if self._mdn >= self.ret_threshold:
+                if not self._ret_active:
+                    self._ret_active, self._ret_start = True, self._elapsed
+                    self._sacc_until = min(self._sacc_until, self._elapsed)  # retreat overrides a saccade in progress
+                    self.escapes.append((round(self._elapsed, 2), "MDN", 0.0))
+                self._ret_last = self._elapsed
+            elif (
+                self._ret_active
+                and self._elapsed - self._ret_last > self.ret_hold_s
+                and (self._elapsed - self._ret_start >= self.ret_min_s)
+            ):
+                self._ret_active = False
+                self._caution_from = self._elapsed
+                if self.ret_then_saccade and self.sacc_on:
+                    trigger = "retreat"
+        if self._ret_active:
+            cmd.escape = True
+            cmd.forward = -self.ret_speed
+            cmd.yaw = 0.0
+            cmd.throttle = 0.0
+            cmd.note = "retreat (MDN)"
+            return cmd
+
         busy = self._elapsed <= max(self._escape_until, self._sacc_until)
         if trigger and not busy:
             if self.sacc_on:
