@@ -66,6 +66,7 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         # fault injection (S7b): ext_paused stops only the height messages, mute stops everything the companion sends
         # (height, velocity setpoints, heartbeat) as if the Orange Pi had hung; telemetry is still read for scoring
         self.ext_paused = False
+        self._ext_sent = 0.0  # monotonic time of the last height actually sent (EcpsPilot height-source watchdog)
         self.mute = False
 
     # ------------------------------------------------------------------ link
@@ -326,3 +327,10 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         x, y = (lp.x, lp.y) if lp is not None else (0.0, 0.0)
         r, p, yw = (att.roll, att.pitch, att.yaw) if att is not None else (0.0, 0.0, 0.0)
         self.m.mav.vision_position_estimate_send(int(now * 1e6), x, y, -h, r, p, yw)
+        self._ext_sent = now
+
+    def ext_age_s(self) -> float:
+        """Seconds since the companion last sent the FC its height (inf before the first, 0 when not in use)."""
+        if not self.ext_height:
+            return 0.0
+        return time.monotonic() - self._ext_sent if self._ext_sent else float("inf")

@@ -1,10 +1,15 @@
 # usage: run_matrix.sh <matrix file> <log>     each line: <tag> <world> <variant> <seed> <run_g4 mode args...>
+# variant = minifly/<variant>.yaml with the ECPS decoder/pilot/retina; up_<name> = upstream modules with <name>.yaml
 # runs every line through gz_g4.sh (custom MiniFly read-out, pilot and retina) and logs one summary line per run
 # NAV=flow / EXTRA_PARM=... in the environment are passed on to gz_g4.sh
 M=~/sim/FlyDrones/ecps295/minifly
 while read -r tag world variant seed args; do
   [ -z "$tag" ] || [ "${tag:0:1}" = "#" ] && continue
-  bash ~/sim/gz_g4.sh ecps295_$world.sdf $tag "$args --seed $seed --config $M/$variant.yaml --decoder ecps --pilot ecps --retina ecps --out run" > /dev/null 2>&1
+  case $variant in
+    up_*) mods="--config $M/${variant#up_}.yaml --decoder upstream --pilot upstream --retina upstream" ;;  # upstream FlyDrones
+    *) mods="--config $M/$variant.yaml --decoder ecps --pilot ecps --retina ecps" ;;
+  esac
+  bash ~/sim/gz_g4.sh ecps295_$world.sdf $tag "$args --seed $seed $mods --out run" > /dev/null 2>&1
   /usr/bin/python3 - "$tag" "$HOME/sim/runs/$tag/run.json" <<'PY' >> "$2"
 import json, os, sys
 tag, path = sys.argv[1], sys.argv[2]

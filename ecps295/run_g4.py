@@ -61,11 +61,28 @@ ap.add_argument(
 ap.add_argument("--ext-drop-at", type=float, default=-1, help="fault: stop the companion height at t [s] (flight time)")
 ap.add_argument("--ext-drop-for", type=float, default=0, help="fault: resume the companion height after this [s]; 0 = never")
 ap.add_argument("--mute-at", type=float, default=-1, help="fault: companion hangs at t [s]: nothing is sent any more")
+ap.add_argument(
+    "--set",
+    action="append",
+    default=[],
+    metavar="KEY.PATH=VALUE",
+    help="config override after --config (ablations), e.g. --set vision.ecps_blank.gain=0; VALUE is parsed as YAML",
+)
+ap.add_argument("--shm", default="/dev/shm/ecps295_cam", help="camera shm written by cam_bridge.py (per instance)")
 ap.add_argument("--home", default="33.6430,-117.8420,20", help="SITL --home (Gazebo origin) for SIM_STATE truth")
 ap.add_argument("--out", default="g4")
 a = ap.parse_args()
 
 cfg = load_config(a.config or None, {"safety": dict(ECPS295_SAFETY_20FT), "brain": {"seed": a.seed}})
+for item in a.set:  # ablation overrides, applied last
+    import yaml
+
+    path, _, value = item.partition("=")
+    node = cfg
+    *parents, leaf = path.split(".")
+    for k in parents:
+        node = node.setdefault(k, {})
+    node[leaf] = yaml.safe_load(value)
 _src = str(cfg["brain"]["source"])
 if a.config and _src.endswith(".npz") and not Path(_src).is_absolute():  # brain file next to the variant YAML
     cfg["brain"]["source"] = str(Path(a.config).resolve().parent / _src)
@@ -80,6 +97,7 @@ drone = GazeboCameraMavlinkDrone(
     passive=(a.mode == "probe"),
     takeoff_alt=TAKEOFF_ALT_M,
     nav=a.nav,
+    shm=a.shm,
     ext_height=a.ext_height,
     origin=tuple(float(v) for v in a.home.split(",")[:3]),
     **dyn,
@@ -426,6 +444,7 @@ summary = {
     "fc_land": any(r["fc_mode"] == 9 for r in rows),
     "height_guard_s": round(getattr(pilot, "hg_ticks", 0) / HZ, 1),
     "ext_height": a.ext_height,
+    "overrides": a.set,
     # companion height vs truth (alt = body origin; the ToF sits 15 mm lower)
     "ext_h_err_max_m": max((abs(r["ext_h"] - (r["alt"] - TOF_DZ)) for r in rows if r["ext_h"] is not None), default=None),
     "ventral_events": getattr(getattr(pilot.retina, "ventral", None), "events", [])[:40],

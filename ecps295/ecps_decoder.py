@@ -53,6 +53,10 @@ class EcpsDecoder(MotorDecoder):
         self.ret_speed = float(r.get("speed", 0.5))
         self.ret_min_s = float(r.get("min_s", 1.0))
         self.ret_hold_s = float(r.get("hold_s", 0.5))
+        # blind: nothing looks backwards (S7b D1: a 4 s retreat backed into a box). After a capped retreat, MDN has to
+        # go quiet before the next one, so the drone turns away instead of backing on in steps.
+        self.ret_max_s = float(r.get("max_s", 1e9))
+        self._ret_wait_quiet = False
         self.ret_then_saccade = bool(r.get("then_saccade", True))
         self._mdn = 0.0
         self._ret_start = -1.0
@@ -130,18 +134,20 @@ class EcpsDecoder(MotorDecoder):
         # retreat (v4): MDN -> back up; ends with a saccade (handled as an ordinary trigger below)
         if self.ret_on:
             self._mdn = 0.6 * self._mdn + 0.4 * max(rates.get(g, 0.0) for g in self.ret_terms)
-            if self._mdn >= self.ret_threshold:
+            capped = self._ret_active and self._elapsed - self._ret_start >= self.ret_max_s
+            if self._mdn < self.ret_threshold:
+                self._ret_wait_quiet = False
+            if self._mdn >= self.ret_threshold and not capped and not self._ret_wait_quiet:
                 if not self._ret_active:
                     self._ret_active, self._ret_start = True, self._elapsed
                     self._sacc_until = min(self._sacc_until, self._elapsed)  # retreat overrides a saccade in progress
                     self.escapes.append((round(self._elapsed, 2), "MDN", 0.0))
                 self._ret_last = self._elapsed
-            elif (
-                self._ret_active
-                and self._elapsed - self._ret_last > self.ret_hold_s
-                and (self._elapsed - self._ret_start >= self.ret_min_s)
+            elif self._ret_active and (
+                capped or (self._elapsed - self._ret_last > self.ret_hold_s and self._elapsed - self._ret_start >= self.ret_min_s)
             ):
                 self._ret_active = False
+                self._ret_wait_quiet = capped
                 self._caution_from = self._elapsed
                 if self.ret_then_saccade and self.sacc_on:
                     trigger = "retreat"

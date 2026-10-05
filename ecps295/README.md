@@ -327,3 +327,40 @@ Route B fixes the height: no fence landings, the FC height within 0.1-0.2 m, pat
 drone stays at the 1.0 m soft ceiling. v4 alone halves the time over boxes and the contacts but cannot stop the FC
 from climbing (4/5 landings). Together: no contacts, a third of the time over boxes. Open: companion dropout in flight
 (the baro fallback), real baro noise and prop wash, the ExtNav latency on the Orange Pi.
+
+### S7b: companion faults with route B (2026-10-04/05)
+
+`run_g4.py` fault injection: `--ext-drop-at T [--ext-drop-for D]` stops only the companion's height messages (height
+module dead, brain still flying), `--mute-at T` stops everything the companion sends (Orange Pi hung); `--freeze-cam-at`
+as before. First round (v4 + B, 5 random low-box cages, fault at 30 s):
+
+- hover, height stopped 10 s then resumed: ArduPilot fell back to baro and back to ExternalNav within 2 cm.
+- height stopped for good while the brain kept patrolling: 4/5 FC landings, up to 2.17 m. On baro, a box under the
+  drone pulled the EKF height from 0.87 to -0.04 m in 2 s and ArduPilot climbed at full rate.
+- companion hung: GUIDED timed out after 1 s, the drone hovered steadily on baro, but until the battery runs out.
+- separately, a v4 retreat ran 4 s (MDN kept firing along a box edge) and backed into an obstacle: nothing looks
+  backwards.
+
+Fixes: EcpsPilot `height_source` watchdog (no height sent for 0.5 s: hover, 3 s: land), EcpsDecoder `retreat.max_s`
+2.0 (then MDN has to go quiet before the next retreat), and `sitl/variants/companion_fs.parm` (the companion's sysid
+254 counts as a GCS, `FS_GCS_ENABLE 5` lands 2 s after its heartbeat stops). With and without each (E3 of the S8
+ablation, 10 cages each, all runs RTF >= 0.95):
+
+| fault at 30 s | with the fix | without |
+|---|---|---|
+| camera freezes | watchdog hover after 0.25 s, land after 3 s; 1/10 runs with contact (at 20 s, before the fault) | 4/10 with contact |
+| height module stops | hover after 0.45 s, land after 3 s; 0/10 above 1.3 m | 7/10 above 1.3 m (max 2.61 m), 7/10 fence landings |
+| height stops 10 s, then resumes | landed at 3 s by the watchdog, 0/10 above 1.3 m | - |
+| companion hangs | 10/10 landed by the GCS failsafe | 10/10 hovering until the end |
+
+### S8 ablation infrastructure (2026-10-05)
+
+- Parallel Gazebo/SITL: `INST=n bash gz_g4.sh` (own `GZ_PARTITION`, plugin port 9002+10n via a per-run model copy,
+  SITL `-I n` = TCP 5760+10n, camera shm `/dev/shm/ecps295_i<n>_cam`, cleanup by process group). On the ROG two
+  instances keep RTF 0.956-0.962 (one: 0.973; three: 0.83-0.89, CPU bound: each Gazebo takes ~3 cores).
+  `run_matrix_par.sh <matrix> <log> <N>` splits a matrix over N instances.
+- `run_g4.py --set key.path=value` (YAML value) overrides any config entry after `--config`: one switch per ablation.
+- `gen_ablation.py OUT` writes the matrices: E1 patrols on 20 random low-box cages (`lowbox_s0..19`) for 22 conditions,
+  E2 wall approaches (4 walls x 8 seeds) for 15, E3 faults; `run_ablation.sh OUT 2 [batch ...]` runs them and re-runs
+  every run with whole-run RTF < 0.95 on one instance. `ablation_stats.py` pairs conditions on the episode: bootstrap
+  95% CIs, Wilcoxon signed-rank with rank-biserial r, exact McNemar for binary outcomes, Holm correction per metric.

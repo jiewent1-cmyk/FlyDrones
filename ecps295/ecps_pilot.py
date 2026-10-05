@@ -8,6 +8,8 @@ fence   (optional, fence_turn=True) upstream SafetyGovernor only zeroes the forw
         brain is in a saccade it only blocks forward motion and leaves the yaw to the saccade.
 camera  a frozen camera (USB hang, driver stuck) went unnoticed and the brain flew blind into the wall
         (G4 T4_freeze). If the drone reports no new frame for stale_s, command hover; after land_after_s, land.
+height source  (route B) the companion's height module feeds the FC; if it has not sent for stale_s, hover; after
+        land_after_s, land (S7b D2: it stopped, the FC fell back to baro and a box threw the drone to 2.2 m)
 height  (optional, height_guard) without GPS a box under the drone pulls the flow EKF height down and the EKF then
         rejects the true range as an outlier: after backing off the box it still read 0.75 m at a true 1.23 m, and
         ArduPilot's own altitude hold carried the drone through the 1.3 m hard fence (v4 smoke test). The ventral
@@ -35,6 +37,7 @@ class EcpsPilot(Pilot):
         fence_turn: bool = False,
         fence_margin_m: float = 0.35,
         height_guard: dict | None = None,
+        height_source: dict | None = None,
         **kw,
     ):
         super().__init__(*args, **kw)
@@ -45,6 +48,12 @@ class EcpsPilot(Pilot):
         self.hg_gain = float(hg.get("gain", 1.5))
         self.hg_ticks = 0
         self.last_height_est: float | None = None
+        # companion height watchdog (S7b D2): the FC height comes from our own height module (route B); if it stops,
+        # the FC falls back to baro, and a box under the drone then threw it to 2.2 m. Do not keep patrolling.
+        hs = height_source or {}
+        self.ext_wd_on = bool(hs.get("enabled", True))
+        self.ext_stale_s = float(hs.get("stale_s", 0.5))
+        self.ext_land_after_s = float(hs.get("land_after_s", 3.0))
         self.fence_turn = fence_turn
         self.fence_margin = fence_margin_m
         self._turning_back = False
@@ -116,6 +125,13 @@ class EcpsPilot(Pilot):
             if stale > self.land_after_s:
                 self.safety.land_requested = True
                 self._event(t, "camera stale -> land")
+        ext_age = getattr(self.drone, "ext_age_s", lambda: 0.0)()
+        if self.ext_wd_on and ext_age > self.ext_stale_s and getattr(self.drone, "ext_height", False):
+            cmd = FlightCommand.hover(f"companion height stale {min(ext_age, 99):.1f} s")
+            self._event(t, "height source stale -> hover")
+            if ext_age > self.ext_land_after_s:
+                self.safety.land_requested = True
+                self._event(t, "height source stale -> land")
         if self.hg_on and hasattr(self.retina, "ventral"):
             h = self.retina.ventral.height_above_floor(self.retina.baro_m)
             self.last_height_est = h

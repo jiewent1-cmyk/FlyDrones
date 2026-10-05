@@ -39,6 +39,7 @@ decoder:
       speed: 0.5
       min_s: 1.5                # 1.0 / 0.5: turned while still at the box edge and crossed it again
       hold_s: 1.0
+      max_s: 2.0                # ~0.5 m; nothing looks backwards (S7b D1: a 4 s retreat backed into a box)
       then_saccade: true
     throttle_per_forward: 0.14 # G4 probe: forward 0.6 -> throttle -0.086
     throttle_yaw_decouple: 0.011  # G4 probe: one-sided DNg02 +17 Hz -> throttle +0.175
@@ -87,6 +88,10 @@ vision:
     smooth_s: 0.4              # against baro noise (SITL +-0.2 m)
     baseline_s: 6.0
 ecps_pilot:
+  height_source:               # route B height module watchdog (S7b D2)
+    enabled: true
+    stale_s: 0.5
+    land_after_s: 3.0
   height_guard:                # EcpsPilot safety layer: baro height above the floor (ventral cue), not the flow EKF
     enabled: false             # smoke test: estimate within ~3 cm, but ArduPilot executes the descent with the corrupted
                                # EKF (still climbed over the box, then integrated a target that put it on the floor)

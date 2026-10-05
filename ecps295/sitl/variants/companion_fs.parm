@@ -1,0 +1,8 @@
+# Companion (Orange Pi) loss failsafe for route B (S7b D3): when the companion hangs, ArduPilot's GUIDED timeout makes
+# it hover forever on baro. Treat the companion's sysid (254) as a GCS so a lost heartbeat triggers the GCS failsafe.
+# 255 stays accepted (SITL take-off RC overrides; a real GCS). On the real drone no GCS link is planned in the cage.
+MAV_GCS_SYSID    254
+MAV_GCS_SYSID_HI 255
+# 5 = Land
+FS_GCS_ENABLE    5
+FS_GCS_TIMEOUT   2
