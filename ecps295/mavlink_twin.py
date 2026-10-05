@@ -63,6 +63,10 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         self._ext_last = 0.0
         self.ext_h_m: float | None = None  # last height sent to the FC
         self.ext_src = ""  # "tof" / "baro" / "ground"
+        # fault injection (S7b): ext_paused stops only the height messages, mute stops everything the companion sends
+        # (height, velocity setpoints, heartbeat) as if the Orange Pi had hung; telemetry is still read for scoring
+        self.ext_paused = False
+        self.mute = False
 
     # ------------------------------------------------------------------ link
     def connect(self) -> None:
@@ -103,6 +107,8 @@ class Ecps295MavlinkDrone(MavlinkDrone):
 
     def _heartbeat(self) -> None:
         # F9
+        if self.mute:
+            return
         now = time.monotonic()
         if now - self._last_hb >= 1.0:
             mav = self.mavutil.mavlink
@@ -279,6 +285,8 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         raise TakeoffError("did not reach takeoff altitude")
 
     def send(self, cmd) -> None:
+        if self.mute:
+            return
         self._heartbeat()
         self.send_ext_height()
         super().send(cmd)
@@ -300,7 +308,10 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         return (None, "") if h is None else (h, "baro")
 
     def send_ext_height(self) -> None:
-        if not self.ext_height or self.m is None:
+        if not self.ext_height or self.m is None or self.mute:
+            return
+        if self.ext_paused:
+            self.ext_src = "paused"
             return
         now = time.monotonic()
         if now - self._ext_last < 0.05:  # 20 Hz

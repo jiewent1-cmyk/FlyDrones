@@ -58,6 +58,9 @@ ap.add_argument(
     action="store_true",
     help="companion supplies the FC height (VISION_POSITION_ESTIMATE z; needs sitl/variants/G_extnav_height.parm)",
 )
+ap.add_argument("--ext-drop-at", type=float, default=-1, help="fault: stop the companion height at t [s] (flight time)")
+ap.add_argument("--ext-drop-for", type=float, default=0, help="fault: resume the companion height after this [s]; 0 = never")
+ap.add_argument("--mute-at", type=float, default=-1, help="fault: companion hangs at t [s]: nothing is sent any more")
 ap.add_argument("--home", default="33.6430,-117.8420,20", help="SITL --home (Gazebo origin) for SIM_STATE truth")
 ap.add_argument("--out", default="g4")
 a = ap.parse_args()
@@ -219,6 +222,14 @@ if a.record_frames:
 
 
 def tick(t: float, dt: float, phase: str):
+    if 0 <= a.ext_drop_at <= t:
+        resumed = a.ext_drop_for > 0 and t >= a.ext_drop_at + a.ext_drop_for
+        if drone.ext_paused == resumed:
+            drone.ext_paused = not resumed
+            print(f"fault injection: companion height {'stopped' if drone.ext_paused else 'resumed'} at t={t:.1f} s", flush=True)
+    if 0 <= a.mute_at <= t and not drone.mute:
+        drone.mute = True
+        print(f"fault injection: companion hung at t={t:.1f} s", flush=True)
     if 0 <= a.freeze_cam_at <= t and not drone.frozen:
         drone.frozen = True
         print(f"fault injection: camera frozen at t={t:.1f} s", flush=True)
@@ -251,6 +262,7 @@ def tick(t: float, dt: float, phase: str):
             "baro": drone.baro_m(),
             "ext_h": None if drone.ext_h_m is None else round(drone.ext_h_m, 3),
             "ext_src": drone.ext_src,
+            "mute": int(drone.mute),
             "ventral": round(getattr(pilot.retina, "ventral", None).level, 2) if hasattr(pilot.retina, "ventral") else 0.0,
             "box_under": int(box_under(tn, te, ta)),
             "h_est": None if getattr(pilot, "last_height_est", None) is None else round(pilot.last_height_est, 3),
@@ -332,6 +344,7 @@ try:
     else:
         run_phase(a.mode, a.seconds)
 finally:
+    drone.mute = False  # the run is over: land normally
     drone.send(FlightCommand.hover("stop"))
     drone.passive = False
     drone.land()
