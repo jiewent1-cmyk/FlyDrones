@@ -1,0 +1,10 @@
+hang_no_fs__lowbox_s0_k0 lowbox_s0 v4 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s1_k1 lowbox_s1 v4 1 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s2_k2 lowbox_s2 v4 2 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s3_k3 lowbox_s3 v4 3 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s4_k4 lowbox_s4 v4 4 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s5_k5 lowbox_s5 v4 5 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s6_k6 lowbox_s6 v4 6 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s7_k7 lowbox_s7 v4 7 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s8_k8 lowbox_s8 v4 8 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30
+hang_no_fs__lowbox_s9_k9 lowbox_s9 v4 9 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --mute-at 30

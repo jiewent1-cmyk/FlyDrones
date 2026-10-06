@@ -22,11 +22,13 @@ import glob
 import json
 import math
 import os
+import re
 
 import numpy as np
 from scipy import stats
 
 METRICS = [  # (key, label, kind, better)
+    ("contacts_per_100m", "contacts per 100 m flown (primary safety metric)", "num", "lower"),
     ("success", "success (no contact, no FC landing)", "bin", "higher"),
     ("contact_any", "episodes with contact", "bin", "lower"),
     ("fc_land", "FC landings", "bin", "lower"),
@@ -37,7 +39,17 @@ METRICS = [  # (key, label, kind, better)
     ("coverage", "coverage", "num", "higher"),
     ("over_box_s", "time over boxes s", "num", "lower"),
     ("alt_true_max_m", "max true height m", "num", "lower"),
+    ("above_fence", "episodes above the 1.3 m hard fence", "bin", "lower"),
     ("ekf_err_alt_max_m", "FC height error max m", "num", "lower"),
+]
+METRICS_E2 = [  # wall approaches (run_g4 --mode approach)
+    ("contact_any", "episodes with contact", "bin", "lower"),
+    ("escaped", "episodes with an escape", "bin", "higher"),
+    ("min_clearance_m", "min clearance m", "num", "higher"),
+    ("final_clearance_m", "final clearance m", "num", "higher"),
+    ("escape_onset_clearance_m", "clearance at escape onset m (episodes with an escape)", "num", "higher"),
+    ("brake_onset_clearance_m", "clearance at brake onset m (episodes with a brake)", "num", "higher"),
+    ("contact_episodes", "contacts per episode", "num", "lower"),
 ]
 RNG = np.random.default_rng(0)
 
@@ -54,6 +66,10 @@ def load(d: str) -> dict | None:
     j["contact_any"] = int(j.get("contact_episodes", 0) > 0)
     j["fc_land"] = int(bool(j.get("fc_land", False)))
     j["success"] = int(not j["contact_any"] and not j["fc_land"])
+    j["escaped"] = int(j.get("escape_onset_clearance_m") is not None)
+    # exposure: a drone parked at the geofence (upstream, no turn-back) cannot hit much; path floor 1 m against blow-ups
+    j["contacts_per_100m"] = 100.0 * j.get("contact_episodes", 0) / max(1.0, float(j.get("path_m") or 0.0))
+    j["above_fence"] = int(float(j.get("alt_true_max_m") or 0.0) > 1.3)
     return j
 
 
@@ -97,8 +113,12 @@ ap.add_argument("--ref", required=True)
 ap.add_argument("--conds", required=True, help="comma-separated condition names (without the reference)")
 ap.add_argument("--labels", default="", help="cond=label,... for the tables")
 ap.add_argument("--out", default="ablation")
+ap.add_argument("--metrics", choices=["e1", "e2"], default="e1")
+ap.add_argument("--episodes", default="", help="regex the episode name must match (e.g. lowbox_s(1?[0-9])_ for s0-s19)")
 a = ap.parse_args()
 conds = [c for c in a.conds.split(",") if c]
+if a.metrics == "e2":
+    METRICS = METRICS_E2
 labels = dict(kv.split("=", 1) for kv in a.labels.split(",") if "=" in kv)
 
 data: dict[str, dict[str, dict]] = {}
@@ -107,6 +127,8 @@ for c in [a.ref, *conds]:
     data[c], invalid[c] = {}, []
     for d in sorted(glob.glob(os.path.join(a.runs, f"{c}__*"))):
         ep = os.path.basename(d).split("__", 1)[1]
+        if a.episodes and not re.search(a.episodes, ep):
+            continue
         j = load(d)
         if j is None:
             invalid[c].append(ep)
@@ -125,7 +147,8 @@ lines = [f"# Ablation vs `{a.ref}`", ""]
 for key, label, kind, better in METRICS:
     rows, ps = [], []
     for c in conds:
-        eps = sorted(set(data[a.ref]) & set(data[c]))
+        # pairs where both runs have the metric (e.g. escape onset only exists if the drone escaped)
+        eps = sorted(e for e in set(data[a.ref]) & set(data[c]) if data[a.ref][e].get(key) is not None and data[c][e].get(key) is not None)
         if not eps:
             rows.append((c, 0, None))
             ps.append(1.0)
@@ -136,7 +159,7 @@ for key, label, kind, better in METRICS:
         rows.append((c, len(eps), (x.mean(), boot_ci(x), (x - ref).mean(), boot_ci(x - ref), p, eff)))
         ps.append(p)
     adj = holm(ps)
-    full = np.array([float(j.get(key) or 0.0) for j in data[a.ref].values()])
+    full = np.array([float(j[key]) for j in data[a.ref].values() if j.get(key) is not None])
     lines += [f"## {label} ({'higher' if better == 'higher' else 'lower'} is better)", ""]
     lo, hi = boot_ci(full)
     lines += [f"reference `{a.ref}`: {full.mean():.3f} [{lo:.3f}, {hi:.3f}] (n={len(full)})", ""]

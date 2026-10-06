@@ -660,11 +660,11 @@ def lowbox_objects(seed: int, n: int = 6):
     return objs
 
 
-for k in range(20):  # 20 layouts: one per episode in the S8 ablation (s0-s4 unchanged, seeded per k)
+for k in range(50):  # 50 layouts: one per episode in the S8 ablation (n=50 for the key conditions; seeded per k)
     objs = lowbox_objects(k)
     write_world(f"ecps295_lowbox_s{k}", lambda objs=objs: cage_extra(6.1, 3.05, objs), objs + cage_walls(6.1, 3.05), floor_m=6.5)
 print(
     "wrote models",
     [v[0] for v in VARIANTS],
-    "and worlds ecps295_{flat,camtest,camtest_tape,wall_*,cage10,cage20,lowbox_s0..19}[_monitor].sdf",
+    "and worlds ecps295_{flat,camtest,camtest_tape,wall_*,cage10,cage20,lowbox_s0..49}[_monitor].sdf",
 )

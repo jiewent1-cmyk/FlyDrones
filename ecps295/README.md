@@ -364,3 +364,28 @@ ablation, 10 cages each, all runs RTF >= 0.95):
   E2 wall approaches (4 walls x 8 seeds) for 15, E3 faults; `run_ablation.sh OUT 2 [batch ...]` runs them and re-runs
   every run with whole-run RTF < 0.95 on one instance. `ablation_stats.py` pairs conditions on the episode: bootstrap
   95% CIs, Wilcoxon signed-rank with rank-biserial r, exact McNemar for binary outcomes, Holm correction per metric.
+
+### S8 ablation results (2026-10-06)
+
+Full report (Chinese) with method, all tables and discussion: `results/ablation_2026-10-06/REPORT_zh.md`; per-run CSV,
+paired statistics (`e1/e2/e3_*.md|json`), the matrices and the thermal log are next to it.
+
+1,260 closed-loop flights, all whole-run RTF >= 0.95 (157 parallel runs below it were re-run on one instance; the
+criterion was not changed). No GPS (flow + ToF + route B) unless stated. Paired on the episode, Holm-corrected.
+
+| removed / condition | E1 contacts per 100 m (full 1.07) | E1 success (full 82%) | E2 wall contact (full 0%) | E2 min clearance m (full 0.68) |
+|---|---|---|---|---|
+| all new cell types (LCb, LCn, LCv), n=50 | **13.8** | **42%** | **47%** | **0.11** |
+| saccade escape, n=50 | **10.5** | 60% | 0% | **0.19** |
+| LCb, n=50 | **7.5** | 58% | **50%** | **0.10** |
+| efference copy, n=20 | **6.2** | 45% | 0% | **0.44** |
+| route B (FC height from the ToF), n=50 | 1.9 | **10%** (88% FC landings) | - | - |
+| LCv / retreat, n=50 | 1.7 / 1.1 | 82% / 86% | - | - |
+| upstream FlyDrones, n=50 | 10.2 (parks at the fence: 2.9 m path) | 70% (26% FC landings) | **100%** | **-0.09** |
+
+Bold: p < 0.05. LCb and the saccade escape carry the wall avoidance; route B is what makes flying without GPS
+possible. With route B working, v4's ventral pathway only shortens the time over low boxes (21.8 -> 9.4 s); it is a
+behavioural layer for when the height estimate fails (S7d), not a safety gain in nominal flight. The efference copy
+turned out to hold the cruise height: without it the drone flies 0.17 m lower and the low boxes become obstacles.
+E3: height-source watchdog 7/10 -> 0/10 runs above the 1.3 m fence (p = 0.016), companion failsafe 0/10 -> 10/10
+landed (p = 0.002), camera watchdog contacts 4/10 -> 1/10 (n.s.).

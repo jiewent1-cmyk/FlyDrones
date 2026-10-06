@@ -1,0 +1,4 @@
+no_lcb__wall_plain_k1 wall_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+no_lcn__wall_tape_k7 wall_tape v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_near.enabled=false
+no_saccade__wall_offset_plain_k7 wall_offset_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+lad_v3__wall_offset_plain_k6 wall_offset_plain v3 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height

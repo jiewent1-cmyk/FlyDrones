@@ -1,0 +1,1 @@
+no_new_cells__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false

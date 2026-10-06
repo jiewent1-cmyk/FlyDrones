@@ -1,0 +1,210 @@
+full__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+full__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+no_lcb__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0
+no_lcb_side__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcb_side__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.side_gain=0
+no_lcv__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_lcv__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_ventral.enabled=false
+no_retreat__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_retreat__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.retreat.enabled=false
+no_new_cells__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_new_cells__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+no_saccade__lowbox_s20_k20 lowbox_s20 v4 20 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s21_k21 lowbox_s21 v4 21 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s22_k22 lowbox_s22 v4 22 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s23_k23 lowbox_s23 v4 23 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s24_k24 lowbox_s24 v4 24 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s25_k25 lowbox_s25 v4 25 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s26_k26 lowbox_s26 v4 26 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s27_k27 lowbox_s27 v4 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s28_k28 lowbox_s28 v4 28 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s29_k29 lowbox_s29 v4 29 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s30_k30 lowbox_s30 v4 30 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s31_k31 lowbox_s31 v4 31 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s32_k32 lowbox_s32 v4 32 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s33_k33 lowbox_s33 v4 33 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s34_k34 lowbox_s34 v4 34 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s35_k35 lowbox_s35 v4 35 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s36_k36 lowbox_s36 v4 36 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s37_k37 lowbox_s37 v4 37 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s38_k38 lowbox_s38 v4 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s39_k39 lowbox_s39 v4 39 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s40_k40 lowbox_s40 v4 40 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s41_k41 lowbox_s41 v4 41 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s42_k42 lowbox_s42 v4 42 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s43_k43 lowbox_s43 v4 43 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s44_k44 lowbox_s44 v4 44 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s45_k45 lowbox_s45 v4 45 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s46_k46 lowbox_s46 v4 46 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s47_k47 lowbox_s47 v4 47 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s48_k48 lowbox_s48 v4 48 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+no_saccade__lowbox_s49_k49 lowbox_s49 v4 49 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb

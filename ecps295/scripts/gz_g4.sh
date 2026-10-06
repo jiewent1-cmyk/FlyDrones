@@ -79,8 +79,10 @@ WN=$(basename $WORLD .sdf)
 # trust: the 40-sample window below lasts ~8 s and a single lockstep hiccup moved its mean by 0.1-0.4
 clocks() { timeout 5 gz topic -e -t /world/$WN/stats -n 1 2>/dev/null | awk '/^(sim_time|real_time) \{/ {b=$1} /sec:/ && b {v[b]+=($1=="nsec:")?$2/1e9:$2} /^\}/ {b=""} END {printf "%.3f %.3f", v["sim_time"], v["real_time"]}'; }
 (sleep 40; clocks > clock0.txt) &
+# window sample (reference only) in its own file: on runs shorter than ~70 s it fired during teardown and its
+# '> rtf.log' wiped the whole-run line (S8 E2: 439 of 448 approach runs looked invalid)
 (sleep 60; gz topic -e -t /world/$WN/stats -n 40 2>/dev/null | grep real_time_factor | awk '{print $2}' | sort -g \
-  | awk '{v[NR]=$1; s+=$1} END {if (NR) printf "RTF mean %.3f median %.3f min %.3f over %d samples\n", s/NR, v[int((NR+1)/2)], v[1], NR}' > rtf.log) &
+  | awk '{v[NR]=$1; s+=$1} END {if (NR) printf "RTF mean %.3f median %.3f min %.3f over %d samples\n", s/NR, v[int((NR+1)/2)], v[1], NR}' > rtf_window.log) &
 source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
 PYTHONPATH=$E MPLBACKEND=Agg timeout 900 python $E/run_g4.py $ARGS 2>&1 | grep -v "EOF on TCP" > exp.log
 clocks > clock1.txt
