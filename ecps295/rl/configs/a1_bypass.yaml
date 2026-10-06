@@ -1,0 +1,129 @@
+# a1_bypass (arm bypass) best held-out validation gen 4: F=0.1694 pC=0.0 cov=0.266
+#   yaw_gain: 0.0315
+#   yaw_dnp03_w: 1.5111
+#   smoothing: 0.3531
+#   brake_dnp03: 0.0087
+#   brake_dnp01: 0.0418
+#   brake_decay: 0.9776
+#   escape_thr: 33.7438
+#   sacc_thr: 17.5702
+#   sacc_dur: 1.3728
+#   sacc_backoff: 0.2652
+#   sacc_backoff_s: 0.6634
+#   sacc_on_brake: 0.5678
+#   sacc_refr: 0.9004
+#   sacc_keep_dir: 2.4763
+#   caut_hold: 3.5323
+#   caut_ramp: 2.1713
+#   caut_on_brake: 0.5775
+#   c0: 22.441
+#   k_flow: 0.139
+#   k_hal: 0.1448
+#   k_loom: 5.0
+#   k_blank: 0.0596
+#   k_near: 5.0
+#   k_gf: 0.2185
+#   th_gf: 23.6677
+brain:
+  source: ../../minifly/minifly_v3.npz  # brain next to the hand-tuned variants (python my_minifly.py v3)
+safety:
+  max_yaw: 1.0
+decoder:
+  axes:
+    yaw:
+      gain: 0.03149679065143039
+      terms:
+        DNg02_R: 1.0
+        DNg02_L: -1.0
+        DNp03_L: 1.511116999967033
+        DNp03_R: -1.511116999967033
+  escape:
+    mode: saccade
+    threshold_hz: 33.7438476426365
+  ecps:
+    brake_decay: 0.97755816396394
+    saccade:
+      enabled: true
+      terms:
+      - DNp03_L
+      - DNp03_R
+      threshold_hz: 17.570246179618856
+      duration_s: 1.3727665753661915
+      yaw: 1.0
+      backoff: 0.26516736032625726
+      backoff_s: 0.6634444946921254
+      on_brake: 0.5678027581100094
+      refractory_s: 0.9004383178550268
+      keep_direction_s: 2.4762949969637167
+    caution:
+      hold_s: 3.5322801564550796
+      ramp_s: 2.171263165572873
+      on_brake: 0.5775422377507418
+    throttle_per_forward: 0.14
+    throttle_yaw_decouple: 0.011
+  smoothing: 0.35308235858523307
+  brake_terms:
+    DNp03_L: 0.008741640242978781
+    DNp03_R: 0.008741640242978781
+    DNp01_L: 0.0417949553435237
+    DNp01_R: 0.0417949553435237
+ecps_drone:
+  yaw_rate_max_dps: 60
+inputs:
+  LCb_L:
+    types:
+    - ^LCb$
+    side: L
+    feature: blank
+    eye: L
+    max_hz: 150
+  LCb_R:
+    types:
+    - ^LCb$
+    side: R
+    feature: blank
+    eye: R
+    max_hz: 150
+  LCn_L:
+    types:
+    - ^LCn$
+    side: L
+    feature: near
+    eye: L
+    max_hz: 120
+  LCn_R:
+    types:
+    - ^LCn$
+    side: R
+    feature: near
+    eye: R
+    max_hz: 120
+vision:
+  ecps_blank:
+    energy_thr: 0.0002
+    rows:
+    - 1
+    - 4
+    gain: 2.5
+    min_frac: 0.55
+    baseline_s: 6.0
+    side_gain: 2.0
+  ecps_near:
+    enabled: true
+    rows:
+    - 2
+    - 6
+    gain: 3.0
+    min_flow: 0.08
+    max_yaw_dps: 12.0
+    smooth: 0.15
+    outer_cols: 5
+bypass:
+  c0: 22.44100810959624
+  k_flow: 0.13897810262907467
+  k_hal: 0.14484412936396743
+  k_loom: 5.000000000000001
+  k_blank: 0.05963327243852281
+  k_near: 5.000000000000001
+  k_gf: 0.21852392530146938
+  th_gf: 23.667656652443178

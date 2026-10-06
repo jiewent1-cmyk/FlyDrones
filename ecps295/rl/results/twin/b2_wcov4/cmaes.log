@@ -1,0 +1,25 @@
+warm start {'yaw_gain': 0.0193, 'yaw_dnp03_w': 0.2448, 'smoothing': 0.9, 'brake_dnp03': 0.001, 'brake_dnp01': 0.3, 'brake_decay': 0.9525, 'escape_thr': 27.5835, 'sacc_thr': 2.0, 'sacc_dur': 3.1336, 'sacc_backoff': 0.3544, 'sacc_backoff_s': 1.2391, 'sacc_on_brake': 1.0432, 'sacc_refr': 5.611, 'sacc_keep_dir': 3.4109, 'caut_hold': 0.831, 'caut_ramp': 3.025, 'caut_on_brake': 0.9075}
+gen  0  625s  v3_2 F=+0.503 pC=0.58 near=1.4 cov=0.53 | best F=+1.273 pC=0.42 near=1.0 cov=0.58 | median F=+1.077 sigma=0.185
+gen  1  653s  v3_2 F=+0.788 pC=0.50 near=1.1 cov=0.53 | best F=+1.434 pC=0.17 near=0.8 cov=0.55 | median F=+1.196 sigma=0.172
+gen  2  668s  v3_2 F=+0.914 pC=0.33 near=0.9 cov=0.51 | best F=+0.764 pC=0.33 near=1.4 cov=0.53 | median F=+0.612 sigma=0.164
+gen  3  634s  v3_2 F=+1.039 pC=0.42 near=1.2 cov=0.54 | best F=+1.446 pC=0.25 near=0.7 cov=0.52 | median F=+1.287 sigma=0.160
+  VAL gen 4: mean F=+1.438 pC=0.21 near=1.2 cov=0.57 | v3_2 F=+0.730 pC=0.33 near=0.8 cov=0.50
+gen  4  592s  v3_2 F=-0.066 pC=0.58 near=1.7 cov=0.50 | best F=+1.212 pC=0.33 near=1.2 cov=0.57 | median F=+0.802 sigma=0.156
+gen  5  542s  v3_2 F=+0.647 pC=0.50 near=1.0 cov=0.52 | best F=+1.561 pC=0.25 near=0.8 cov=0.56 | median F=+0.984 sigma=0.156
+gen  6  600s  v3_2 F=+1.153 pC=0.50 near=0.8 cov=0.59 | best F=+1.181 pC=0.50 near=1.2 cov=0.62 | median F=+0.775 sigma=0.150
+gen  7  578s  v3_2 F=+1.561 pC=0.17 near=0.6 cov=0.54 | best F=+1.757 pC=0.17 near=0.8 cov=0.58 | median F=+1.063 sigma=0.144
+gen  8  624s  v3_2 F=-0.034 pC=0.58 near=1.3 cov=0.47 | best F=+1.435 pC=0.25 near=0.8 cov=0.56 | median F=+1.155 sigma=0.137
+  VAL gen 9: mean F=+1.389 pC=0.33 near=0.8 cov=0.58 | v3_2 F=+0.730 pC=0.33 near=0.8 cov=0.50
+gen  9  598s  v3_2 F=+0.468 pC=0.50 near=1.2 cov=0.50 | best F=+1.231 pC=0.33 near=1.2 cov=0.55 | median F=+0.904 sigma=0.133
+gen 10  629s  v3_2 F=+0.762 pC=0.50 near=1.7 cov=0.56 | best F=+1.588 pC=0.25 near=1.1 cov=0.58 | median F=+0.984 sigma=0.129
+gen 11  605s  v3_2 F=+0.415 pC=0.50 near=2.0 cov=0.52 | best F=+1.259 pC=0.42 near=1.2 cov=0.57 | median F=+1.094 sigma=0.133
+gen 12  548s  v3_2 F=+1.002 pC=0.50 near=1.1 cov=0.55 | best F=+1.523 pC=0.25 near=0.8 cov=0.57 | median F=+1.199 sigma=0.136
+gen 13  569s  v3_2 F=+0.558 pC=0.42 near=1.8 cov=0.48 | best F=+1.292 pC=0.25 near=1.1 cov=0.53 | median F=+0.956 sigma=0.143
+  VAL gen 14: mean F=+1.367 pC=0.38 near=1.1 cov=0.60 | v3_2 F=+0.730 pC=0.33 near=0.8 cov=0.50
+gen 14  622s  v3_2 F=+1.085 pC=0.33 near=0.8 cov=0.55 | best F=+1.582 pC=0.17 near=0.9 cov=0.54 | median F=+1.121 sigma=0.147
+gen 15  579s  v3_2 F=+0.789 pC=0.50 near=0.8 cov=0.51 | best F=+1.713 pC=0.08 near=0.8 cov=0.56 | median F=+1.258 sigma=0.150
+gen 16  722s  v3_2 F=+1.342 pC=0.08 near=1.0 cov=0.50 | best F=+1.512 pC=0.17 near=1.2 cov=0.54 | median F=+1.089 sigma=0.152
+gen 17  611s  v3_2 F=+1.197 pC=0.33 near=1.8 cov=0.59 | best F=+1.494 pC=0.33 near=1.4 cov=0.58 | median F=+0.708 sigma=0.154
+gen 18  658s  v3_2 F=+0.371 pC=0.42 near=1.2 cov=0.47 | best F=+1.371 pC=0.25 near=1.1 cov=0.56 | median F=+1.028 sigma=0.159
+  VAL gen 19: mean F=+1.372 pC=0.25 near=1.0 cov=0.59 | v3_2 F=+0.730 pC=0.33 near=0.8 cov=0.50
+gen 19  679s  v3_2 F=+1.117 pC=0.42 near=1.2 cov=0.56 | best F=+1.490 pC=0.33 near=1.2 cov=0.59 | median F=+0.884 sigma=0.161

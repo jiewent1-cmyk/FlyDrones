@@ -1,0 +1,15 @@
+[twin]
+  n                  v3_2       64   es       64
+  contact_runs       v3_2       49   es       44
+  contact_rate       v3_2    0.766   es    0.688
+  contacts_mean      v3_2     1.42   es     1.12
+  near_mean          v3_2     2.22   es     1.89
+  minclr_p10         v3_2    -0.01   es    -0.01
+  coverage_mean      v3_2    0.665   es    0.663
+  path_mean          v3_2     19.7   es     22.1
+  escapes_mean       v3_2     6.02   es     3.75
+  fence_turn_s_mean  v3_2     15.2   es     11.8
+  Fisher contact runs p = 0.4279
+  Mann-Whitney near_miss_episodes p = 0.0726
+  Mann-Whitney coverage           p = 0.6137
+  Mann-Whitney contact_episodes   p = 0.1271

@@ -1,0 +1,112 @@
+# a1_shuffle3 (arm shuffle3) best held-out validation gen 14: F=-0.0869 pC=0.167 cov=0.365
+#   yaw_gain: 0.06
+#   yaw_dnp03_w: 0.0
+#   smoothing: 0.05
+#   brake_dnp03: 0.0209
+#   brake_dnp01: 0.2049
+#   brake_decay: 0.99
+#   escape_thr: 61.4423
+#   sacc_thr: 30.0
+#   sacc_dur: 2.5278
+#   sacc_backoff: 0.4091
+#   sacc_backoff_s: 1.5
+#   sacc_on_brake: 0.2
+#   sacc_refr: 2.196
+#   sacc_keep_dir: 6.765
+#   caut_hold: 5.2389
+#   caut_ramp: 4.0
+#   caut_on_brake: 0.2
+brain:
+  source: ../../minifly/minifly_v3.npz  # brain next to the hand-tuned variants (python my_minifly.py v3)
+safety:
+  max_yaw: 1.0
+decoder:
+  axes:
+    yaw:
+      gain: 0.06
+      terms:
+        DNg02_R: 1.0
+        DNg02_L: -1.0
+        DNp03_L: 0.0
+        DNp03_R: -0.0
+  escape:
+    mode: saccade
+    threshold_hz: 61.44232334349399
+  ecps:
+    brake_decay: 0.99
+    saccade:
+      enabled: true
+      terms:
+      - DNp03_L
+      - DNp03_R
+      threshold_hz: 30.000000000000004
+      duration_s: 2.5278332592713144
+      yaw: 1.0
+      backoff: 0.409105849710094
+      backoff_s: 1.5
+      on_brake: 0.2
+      refractory_s: 2.1960336392253508
+      keep_direction_s: 6.764977350011296
+    caution:
+      hold_s: 5.2388878975999384
+      ramp_s: 4.0
+      on_brake: 0.2
+    throttle_per_forward: 0.14
+    throttle_yaw_decouple: 0.011
+  smoothing: 0.05000000000000001
+  brake_terms:
+    DNp03_L: 0.020901707983229757
+    DNp03_R: 0.020901707983229757
+    DNp01_L: 0.2049199605997127
+    DNp01_R: 0.2049199605997127
+ecps_drone:
+  yaw_rate_max_dps: 60
+inputs:
+  LCb_L:
+    types:
+    - ^LCb$
+    side: L
+    feature: blank
+    eye: L
+    max_hz: 150
+  LCb_R:
+    types:
+    - ^LCb$
+    side: R
+    feature: blank
+    eye: R
+    max_hz: 150
+  LCn_L:
+    types:
+    - ^LCn$
+    side: L
+    feature: near
+    eye: L
+    max_hz: 120
+  LCn_R:
+    types:
+    - ^LCn$
+    side: R
+    feature: near
+    eye: R
+    max_hz: 120
+vision:
+  ecps_blank:
+    energy_thr: 0.0002
+    rows:
+    - 1
+    - 4
+    gain: 2.5
+    min_frac: 0.55
+    baseline_s: 6.0
+    side_gain: 2.0
+  ecps_near:
+    enabled: true
+    rows:
+    - 2
+    - 6
+    gain: 3.0
+    min_flow: 0.08
+    max_yaw_dps: 12.0
+    smooth: 0.15
+    outer_cols: 5

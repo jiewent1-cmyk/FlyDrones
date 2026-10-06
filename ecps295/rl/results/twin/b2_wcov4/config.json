@@ -1,0 +1,191 @@
+{
+ "run": "b2_wcov4",
+ "gens": 20,
+ "k": 12,
+ "popsize": 12,
+ "sigma0": 0.2,
+ "seconds": 90.0,
+ "procs": 12,
+ "val_every": 5,
+ "val_k": 24,
+ "space": "wide",
+ "arm": "intact",
+ "w_cov": 4.0,
+ "x0_yaml": "minifly/v3_2_es3.yaml",
+ "names": [
+  "yaw_gain",
+  "yaw_dnp03_w",
+  "smoothing",
+  "brake_dnp03",
+  "brake_dnp01",
+  "brake_decay",
+  "escape_thr",
+  "sacc_thr",
+  "sacc_dur",
+  "sacc_backoff",
+  "sacc_backoff_s",
+  "sacc_on_brake",
+  "sacc_refr",
+  "sacc_keep_dir",
+  "caut_hold",
+  "caut_ramp",
+  "caut_on_brake"
+ ],
+ "z0": [
+  0.58162966562358,
+  0.12240151331809244,
+  1.0,
+  0.0,
+  1.0,
+  0.7323367972802554,
+  0.537558603017276,
+  0.0,
+  0.7451633539698277,
+  0.5906794119797305,
+  0.8260858393532492,
+  0.8431909178033801,
+  0.9351679040306177,
+  0.34108563125775176,
+  0.10387052948177171,
+  0.7562376373259597,
+  0.3075984578056385
+ ],
+ "spec": [
+  [
+   "yaw_gain",
+   "decoder.axes.yaw.gain",
+   0.025,
+   0.004,
+   0.06,
+   true
+  ],
+  [
+   "yaw_dnp03_w",
+   "decoder.axes.yaw.dnp03",
+   0.8,
+   0.0,
+   2.0,
+   false
+  ],
+  [
+   "smoothing",
+   "decoder.smoothing",
+   0.2,
+   0.05,
+   0.9,
+   true
+  ],
+  [
+   "brake_dnp03",
+   "decoder.brake_terms.dnp03",
+   0.02,
+   0.001,
+   0.08,
+   true
+  ],
+  [
+   "brake_dnp01",
+   "decoder.brake_terms.dnp01",
+   0.03,
+   0.005,
+   0.3,
+   true
+  ],
+  [
+   "brake_decay",
+   "decoder.ecps.brake_decay",
+   0.97,
+   0.85,
+   0.99,
+   false
+  ],
+  [
+   "escape_thr",
+   "decoder.escape.threshold_hz",
+   20.0,
+   8.0,
+   80.0,
+   true
+  ],
+  [
+   "sacc_thr",
+   "decoder.ecps.saccade.threshold_hz",
+   15.0,
+   2.0,
+   30.0,
+   true
+  ],
+  [
+   "sacc_dur",
+   "decoder.ecps.saccade.duration_s",
+   1.5,
+   0.6,
+   4.0,
+   false
+  ],
+  [
+   "sacc_backoff",
+   "decoder.ecps.saccade.backoff",
+   0.3,
+   0.0,
+   0.6,
+   false
+  ],
+  [
+   "sacc_backoff_s",
+   "decoder.ecps.saccade.backoff_s",
+   0.6,
+   0.0,
+   1.5,
+   false
+  ],
+  [
+   "sacc_on_brake",
+   "decoder.ecps.saccade.on_brake",
+   0.6,
+   0.2,
+   1.2,
+   false
+  ],
+  [
+   "sacc_refr",
+   "decoder.ecps.saccade.refractory_s",
+   1.0,
+   0.0,
+   6.0,
+   false
+  ],
+  [
+   "sacc_keep_dir",
+   "decoder.ecps.saccade.keep_direction_s",
+   5.0,
+   0.0,
+   10.0,
+   false
+  ],
+  [
+   "caut_hold",
+   "decoder.ecps.caution.hold_s",
+   2.0,
+   0.0,
+   8.0,
+   false
+  ],
+  [
+   "caut_ramp",
+   "decoder.ecps.caution.ramp_s",
+   2.0,
+   0.0,
+   4.0,
+   false
+  ],
+  [
+   "caut_on_brake",
+   "decoder.ecps.caution.on_brake",
+   0.6,
+   0.2,
+   2.5,
+   false
+  ]
+ ]
+}

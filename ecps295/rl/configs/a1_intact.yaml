@@ -1,0 +1,112 @@
+# a1_intact (arm intact) best held-out validation gen 19: F=-0.1609 pC=0.25 cov=0.482
+#   yaw_gain: 0.0342
+#   yaw_dnp03_w: 1.876
+#   smoothing: 0.1373
+#   brake_dnp03: 0.0112
+#   brake_dnp01: 0.3
+#   brake_decay: 0.99
+#   escape_thr: 9.874
+#   sacc_thr: 30.0
+#   sacc_dur: 3.0199
+#   sacc_backoff: 0.3689
+#   sacc_backoff_s: 1.0503
+#   sacc_on_brake: 0.4164
+#   sacc_refr: 3.9407
+#   sacc_keep_dir: 5.8521
+#   caut_hold: 0.1353
+#   caut_ramp: 4.0
+#   caut_on_brake: 0.7617
+brain:
+  source: ../../minifly/minifly_v3.npz  # brain next to the hand-tuned variants (python my_minifly.py v3)
+safety:
+  max_yaw: 1.0
+decoder:
+  axes:
+    yaw:
+      gain: 0.03415715492192975
+      terms:
+        DNg02_R: 1.0
+        DNg02_L: -1.0
+        DNp03_L: 1.8760384156692045
+        DNp03_R: -1.8760384156692045
+  escape:
+    mode: saccade
+    threshold_hz: 9.874016949204474
+  ecps:
+    brake_decay: 0.99
+    saccade:
+      enabled: true
+      terms:
+      - DNp03_L
+      - DNp03_R
+      threshold_hz: 30.000000000000004
+      duration_s: 3.019858983199114
+      yaw: 1.0
+      backoff: 0.36892635002318913
+      backoff_s: 1.0503393670792236
+      on_brake: 0.4164102909760541
+      refractory_s: 3.9406771296215006
+      keep_direction_s: 5.852068506215841
+    caution:
+      hold_s: 0.13529545910398405
+      ramp_s: 4.0
+      on_brake: 0.7617397652953688
+    throttle_per_forward: 0.14
+    throttle_yaw_decouple: 0.011
+  smoothing: 0.1373381995162301
+  brake_terms:
+    DNp03_L: 0.0111702747157508
+    DNp03_R: 0.0111702747157508
+    DNp01_L: 0.30000000000000004
+    DNp01_R: 0.30000000000000004
+ecps_drone:
+  yaw_rate_max_dps: 60
+inputs:
+  LCb_L:
+    types:
+    - ^LCb$
+    side: L
+    feature: blank
+    eye: L
+    max_hz: 150
+  LCb_R:
+    types:
+    - ^LCb$
+    side: R
+    feature: blank
+    eye: R
+    max_hz: 150
+  LCn_L:
+    types:
+    - ^LCn$
+    side: L
+    feature: near
+    eye: L
+    max_hz: 120
+  LCn_R:
+    types:
+    - ^LCn$
+    side: R
+    feature: near
+    eye: R
+    max_hz: 120
+vision:
+  ecps_blank:
+    energy_thr: 0.0002
+    rows:
+    - 1
+    - 4
+    gain: 2.5
+    min_frac: 0.55
+    baseline_s: 6.0
+    side_gain: 2.0
+  ecps_near:
+    enabled: true
+    rows:
+    - 2
+    - 6
+    gain: 3.0
+    min_flow: 0.08
+    max_yaw_dps: 12.0
+    smooth: 0.15
+    outer_cols: 5
