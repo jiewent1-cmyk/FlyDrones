@@ -62,6 +62,26 @@ def test_slew_rate():
     assert c.yaw <= 2.5 * 0.05 + 1e-9
 
 
+
+def test_slew_releases_to_zero_on_both_signs():
+    # copysign(1, 0.0) == +1 used to make "negative -> 0" look like a sign change, so a released negative command
+    # (back-off, one saccade direction) decayed over several ticks while a positive one stopped at once
+    for axis in ("yaw", "forward"):
+        for v in (0.4, -0.4):
+            s = SafetyGovernor(load_config())
+            for k in range(40):
+                s.filter(FlightCommand(**{axis: v}), Telemetry(t=k * 0.05, alt_m=1, flying=True), dt=0.05)
+            c = s.filter(FlightCommand(), Telemetry(t=2.0, alt_m=1, flying=True), dt=0.05)
+            assert getattr(c, axis) == 0.0, (axis, v)
+
+
+def test_slew_still_limits_sign_flips():
+    s = SafetyGovernor(load_config())
+    for k in range(40):
+        s.filter(FlightCommand(yaw=-0.4), Telemetry(t=k * 0.05, alt_m=1, flying=True), dt=0.05)
+    c = s.filter(FlightCommand(yaw=0.4), Telemetry(t=2.0, alt_m=1, flying=True), dt=0.05)
+    assert c.yaw <= -0.4 + 2.5 * 0.05 + 1e-9
+
 def test_brain_timeout_hovers():
     s = SafetyGovernor(load_config())
     c = s.filter(FlightCommand(throttle=0.5), Telemetry(t=0, alt_m=1, flying=True), dt=0.05, brain_age_s=2.0)

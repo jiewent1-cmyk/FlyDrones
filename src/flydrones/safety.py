@@ -88,7 +88,7 @@ class SafetyGovernor:
         for a in AXES:
             prev = getattr(self._prev, a)
             v = out[a]
-            if abs(v) > abs(prev) or math.copysign(1, v) != math.copysign(1, prev):
+            if abs(v) > abs(prev) or v * prev < 0:  # copysign(1, 0.0) == +1 made negative -> 0 a "sign change" (slow)
                 v = max(prev - max_step, min(prev + max_step, v))
             out[a] = v
         safe = FlightCommand(**out, escape=cmd.escape, note="; ".join([cmd.note] + notes).strip("; "))
