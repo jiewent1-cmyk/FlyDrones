@@ -65,13 +65,19 @@ def random_world(seed: int, fence_stack: bool = True) -> World:
     return World(obs, floor_half=HALF, name=f"proc{seed}", floor_tape=_floor_tape(6.1, seed=7 + seed), scenery_seed=3 + seed % 5)
 
 
+def empty_world(seed: int = 0) -> World:
+    """Nets and mat only: every saccade here is a false alarm (B1 empty-field saccade rate)."""
+    return World(nets(), floor_half=HALF, name=f"empty{seed}", floor_tape=_floor_tape(6.1, seed=7 + seed), scenery_seed=3 + seed % 5)
+
+
 def validation_set(k: int = 24) -> list[dict]:
     """Fixed held-out procedural episodes for model selection (world seeds disjoint from training draws in practice)."""
     rnd = np.random.default_rng(424242)
     return [{"world_seed": 5_000_000 + i, "yaw_deg": float(rnd.uniform(0, 360)), "seed": 900_000 + i} for i in range(k)]
 
 
-def episode_set(gen: int, k: int) -> list[dict]:
-    """k (world seed, start yaw, brain seed) triples for generation `gen`; identical for every candidate of the gen."""
-    rnd = np.random.default_rng(777 + gen)
+def episode_set(gen: int, k: int, stream: int = 0) -> list[dict]:
+    """k (world seed, start yaw, brain seed) triples for generation `gen`; identical for every candidate of the gen.
+    `stream` selects an independent sequence of training worlds (replicate runs, RL roadmap A4); 0 = es1-es3 / A1."""
+    rnd = np.random.default_rng(777 + gen + 100_003 * stream)
     return [{"world_seed": int(rnd.integers(0, 10**6)), "yaw_deg": float(rnd.uniform(0, 360)), "seed": int(rnd.integers(0, 10**6))} for _ in range(k)]

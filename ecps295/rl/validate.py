@@ -133,7 +133,7 @@ if __name__ == "__main__":
     ap.add_argument("--src", default="gazebo", choices=["gazebo", "twin"])
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--arms", default="v3_2,es")
-    ap.add_argument("--space", default="default", choices=["default", "wide"])
+    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap"])
     ap.add_argument("--out-yaml", default="", help="export target (default minifly/v3_2_es.yaml)")
     a = ap.parse_args()
     params.set_space(a.space)

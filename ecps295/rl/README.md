@@ -1,6 +1,6 @@
 # ecps295/rl：用 CMA-ES 优化 MiniFly 解码器，以及配套的快仿真、对照实验与 Gazebo 多实例评估
 
-> 状态：2026-10-06。A0、B1 已完成，A1 和 B2 的 Gazebo 复测进行中（见文末"待办"）。
+> 状态：2026-10-07。A0、A2、A3、B1 已完成；A1/B2 的 Gazebo 复测与 A4/B 适应度 v2（3 个种子）进行中（见文末"待办"）。
 > 路线与依据见 `docs/`：`RL_plan_20261004_zh.md`（初版计划）、`community_RL_survey_and_roadmap_20261006_zh.md`（社区项目调研与定制路线 A–F）。
 
 本目录只新增文件，不修改 `ecps295/` 里已有的模块。在 GPS 模式下，快仿真用本仓库当前的 `ecps_pilot / ecps_decoder / ecps_retina` 跑出的结果，与开发时使用的 10-04 快照逐位一致（已验证）。
@@ -17,6 +17,9 @@
 | `arms.py` | 对照臂：`brainoff`、`shuffle<k>`（Maslov–Sneppen 换边，精确保持出入度和权重符号）、`randread<k>`、`bypass`（绕过 LIF）、`black`、`frozen`、`noloom` |
 | `batch.py`、`validate.py`、`compare.py`、`export_arms.py` | 并行批量运行、cage20 留出评估与统计、快仿真与 Gazebo 对照、导出最优配置 |
 | `trigger_metrics.py` | 触发器指标（2026-10-06 预注册）：威胁回合、扫视召回率与潜伏期、每分钟虚警、链式触发率、慢速比例 |
+| `stats.py` | A2 配对统计：精确 McNemar（救回/新增）、配对差值 bootstrap 95% CI + Wilcoxon、按指标 Holm 校正、打乱实例分层 bootstrap 与位次 |
+| `gates.py` + `anchors.json` | A3：开环感觉门控、闭环语义冒烟测试、快仿真结果 SHA-256 锚点（本机 / Jetson 逐位一致）。`python -m rl.gates all` 失败时退出码为 1 |
+| `b1_empty.py` | B1 空场扫视率（只有网笼的世界，每次扫视都是虚警） |
 | `server/` | 云服务器上 Gazebo 多实例并行用的脚本：`gz_inst.sh`（端口 +10·I、GZ_PARTITION、每个实例单独复制模型、共享内存路径）、`gz_batch.py`、`simclock.py`、`gz_table.py`，以及 NUMA 绑核 A/B 和各个排队脚本 |
 | `configs/` | es2、es3、A1 各臂、B2 各点的最优配置，以及 `v4_oc5`（v4 的居中视野改回 5 列）。网络权重指向 `../../minifly/*.npz`，用 `python my_minifly.py v3/v4` 生成 |
 | `results/twin/` | 每次 CMA-ES 运行的记录：`gens.jsonl`、`val.jsonl`、`best_val.json`、`config.json`、`episodes.jsonl.gz`、`cmaes.log`；`cage20_holdout/` 是 slew 修复前后的快仿真 64 种子对照 |
@@ -91,6 +94,20 @@ es3 并没有变慢或变犹豫，而是每次扫视都原地掉头、沿来路�
 
 我的假设是：v4 把 near 居中视野从 5 列改回了 3 列，看不到斜着经过的箱角。`configs/v4_oc5.yaml` 用来验证这个假设，Gazebo 复测进行中。
 
+### 3.3b v4_oc5：v4 把居中视野改回 5 列（cage20 GPS，30 个种子，配对对照 v3_2）
+
+| 版本 | 有接触的运行 | 每 100 m 撞击（与 v3_2 的配对差 [95% CI]） | stack_low 上的接触 |
+|---|---|---|---|
+| v4 | 21/32 | +2.62 [+1.43, +3.85]，Holm p = 0.002 | 29 |
+| v4_oc5 | 11/30 | +1.17 [−0.26, +2.99]，p = 0.23 | 16 |
+| es3 | 2/32 | −0.52 [−1.37, +0.52]，p = 0.23 | 4 |
+
+把居中视野改回 5 列，v4 的接触几乎减半（对 v4 p = 0.022），覆盖率不变，所以 `outer_cols: 3` 是 v4 在 cage20 退步的主要原因之一。剩余差距可能来自 v4 网络里新增的神经元或解码器版本。另外，**在配对检验下，es3 对 v3_2 的改进不显著**（McNemar 救回 8 / 新增 2，Holm p = 0.22）。
+
+### 3.3c 空场扫视率（B1，快仿真，32 个种子 × 60 s，只有网笼）
+
+v3_2 每分钟 1.38 次，es3 1.22 次，a1_intact 1.19 次；约 2/3 到 9/10 的运行至少误扫视一次。这是各版本共同的问题，优化没有解决它。C 阶段的 efference copy（随速度和转角抬高逼近门限）就是针对这一点。
+
 ### 3.4 A1 对照臂（快仿真，同一协议，各自留出集上的最优代）
 
 所有臂都从 v3_2 出发，在 wide 参数空间中优化 20 代 × 12 个候选 × 12 个回合。
@@ -122,7 +139,7 @@ w_cov = 2、4、8 时，覆盖率分别为 0.58、0.57、0.62（v3_2 是 0.50）
 
 ## 5. 待办
 
-- 完成 A1、B2 和 v4_oc5 的 Gazebo 复测（共 15 组配置 × 32 种子），之后更新本文件。
-- 适应度加上最低覆盖率约束；扫视转角单独作为参数（限定 90–135°）。
-- A2/A3：配对统计（McNemar、bootstrap 差值 CI、Holm 校正）、感觉因果门控、语义冒烟测试。
+- 完成 A1 + B2 的 Gazebo 复测（15 组配置 × 32 种子），用 `stats.py` 出配对结论，并更新本文件。
+- 进行中（Jetson）：B 适应度 v2（`--fitness v2`：覆盖权重 2、平滑接近代价 0.5·mean exp(−(clr/0.3)²)、覆盖率低于 0.40 时按差额 ×3 扣分）+ `turncap` 空间（扫视时长 1.2–2.5 s，约 60–140°，杜绝 173° 掉头），3 个 CMA 种子、各自独立的训练世界流（A4）。
+- B3：把 Governor 和围栏的介入计入代价。
 - 之后进入 C（efference copy 参数、通路增益和泄漏、批量化快仿真）和 D（lowbox、光流导航、ghost 等分布外条件），与 S8 的场景对齐。

@@ -49,10 +49,13 @@ NAMES = [s[0] for s in SPEC]
 N = len(SPEC)
 
 
+SPEC_TURNCAP = [(n, path, v0, *((1.2, 2.5) if n == "sacc_dur" else (lo, hi)), lg) for n, path, v0, lo, hi, lg in SPEC_WIDE]
+
+
 def set_space(name: str) -> None:
-    """'default' (es1, es2) or 'wide' (es3). Rebinds SPEC / Z0 for this process and forked workers."""
+    """'default' (es1, es2), 'wide' (es3, A1, B2) or 'turncap' (wide with a 1.2-2.5 s saccade, B fitness v2)."""
     global SPEC, Z0
-    SPEC = SPEC_WIDE if name == "wide" else SPEC_DEFAULT
+    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP}.get(name, SPEC_DEFAULT)
     Z0 = to_z(np.array([s[2] for s in SPEC]))
 
 

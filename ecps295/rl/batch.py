@@ -33,7 +33,11 @@ def _job(job: dict) -> dict:
 
     t0 = time.perf_counter()
     try:
-        if job["world"].startswith("proc:"):
+        if job["world"].startswith("empty:"):
+            from rl.worlds import empty_world
+
+            world = empty_world(int(job["world"][6:]))
+        elif job["world"].startswith("proc:"):
             from rl.worlds import random_world
 
             world = random_world(int(job["world"][5:]))

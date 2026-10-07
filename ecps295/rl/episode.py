@@ -158,6 +158,7 @@ def run_episode(
         "alt_min": round(min(r[2] for r in rows), 2),
         "alt_max": round(max(r[2] for r in rows), 2),
         "dcmd2": round(dcmd, 2),
+        "proximity": round(sum(math.exp(-((max(c, 0.0) / 0.3) ** 2)) for c in cl) / len(cl), 4),
         "landed_early": bool(pilot.safety.land_requested),
         "escape_triggers": [e[1] for e in pilot.decoder.escapes],
         "escape_at": esc_at,

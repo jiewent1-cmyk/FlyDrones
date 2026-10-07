@@ -30,9 +30,17 @@ V32 = str(E / "minifly" / "v3_2.yaml")
 
 
 W_COV = 1.0  # coverage weight in J (B2 sweeps it; 1.0 = es1-es3 / A1 fitness)
+FITNESS = "v1"  # v2 (B, fixed 2026-10-07): + 0.5 mean proximity cost, - 3 x shortfall below coverage 0.40
+COV_MIN, W_PROX, W_SHORT = 0.40, 0.5, 3.0
 
 
 def ep_score(r: dict, seconds: float) -> float:
+    if FITNESS == "v2":
+        return ep_score_v1(r, seconds) - W_PROX * r.get("proximity", 0.0) - W_SHORT * max(0.0, COV_MIN - r["coverage"])
+    return ep_score_v1(r, seconds)
+
+
+def ep_score_v1(r: dict, seconds: float) -> float:
     return (
         W_COV * r["coverage"]
         + 0.01 * r["path_m"]
@@ -93,14 +101,16 @@ def main() -> None:
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--val-every", type=int, default=5, help="evaluate the distribution mean on the held-out set")
     ap.add_argument("--val-k", type=int, default=24)
-    ap.add_argument("--space", default="default", choices=["default", "wide"])
+    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap"])
     ap.add_argument("--arm", default="intact", help="rl.arms control arm optimised with the same budget")
     ap.add_argument("--w-cov", type=float, default=1.0, help="coverage weight in the episode score (B2 Pareto sweep)")
+    ap.add_argument("--fitness", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--cma-seed", type=int, default=1, help="CMA-ES seed; also selects the training-world stream (seed-1)")
     ap.add_argument("--x0-yaml", default="", help="warm start from the decoder values in this variant YAML (rl.validate export)")
     a = ap.parse_args()
     params.set_space(a.space)
-    global W_COV
-    W_COV = a.w_cov
+    global W_COV, FITNESS
+    W_COV, FITNESS = a.w_cov, a.fitness
     x0 = params.Z0
     if a.x0_yaml:
 
@@ -127,13 +137,13 @@ def main() -> None:
         print(f"resumed at generation {gen0}", flush=True)
     else:
         es = cma.CMAEvolutionStrategy(
-            x0.tolist(), a.sigma0, {"bounds": [0.0, 1.0], "popsize": a.popsize, "seed": 1, "verbose": -9}
+            x0.tolist(), a.sigma0, {"bounds": [0.0, 1.0], "popsize": a.popsize, "seed": a.cma_seed, "verbose": -9}
         )
         gen0 = 0
         (out / "config.json").write_text(json.dumps({**vars(a), "names": params.NAMES, "z0": x0.tolist(), "spec": params.SPEC}, indent=1))
     for gen in range(gen0, a.gens):
         t0 = time.time()
-        eps = episode_set(gen, a.k)
+        eps = episode_set(gen, a.k, stream=a.cma_seed - 1)
         Z = es.ask()
         jobs = jobs_for("v3_2", None, eps, a.seconds)
         for i, z in enumerate(Z):
