@@ -3,6 +3,52 @@
 Simulation work for UCI ECPS 295 (Fall 2026), following the course's phase-1 simulation route.
 Nothing under `src/flydrones/` is modified; everything here subclasses or drives upstream code.
 
+> **Reports · 实验报告 →** [`reports/`](reports/README.md) (English + 中文, with figures) ·
+> S8 ablation full report: [`results/ablation_2026-10-06/REPORT_zh.md`](results/ablation_2026-10-06/REPORT_zh.md) ·
+> CMA-ES / RL: [`rl/README.md`](rl/README.md)
+
+## At a glance · 概览
+
+A FlyDrones MiniFly connectome brain flies the 295 g / 2S course quadrotor through ArduPilot, in a Gazebo twin of the
+final hardware: fisheye camera, 3901-L0X optical flow + ToF, **no GPS**.
+FlyDrones 的 MiniFly 连接组大脑通过 ArduPilot 驾驶 295 g / 2S 课程四旋翼，运行在最终硬件的 Gazebo 孪生中
+（鱼眼相机、3901-L0X 光流 + ToF、**无 GPS**）。
+
+| | Upstream FlyDrones | This branch (v4 + route B) | Evidence |
+|---|---|---|---|
+| Wall approaches with contact · 撞墙比例 | 100 % | **0 %** | S8 E2, 32 approaches |
+| Contacts per 100 m, low-box patrol · 每 100 m 撞击 | 10.2 (parks at the fence) | **1.07** | S8 E1, 50 worlds |
+| Mission success without GPS · 无 GPS 成功率 | 70 % (26 % FC landings) | **82 %** (0 % FC landings) | S8 E1 |
+| Companion hangs → safe landing · 机载卡死后安全降落 | – | **10/10** | S8 E3 |
+| Closed-loop flights behind these numbers · 闭环飞行次数 | | **1,260** (RTF ≥ 0.95) | `results/ablation_2026-10-06/` |
+
+```mermaid
+flowchart LR
+  CAM["fisheye camera"] --> RET["EcpsRetina<br/>flow · looming · blank · near · ventral"]
+  TOF["ToF + baro"] --> RET
+  RET --> MF["MiniFly LIF connectome<br/>+ LCb + LCn + LCv→MDN"]
+  MF --> DEC["EcpsDecoder<br/>saccade · caution · retreat · efference copy"]
+  DEC --> PIL["EcpsPilot<br/>watchdogs · fence turn-back"]
+  PIL -->|GUIDED velocity| AP["ArduPilot 4.7 SITL"]
+  PIL -->|route B: height above floor| AP
+  AP <-->|JSON lockstep| GZ["Gazebo Harmonic"]
+```
+
+![Version ladder](reports/figures/fig1_version_ladder.png)
+
+![E1 ablation](reports/figures/fig2_e1_ablation_forest.png)
+
+| Stage · 阶段 | What · 内容 | Report |
+|---|---|---|
+| S4–S5, G1–G4 | SITL + Gazebo twin (airframe, fisheye, cages), MiniFly flies by camera · 孪生与闭环 | [1](reports/01_twin_and_minifly.en.md) · [中](reports/01_twin_and_minifly.zh.md) |
+| S2 | custom MiniFly v1 → v4 (saccade, LCb, LCn, LCv/MDN) · 定制 MiniFly | [1](reports/01_twin_and_minifly.en.md) · [中](reports/01_twin_and_minifly.zh.md) |
+| S7d / S7e / S7b | optical-flow navigation, route B, companion faults · 光流导航、路线 B、机载故障 | [2](reports/02_gps_free_navigation.en.md) · [中](reports/02_gps_free_navigation.zh.md) |
+| S8 | ablation, 1,260 flights · 消融 | [3](reports/03_s8_ablation.en.md) · [中](reports/03_s8_ablation.zh.md) |
+| RL | CMA-ES decoder, control arms, Gazebo multi-instance · CMA-ES 与对照臂 | [4](reports/04_cmaes_optimisation.en.md) · [中](reports/04_cmaes_optimisation.zh.md) |
+
+The sections below are the lab notebook: setup, commands and raw tables in the order the work was done.
+以下各节是实验记录：按时间顺序记录的环境、命令和原始表格。
+
 ## Layers
 
 | Layer | What | Files |

@@ -2,6 +2,12 @@
   <img src="assets/banner.svg" alt="FlyDrones: a fruit fly connectome as a drone pilot" width="100%">
 </p>
 
+> [!NOTE]
+> **Branch `ecps295-sim` — UCI ECPS 295 (Fall 2026).** This fork flies MiniFly on a 295 g course quadrotor through
+> ArduPilot, in a Gazebo digital twin without GPS. Upstream code is untouched; all work is in [`ecps295/`](ecps295/README.md).
+> Bilingual experiment reports with figures · 中英双语实验报告：[`ecps295/reports/`](ecps295/reports/README.md).
+> Headline: wall contact 100 % → 0 %, 1.07 contacts per 100 m, 82 % GPS-free mission success over 1,260 Gazebo flights.
+
 <p align="center">
   <a href="https://spikecalls.github.io/FlyDrones/"><img alt="Fly it in your browser" src="https://img.shields.io/badge/%E2%96%B6%20FLY%20IT%20IN%20YOUR%20BROWSER-39ff88?style=for-the-badge&labelColor=0d1117"></a>
   &nbsp;
