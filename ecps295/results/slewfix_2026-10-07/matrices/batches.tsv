@@ -1,0 +1,6 @@
+A_e1	flow	$V/G_extnav_height.parm,$V/companion_fs.parm
+A_e1_noB	flow	$V/companion_fs.parm
+A_e2	flow	$V/G_extnav_height.parm,$V/companion_fs.parm
+B_low	flow	$V/G_extnav_height.parm,$V/companion_fs.parm
+B_cage	gps	$V/companion_fs.parm
+B_wall	flow	$V/G_extnav_height.parm,$V/companion_fs.parm

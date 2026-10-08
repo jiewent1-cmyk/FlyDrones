@@ -435,3 +435,24 @@ behavioural layer for when the height estimate fails (S7d), not a safety gain in
 turned out to hold the cruise height: without it the drone flies 0.17 m lower and the low boxes become obstacles.
 E3: height-source watchdog 7/10 -> 0/10 runs above the 1.3 m fence (p = 0.016), companion failsafe 0/10 -> 10/10
 landed (p = 0.002), camera watchdog contacts 4/10 -> 1/10 (n.s.).
+
+### Slew-fix re-check and RL decoders vs hand-built models (2026-10-07)
+
+Report (Chinese): `results/slewfix_2026-10-07/REPORT_zh.md`; paired statistics in the same folder (`A1_*` same condition bug vs
+fixed, `A2_*` component effects, `B_*` model comparison). 1,040 flights with the SafetyGovernor slew fix (8b8eef9), all
+whole-run RTF >= 0.95, same worlds / brain seeds / statistics as S8 (`gen_slewcheck.py`, `scripts/run_resume.sh`,
+`scripts/slew_analysis.sh`).
+
+- The slew bug does not change the S8 conclusions: no condition changes significantly between bug and fix, and every
+  component effect keeps its direction (LCb 50% wall contacts, route B 5% success, saccade 0.18 m clearance).
+- RL decoders (v3_2 + CMA-ES parameters, `rl/configs/`) give no safety gain in the deployment setting (lowbox, flow +
+  route B, n=30: contacts per 100 m v4 1.01, v3_2 0.91, es2 1.22, es3 1.71, wcov2/4/8 1.9-3.0, all n.s.) and spend 2.4x
+  longer over boxes than v4 (no LCv / retreat).
+- In their training setting (cage20 GPS, n=32) es2 / es3 / wcov2 beat v4 on contacts per 100 m (0.5-0.9 vs 3.2) and
+  es2 / es3 have fewer near misses than v3_2 (0.75 / 0.94 vs 1.97); versus v3_2 the contact drop is n.s. On the walls
+  they keep 0.17 m more clearance through longer back-off and turns, with the same escape onset (0.89 m).
+- v4_oc5 equals v4 everywhere (the narrow centering field is not the cause of the cage20 contacts); v4 vs v3_2 in
+  cage20 is 3.18 vs 2.29 contacts per 100 m, n.s.
+
+Verdict: the hand-built components decide safety; the RL decoders are a modest, setting-specific tuning. v4 stays the
+main line.

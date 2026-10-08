@@ -1,0 +1,160 @@
+fx_full__wall_tape_k0 wall_tape v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k1 wall_tape v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k2 wall_tape v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k3 wall_tape v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k4 wall_tape v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k5 wall_tape v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k6 wall_tape v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_tape_k7 wall_tape v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k0 wall_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k1 wall_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k2 wall_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k3 wall_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k4 wall_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k5 wall_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k6 wall_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_plain_k7 wall_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k0 wall_offset v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k1 wall_offset v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k2 wall_offset v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k3 wall_offset v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k4 wall_offset v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k5 wall_offset v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k6 wall_offset v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_k7 wall_offset v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k0 wall_offset_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k1 wall_offset_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k2 wall_offset_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k3 wall_offset_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k4 wall_offset_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k5 wall_offset_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k6 wall_offset_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_full__wall_offset_plain_k7 wall_offset_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height
+fx_no_lcb__wall_tape_k0 wall_tape v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k1 wall_tape v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k2 wall_tape v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k3 wall_tape v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k4 wall_tape v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k5 wall_tape v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k6 wall_tape v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_tape_k7 wall_tape v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k0 wall_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k1 wall_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k2 wall_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k3 wall_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k4 wall_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k5 wall_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k6 wall_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_plain_k7 wall_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k0 wall_offset v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k1 wall_offset v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k2 wall_offset v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k3 wall_offset v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k4 wall_offset v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k5 wall_offset v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k6 wall_offset v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_k7 wall_offset v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k0 wall_offset_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k1 wall_offset_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k2 wall_offset_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k3 wall_offset_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k4 wall_offset_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k5 wall_offset_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k6 wall_offset_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_lcb__wall_offset_plain_k7 wall_offset_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0
+fx_no_new_cells__wall_tape_k0 wall_tape v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k1 wall_tape v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k2 wall_tape v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k3 wall_tape v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k4 wall_tape v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k5 wall_tape v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k6 wall_tape v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_tape_k7 wall_tape v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k0 wall_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k1 wall_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k2 wall_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k3 wall_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k4 wall_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k5 wall_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k6 wall_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_plain_k7 wall_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k0 wall_offset v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k1 wall_offset v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k2 wall_offset v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k3 wall_offset v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k4 wall_offset v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k5 wall_offset v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k6 wall_offset v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_k7 wall_offset v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k0 wall_offset_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k1 wall_offset_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k2 wall_offset_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k3 wall_offset_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k4 wall_offset_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k5 wall_offset_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k6 wall_offset_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_new_cells__wall_offset_plain_k7 wall_offset_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set vision.ecps_blank.gain=0 --set vision.ecps_near.enabled=false --set vision.ecps_ventral.enabled=false
+fx_no_saccade__wall_tape_k0 wall_tape v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k1 wall_tape v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k2 wall_tape v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k3 wall_tape v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k4 wall_tape v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k5 wall_tape v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k6 wall_tape v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_tape_k7 wall_tape v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k0 wall_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k1 wall_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k2 wall_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k3 wall_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k4 wall_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k5 wall_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k6 wall_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_plain_k7 wall_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k0 wall_offset v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k1 wall_offset v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k2 wall_offset v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k3 wall_offset v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k4 wall_offset v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k5 wall_offset v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k6 wall_offset v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_k7 wall_offset v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k0 wall_offset_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k1 wall_offset_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k2 wall_offset_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k3 wall_offset_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k4 wall_offset_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k5 wall_offset_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k6 wall_offset_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_saccade__wall_offset_plain_k7 wall_offset_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.saccade.enabled=false --set decoder.escape.mode=climb
+fx_no_efference__wall_tape_k0 wall_tape v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k1 wall_tape v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k2 wall_tape v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k3 wall_tape v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k4 wall_tape v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k5 wall_tape v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k6 wall_tape v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_tape_k7 wall_tape v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k0 wall_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k1 wall_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k2 wall_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k3 wall_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k4 wall_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k5 wall_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k6 wall_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_plain_k7 wall_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k0 wall_offset v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k1 wall_offset v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k2 wall_offset v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k3 wall_offset v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k4 wall_offset v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k5 wall_offset v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k6 wall_offset v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_k7 wall_offset v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k0 wall_offset_plain v4 0 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k1 wall_offset_plain v4 1 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k2 wall_offset_plain v4 2 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k3 wall_offset_plain v4 3 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k4 wall_offset_plain v4 4 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k5 wall_offset_plain v4 5 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k6 wall_offset_plain v4 6 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
+fx_no_efference__wall_offset_plain_k7 wall_offset_plain v4 7 --mode approach --seconds 20 --cruise 0.5 --max-forward 0.5 --ext-height --set decoder.ecps.throttle_per_forward=0
