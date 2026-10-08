@@ -1,0 +1,14 @@
+# conda env "flydrones" (python 3.11): versions of ROG / server / Mac mini on 2026-10-08.
+# numpy and scipy must match exactly: the fast twin and rl.gates anchors are bit-identical only with these.
+numpy==2.4.6
+scipy==1.17.1
+cma==4.5.0
+PyYAML==6.0.3
+matplotlib==3.11.2
+pillow==12.3.0
+pymavlink==2.4.50
+fastcrc==0.5.0
+lxml==6.1.3
+opencv-python==5.0.0.93
+pandas==3.0.6
+pytest==9.1.1

@@ -1,0 +1,15 @@
+{
+ "_note": "Reference values for verify_desktop.sh (2026-10-08). lowbox_s0 = v4, flow + route B, 120 s patrol, seed 0.",
+ "minifly_sha256": {
+  "minifly_v2.npz": "ef15e98ee62034fa3b156daed6298b5927e5c15b32f9c066ee9d4c905d4f7029",
+  "minifly_v3.npz": "0f035b4c954088a786b45b6bf28d39fa2d4f90dc39be2c645e89a789789de7ca",
+  "minifly_v4.npz": "4bec93a423250d2eaa84e2dcb3e1c3233f0c4b571704e8ef3c04cba3046c7dc1"
+ },
+ "versions": {"gz_sim": "8.15.0", "ardupilot": "Copter-4.7.0", "ardupilot_gazebo": "082a0fe", "python": "3.11"},
+ "lowbox_s0_v4": [
+  {"where": "ROG fx_full (slew fix, 2 instances, RTF 0.968)", "contact_episodes": 0, "near_miss_episodes": 1, "min_clearance_m": 0.099, "path_m": 21.8, "coverage": 0.558, "alt_true_max_m": 0.95},
+  {"where": "ROG fx_full, first try (RTF 0.942, invalid)", "contact_episodes": 0, "near_miss_episodes": 1, "min_clearance_m": 0.006, "path_m": 23.2, "coverage": 0.423},
+  {"where": "ROG S8 full (slew bug, RTF 0.954)", "contact_episodes": 0, "near_miss_episodes": 0, "min_clearance_m": 0.377, "path_m": 25.8, "coverage": 0.558},
+  {"where": "server h0low_v4_s0 (hw tree, simclock)", "contact_episodes": 1, "near_miss_episodes": 4, "min_clearance_m": -0.032, "path_m": 12.8, "coverage": 0.212, "alt_true_max_m": 1.02}
+ ]
+}
