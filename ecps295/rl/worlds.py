@@ -65,6 +65,28 @@ def random_world(seed: int, fence_stack: bool = True) -> World:
     return World(obs, floor_half=HALF, name=f"proc{seed}", floor_tape=_floor_tape(6.1, seed=7 + seed), scenery_seed=3 + seed % 5)
 
 
+def lowbox_world(seed: int, n: int = 6) -> World:
+    """H1: the S8 lowbox distribution (gazebo/make_quad.py lowbox_objects): boxes 0.2-0.75 m tall (flown over at the
+    0.6-0.9 m cruise height: the ventral cue / flow-EKF case), one in four a 1.1 m stack, footprints 0.3-0.6 m, centres
+    1.0-2.3 m from take-off, >= 0.5 m apart. Seeds are offset by 10**6 so lowbox_s0..49 (Gazebo test set) never recur."""
+    import random
+
+    rng = random.Random(1000 + 10**6 + seed)
+    obs, centres = nets(), []
+    while len(centres) < n:
+        r, th = rng.uniform(1.0, 2.3), rng.uniform(-math.pi, math.pi)
+        x, y = r * math.cos(th), r * math.sin(th)  # ENU, as make_quad
+        w, d = rng.uniform(0.3, 0.6), rng.uniform(0.3, 0.6)
+        if any(math.hypot(x - cx, y - cy) < 0.5 + 0.5 * (w + cw) for cx, cy, cw in centres):
+            continue
+        h = 1.1 if rng.random() < 0.25 else rng.uniform(0.2, 0.75)
+        centres.append((x, y, max(w, d)))
+        taped = rng.random() < 0.5
+        n_, e_ = y, x  # ENU -> NED
+        obs.append(Obstacle((n_ - d / 2, e_ - w / 2, 0), (n_ + d / 2, e_ + w / 2, h), CARDBOARD, False, f"lb{len(centres) - 1}", taped))
+    return World(obs, floor_half=HALF, name=f"lowproc{seed}", floor_tape=_floor_tape(6.1, seed=7 + seed), scenery_seed=3 + seed % 5)
+
+
 def empty_world(seed: int = 0) -> World:
     """Nets and mat only: every saccade here is a false alarm (B1 empty-field saccade rate)."""
     return World(nets(), floor_half=HALF, name=f"empty{seed}", floor_tape=_floor_tape(6.1, seed=7 + seed), scenery_seed=3 + seed % 5)

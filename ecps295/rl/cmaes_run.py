@@ -32,12 +32,23 @@ V32 = str(E / "minifly" / "v3_2.yaml")
 W_COV = 1.0  # coverage weight in J (B2 sweeps it; 1.0 = es1-es3 / A1 fitness)
 FITNESS = "v1"  # v2 (B, fixed 2026-10-07): + 0.5 mean proximity cost, - 3 x shortfall below coverage 0.40
 COV_MIN, W_PROX, W_SHORT = 0.40, 0.5, 3.0
+W_BACK, W_EST, W_FA = 0.3, 0.5, 0.1  # v3 (H2, fixed 2026-10-07): per m of commanded backing, per m of max position-estimate error
+BASE = V32  # reference / base variant (H2: minifly/v4.yaml); the reference arm keeps the tag "v3_2" in the logs
+DYN: dict | None = None  # TwinDrone overrides (H2: nav=flow + calibrated estimator)
+LOW_FRAC = 0.0  # share of training / validation episodes in lowbox-style worlds
+W_INT = 0.0  # B3: cost per unit of intervention_frac (share of ticks where governor / fence turn overrode the decoder)
 
 
 def ep_score(r: dict, seconds: float) -> float:
-    if FITNESS == "v2":
-        return ep_score_v1(r, seconds) - W_PROX * r.get("proximity", 0.0) - W_SHORT * max(0.0, COV_MIN - r["coverage"])
-    return ep_score_v1(r, seconds)
+    s = ep_score_v1(r, seconds) - W_INT * r.get("intervention_frac", 0.0)
+    if FITNESS in ("v3", "v4"):
+        s -= W_BACK * r.get("back_m", 0.0) + W_EST * r.get("est_err_max_m", 0.0)
+    if FITNESS == "v4":  # C1 (2026-10-08): + 0.1 per false alarm a minute (rl.trigger_metrics, pre-registered definition)
+        s -= W_FA * (r.get("false_alarms_per_min") or 0.0)
+    if FITNESS in ("v2", "v3", "v4"):
+        cov_min = 0.35 if FITNESS in ("v3", "v4") else COV_MIN  # v4 covers ~0.38 on lowbox (revision doc: floor 0.35)
+        return s - W_PROX * r.get("proximity", 0.0) - W_SHORT * max(0.0, cov_min - r["coverage"])
+    return s
 
 
 def ep_score_v1(r: dict, seconds: float) -> float:
@@ -69,15 +80,31 @@ def fitness(eps: list[dict], seconds: float) -> dict:
         "coverage": round(float(np.mean([r["coverage"] for r in ok])), 3),
         "path": round(float(np.mean([r["path_m"] for r in ok])), 1),
         "minclr_p05": round(float(np.percentile([r["min_clearance_m"] for r in ok], 5)), 3),
+        "interv": round(float(np.mean([r.get("intervention_frac", 0.0) for r in ok])), 4),
     }
+
+
+def _world(e: dict) -> str:
+    """Training / validation world: lowbox-style for a LOW_FRAC share of the episodes (decided from the world seed)."""
+    low = (e["world_seed"] * 2654435761 % 2**32) / 2**32 < LOW_FRAC
+    return f"lowproc:{e['world_seed']}" if low else f"proc:{e['world_seed']}"
+
+
+def _dyn(e: dict) -> dict | None:
+    if DYN == "dr":  # H2: flow-EKF domain randomisation, drawn per episode from its world seed (common to all candidates)
+        from rl.twin import flow_dr
+
+        return flow_dr(e["world_seed"])
+    return DYN
 
 
 def jobs_for(tag: str, overrides: dict | None, eps: list[dict], seconds: float, arm: str = "intact") -> list[dict]:
     return [
         {
             "tag": tag,
-            "variant": V32,
-            "world": f"proc:{e['world_seed']}",
+            "variant": BASE,
+            "world": _world(e),
+            "dyn_over": _dyn(e),
             "seed": e["seed"],
             "yaw_deg": e["yaw_deg"],
             "seconds": seconds,
@@ -101,16 +128,27 @@ def main() -> None:
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--val-every", type=int, default=5, help="evaluate the distribution mean on the held-out set")
     ap.add_argument("--val-k", type=int, default=24)
-    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap"])
+    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap", "v4hw", "v4hw_eff"])
     ap.add_argument("--arm", default="intact", help="rl.arms control arm optimised with the same budget")
     ap.add_argument("--w-cov", type=float, default=1.0, help="coverage weight in the episode score (B2 Pareto sweep)")
-    ap.add_argument("--fitness", default="v1", choices=["v1", "v2"])
+    ap.add_argument("--fitness", default="v1", choices=["v1", "v2", "v3", "v4"])
+    ap.add_argument("--base", default="", help="base / reference variant YAML (default minifly/v3_2.yaml; H2: minifly/v4.yaml)")
+    ap.add_argument("--nav", default="truth", choices=["truth", "flow"], help="TwinDrone navigation (H1 flow estimator)")
+    ap.add_argument("--flow", default="", help='estimator settings for --nav flow: JSON, e.g. {"tau_terr":1.5,"flow_rw":0.03}, or "dr" (rl.twin.flow_dr per episode)')
+    ap.add_argument("--lowbox-frac", type=float, default=0.0, help="share of episodes in lowbox-style worlds (H1)")
+    ap.add_argument("--w-int", type=float, default=0.0, help="B3: cost of governor / fence-turn intervention (share of ticks)")
     ap.add_argument("--cma-seed", type=int, default=1, help="CMA-ES seed; also selects the training-world stream (seed-1)")
     ap.add_argument("--x0-yaml", default="", help="warm start from the decoder values in this variant YAML (rl.validate export)")
     a = ap.parse_args()
     params.set_space(a.space)
-    global W_COV, FITNESS
-    W_COV, FITNESS = a.w_cov, a.fitness
+    global W_COV, FITNESS, W_INT, BASE, DYN, LOW_FRAC
+    W_COV, FITNESS, W_INT = a.w_cov, a.fitness, a.w_int
+    BASE = str(E / a.base) if a.base else V32
+    if a.nav == "flow":
+        DYN = "dr" if a.flow == "dr" else {"nav": "flow", **(json.loads(a.flow) if a.flow else {})}
+    else:
+        DYN = None
+    LOW_FRAC = a.lowbox_frac
     x0 = params.Z0
     if a.x0_yaml:
 
@@ -126,6 +164,15 @@ def main() -> None:
             "sacc_refr": e["saccade"]["refractory_s"], "sacc_keep_dir": e["saccade"]["keep_direction_s"], "caut_hold": e["caution"]["hold_s"],
             "caut_ramp": e["caution"]["ramp_s"], "caut_on_brake": e["caution"]["on_brake"],
         }
+        for n, path, v0, *_ in params.SPEC:  # extra (v4hw / eff) parameters: read by config path, else the spec default
+            if n not in vals:
+                node = cfg
+                try:
+                    for k in path.split("."):
+                        node = node[k]
+                except (KeyError, TypeError):
+                    node = v0
+                vals[n] = node
         x0 = params.to_z(np.array([vals[n] for n in params.NAMES]))
         print("warm start", params.describe(x0), flush=True)
     x0 = params.x0_for(a.arm, x0)

@@ -76,6 +76,28 @@ def _gap(o, n, e):
     return math.hypot(max(o.lo[0] - n, 0.0, n - o.hi[0]), max(o.lo[1] - e, 0.0, e - o.hi[1]))
 
 
+# B1/B3 (fixed 2026-10-08 before any result was seen)
+#   intervention tick  the command flown differs from the decoder's raw command by > OVR_EPS on forward or yaw
+#                      (SafetyGovernor clamps / geofence / slew limit + EcpsPilot fence turn, i.e. not the brain)
+#   turn direction     escape onsets with the nearest obstacle (prop tip, at flight height) within DIR_CLR and within
+#                      +-90 deg of the heading but more than DIR_MIN_DEG off-axis; correct if the mean yaw command over
+#                      the next DIR_WIN s turns away from it (+yaw = clockwise = right)
+OVR_EPS, DIR_CLR, DIR_MIN_DEG, DIR_WIN = 0.1, 1.0, 10.0, 1.0
+
+
+def _nearest_bearing(world: World, n: float, e: float, alt: float) -> tuple[float, float]:
+    """(clearance, bearing rad from north, clockwise) of the closest obstacle reaching the drone's height."""
+    best = (math.inf, 0.0)
+    for o in world.obstacles:
+        if o.hi[2] < alt - 0.1 or o.lo[2] > alt + 0.1:
+            continue
+        pn, pe = min(max(n, o.lo[0]), o.hi[0]), min(max(e, o.lo[1]), o.hi[1])
+        d = math.hypot(pn - n, pe - e) - PROP_TIP_R
+        if d < best[0]:
+            best = (d, math.atan2(pe - e, pn - n))
+    return best
+
+
 def run_episode(
     variant: str,
     world: World,
@@ -105,19 +127,36 @@ def run_episode(
 
     drone.connect()
     pilot.warmup(pilot.decoder.settle_s + 0.1, DT)
-    drone.hover_at(TAKEOFF_ALT_M)
+    drone.hover_at(drone.hover_alt or TAKEOFF_ALT_M)
     rows = []
     escs = []
     dn = []
     esc_at = []
     escape_prev = False
     escapes = 0
+    overrides_n = gov_n = 0
+    est_err = 0.0
+    low = [o for o in world.obstacles if not o.net]
+    over_n = 0
+    dir_cases = []  # (tick, side of obstacle: +1 right / -1 left)
     for k in range(int(seconds * HZ)):
+        n0, e0, a0 = drone.pos
         info = pilot.tick(k * DT, DT)
+        ovr = abs(info.cmd.forward - info.raw.forward) > OVR_EPS or abs(info.cmd.yaw - info.raw.yaw) > OVR_EPS
+        overrides_n += ovr
+        gov_n += ovr and not getattr(pilot, "_turning_back", False)  # outside fence turns: SafetyGovernor only
         for _ in range(SUBSTEPS):
             drone.step(DT / SUBSTEPS)
         n, e, a = drone.pos
+        if drone.nav == "flow":
+            est_err = max(est_err, math.hypot(drone.est[0] - n, drone.est[1] - e))
+        over_n += any(o.lo[0] <= n <= o.hi[0] and o.lo[1] <= e <= o.hi[1] and o.hi[2] < a for o in low)
         esc = bool(info.cmd.escape)
+        if esc and not escape_prev and info.tel.yaw_deg is not None:
+            d, brg = _nearest_bearing(world, n0, e0, a0)
+            rel = math.degrees(math.atan2(math.sin(brg - math.radians(info.tel.yaw_deg)), math.cos(brg - math.radians(info.tel.yaw_deg))))
+            if d < DIR_CLR and DIR_MIN_DEG < abs(rel) < 90.0:
+                dir_cases.append((k, 1 if rel > 0 else -1))
         if esc and not escape_prev:
             lb = getattr(pilot.retina, "last_blank", {}) or {}
             esc_at.append((round(k * DT, 1), round(clearance(world, n, e, a), 2), round(math.hypot(n, e), 2),
@@ -169,6 +208,15 @@ def run_episode(
         "contact_where": sorted({min(world.obstacles, key=lambda o: _gap(o, r[0], r[1])).name for r in rows if r[3] < 0}),
     }
     out.update(trigger_metrics([k * DT for k in range(len(rows))], [r[0] for r in rows], [r[1] for r in rows], cl, escs))
+    out["intervention_frac"] = round(overrides_n / len(rows), 4)
+    out["governor_frac"] = round(gov_n / len(rows), 4)
+    out["over_box_s"] = round(over_n / HZ, 1)
+    out["est_err_max_m"] = round(est_err, 3)
+    out["back_m"] = round(sum(max(0.0, -r[4]) for r in rows) * drone.v_max * DT, 3)  # commanded backing distance
+    w = int(round(DIR_WIN * HZ))
+    turns = [(side, sum(r[5] for r in rows[k : k + w]) / max(1, len(rows[k : k + w]))) for k, side in dir_cases]
+    out["dir_cases"] = len(turns)
+    out["dir_correct"] = sum(1 for side, y in turns if y * side < 0)
     if keep_rows:
         out["rows"] = rows
     return out

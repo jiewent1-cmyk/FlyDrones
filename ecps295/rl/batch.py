@@ -37,6 +37,10 @@ def _job(job: dict) -> dict:
             from rl.worlds import empty_world
 
             world = empty_world(int(job["world"][6:]))
+        elif job["world"].startswith("lowproc:"):
+            from rl.worlds import lowbox_world
+
+            world = lowbox_world(int(job["world"][8:]))
         elif job["world"].startswith("proc:"):
             from rl.worlds import random_world
 

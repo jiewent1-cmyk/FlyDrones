@@ -62,6 +62,7 @@ class EcpsPilot(Pilot):
         self.land_after_s = land_after_s
         self._last_tick_end: float | None = None
         self._last_yaw_dps = 0.0
+        self._last_fwd = 0.0
         self.watchdog_events: list[tuple[float, str]] = []
 
     def _event(self, t: float, what: str) -> None:
@@ -102,6 +103,8 @@ class EcpsPilot(Pilot):
         cam = self.webcam.read() if self.webcam is not None else None
         if hasattr(self.retina, "yaw_rate_dps"):  # EcpsRetina centering needs the gyro (previous tick)
             self.retina.yaw_rate_dps = self._last_yaw_dps
+        if hasattr(self.retina, "fwd_cmd"):  # C1 efference copy: forward command of the previous tick
+            self.retina.fwd_cmd = self._last_fwd
         if hasattr(self.retina, "range_m"):  # v4 ventral cue: downward ToF + baro height (latest telemetry)
             self.retina.range_m = getattr(self.drone, "rangefinder_m", lambda: None)()
             self.retina.baro_m = getattr(self.drone, "baro_m", lambda: None)()
@@ -151,6 +154,7 @@ class EcpsPilot(Pilot):
             self.drone.land()
         else:
             self.drone.send(cmd)
+        self._last_fwd = cmd.forward
         self.history.append(
             {
                 "t": t,

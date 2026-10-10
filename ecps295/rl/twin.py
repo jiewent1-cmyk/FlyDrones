@@ -244,6 +244,16 @@ class TwinCamera:
         return np.clip(img * 255, 0, 255).astype(np.uint8)
 
 
+def flow_dr(seed: int) -> dict:
+    """H1 domain randomisation of the flow-EKF model (2026-10-08): the S8 lowbox calibration could not pin one setting
+    (Gazebo itself cannot rank the models on contacts with 30 worlds), so every episode draws its estimator from the
+    region that reproduced the reliable metrics: terrain lag 0.5-4 s (log-uniform), random walk 0.02-0.06, cruise
+    0.8 +- 0.1 m."""
+    r = np.random.default_rng(70_000 + seed)
+    return {"nav": "flow", "tau_terr": float(np.exp(r.uniform(np.log(0.5), np.log(4.0)))), "flow_rw": float(r.uniform(0.02, 0.06)),
+            "flow_bias": 0.94, "hover_alt": 0.8, "hover_jitter": 0.1}
+
+
 class TwinDrone(Drone):
     """Velocity-mode quad (ArduPilot GUIDED stand-in) with per-axis first-order lags, in the NED telemetry frame."""
 
@@ -266,6 +276,13 @@ class TwinDrone(Drone):
         cmd_delay_ticks: int = 0,
         camera: TwinCamera | None = None,
         radius: float = 0.12,
+        nav: str = "truth",
+        flow_bias: float = 0.94,
+        tau_terr: float = 1.5,
+        flow_rw: float = 0.02,
+        tof_hz: float = 10.0,
+        hover_alt: float | None = None,
+        hover_jitter: float = 0.0,
     ):
         self.world = world
         self.pos = np.array(start, dtype=float)
@@ -289,6 +306,17 @@ class TwinDrone(Drone):
         self._touching = False
         self.r = radius
         self.battery = 100.0
+        # nav="flow" (RL roadmap H1): the real drone has no GPS; EKF3 velocity = optical flow x height above terrain,
+        # height from the companion (route B, ~truth). Over a box the flow sensor sees a closer surface while the EKF
+        # terrain estimate lags, so the speed is over-estimated (Gazebo S8 logs: x1.2-1.7 at range/height 0.4-0.75);
+        # GUIDED then flies the true drone slower and the position estimate runs ahead. Telemetry x/y = estimate.
+        self.nav, self.flow_bias, self.tau_terr, self.flow_rw = nav, flow_bias, tau_terr, flow_rw
+        self.est = np.array(start[:2], dtype=float)
+        self.terr = 0.0  # EKF terrain height estimate
+        self.tof_dt, self._tof_t, self._tof = 1.0 / tof_hz, -1.0, None
+        self.nrng = np.random.default_rng(50_000 + seed)
+        # flow + route B in Gazebo cruises higher than the GPS runs (S8 lowbox: median 0.81 m, p10-p90 0.62-0.98 m)
+        self.hover_alt = None if hover_alt is None else hover_alt + float(np.random.default_rng(60_000 + seed).uniform(-hover_jitter, hover_jitter))
 
     def takeoff(self) -> None:  # Gazebo run_g4: drone.takeoff() blocks until airborne; the brain does not tick
         self.flying = True
@@ -305,7 +333,38 @@ class TwinDrone(Drone):
         self.queue.append(cmd)
         self.queue.pop(0)
 
+    def _range_true(self) -> float:
+        """Downward ToF (VL53L0X, ~27 deg cone): distance to the highest surface inside the cone footprint."""
+        n, e, a = self.pos
+        rad = max(a, 0.05) * 0.24
+        top = 0.0
+        for o in self.world.obstacles:
+            if o.net or o.hi[2] >= a:
+                continue
+            if o.lo[0] - rad < n < o.hi[0] + rad and o.lo[1] - rad < e < o.hi[1] + rad:
+                top = max(top, o.hi[2])
+        return a - top
+
+    def rangefinder_m(self) -> float | None:
+        if self.t - self._tof_t >= self.tof_dt - 1e-9:  # 10 Hz sample and hold
+            self._tof_t = self.t
+            self._tof = float(np.clip(self._range_true() + self.nrng.normal(0, 0.01), 0.03, 1.2))
+        return self._tof
+
+    def baro_m(self) -> float | None:
+        return float(self.pos[2] + self.nrng.normal(0, 0.03))
+
+    def _flow_scale(self) -> float:
+        rng = max(self._range_true(), 0.05)
+        return self.flow_bias * max(self.pos[2] - self.terr, 0.05) / rng
+
     def telemetry(self) -> Telemetry:
+        if self.nav == "flow":
+            return Telemetry(
+                t=self.t, alt_m=float(self.pos[2]), vz_mps=float(self.vel[2]), yaw_deg=math.degrees(self.yaw) % 360,
+                yaw_rate_dps=math.degrees(self.yaw_rate), x_m=float(self.est[0]), y_m=float(self.est[1]),
+                battery_pct=self.battery, flying=self.flying,
+            )
         return Telemetry(
             t=self.t,
             alt_m=float(self.pos[2]),
@@ -336,6 +395,8 @@ class TwinDrone(Drone):
         f = np.array([math.cos(self.yaw), math.sin(self.yaw)])
         r = np.array([-math.sin(self.yaw), math.cos(self.yaw)])
         vxy = (c.forward * f + c.lateral * r) * self.v_max
+        if self.nav == "flow":
+            vxy = vxy / max(self._flow_scale(), 0.3)  # GUIDED drives the (biased) estimated velocity to the target
         target = np.array([vxy[0], vxy[1], c.throttle * self.vz_max])
         k = 1 - np.exp(-dt / self.tau)
         self.vel += (target - self.vel) * k + self.rng.standard_normal(3) * self.wind * math.sqrt(dt)
@@ -354,6 +415,10 @@ class TwinDrone(Drone):
                 self.pos = trial
         if self.pos[2] < 0.05:
             self.pos[2], self.vel[2] = 0.05, 0.0
+        if self.nav == "flow":
+            surf = self.pos[2] - self._range_true()
+            self.terr += (surf - self.terr) * (1 - math.exp(-dt / self.tau_terr))
+            self.est += self._flow_scale() * self.vel[:2] * dt + self.nrng.standard_normal(2) * self.flow_rw * math.sqrt(dt)
         if hit and not self._touching:
             self.collisions += 1
         self._touching = hit

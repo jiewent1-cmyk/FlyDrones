@@ -52,11 +52,45 @@ N = len(SPEC)
 SPEC_TURNCAP = [(n, path, v0, *((1.2, 2.5) if n == "sacc_dur" else (lo, hi)), lg) for n, path, v0, lo, hi, lg in SPEC_WIDE]
 
 
+# H2 (2026-10-07): v4 base, hardware caps the optimiser may not cross (S7b / fx-matrix lessons: nothing looks backwards
+# and the flow EKF drifts while backing; es3-wcov8 pushed back-off x time to 0.4-0.9 and hit the 1.1 m stacks backing):
+# back-off <= 0.3 x 0.6 s (v4 0.18), saccade 1.2-2.0 s, refractory <= 3 s; retreat max_s stays 2.0 (not searched)
+HW_CAPS = {"sacc_dur": (1.2, 2.0), "sacc_backoff": (0.0, 0.3), "sacc_backoff_s": (0.0, 0.6), "sacc_refr": (0.0, 3.0)}
+V4_EXTRA = [
+    ("retreat_thr", "decoder.ecps.retreat.threshold_hz", 20.0, 8.0, 60.0, True),
+    ("retreat_speed", "decoder.ecps.retreat.speed", 0.5, 0.25, 0.5, False),
+    ("retreat_min", "decoder.ecps.retreat.min_s", 1.5, 0.8, 2.0, False),
+    ("vent_drop", "vision.ecps_ventral.drop_m", 0.10, 0.06, 0.16, False),
+    ("vent_rise", "vision.ecps_ventral.rise_m", 0.12, 0.08, 0.20, False),
+]
+SPEC_V4HW = [(n, path, v0, *HW_CAPS.get(n, (lo, hi)), lg) for n, path, v0, lo, hi, lg in SPEC_WIDE] + V4_EXTRA
+# C1 (2026-10-08): efference-copy looming floor (ecps_retina.py vision.ecps_efference), searched on top of v4hw; the start
+# point a = b = 0 is plain v4
+EFF_EXTRA = [
+    ("eff_a", "vision.ecps_efference.a", 0.0, 0.0, 0.3, False),
+    ("eff_b", "vision.ecps_efference.b", 0.0, 0.0, 0.3, False),
+    ("eff_tau", "vision.ecps_efference.tau_s", 0.5, 0.2, 2.0, True),
+    ("eff_c", "vision.ecps_efference.c", 0.0, 0.0, 0.6, False),  # blank: min_frac + c * turn
+]
+SPEC_V4HW_EFF = SPEC_V4HW + EFF_EXTRA
+BASE_NAMES = list(NAMES)
+
+
 def set_space(name: str) -> None:
-    """'default' (es1, es2), 'wide' (es3, A1, B2) or 'turncap' (wide with a 1.2-2.5 s saccade, B fitness v2)."""
-    global SPEC, Z0
-    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP}.get(name, SPEC_DEFAULT)
+    """'default' (es1, es2), 'wide' (es3, A1, B2), 'turncap' (wide with a 1.2-2.5 s saccade, B fitness v2) or 'v4hw'
+    (H2: v4 base, hardware caps, + retreat / ventral parameters)."""
+    global SPEC, Z0, NAMES, N
+    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP, "v4hw": SPEC_V4HW, "v4hw_eff": SPEC_V4HW_EFF}.get(name, SPEC_DEFAULT)
+    NAMES = [s[0] for s in SPEC]
+    N = len(SPEC)
     Z0 = to_z(np.array([s[2] for s in SPEC]))
+
+
+def _set_path(d: dict, path: str, value) -> None:
+    *parents, leaf = path.split(".")
+    for k in parents:
+        d = d.setdefault(k, {})
+    d[leaf] = value
 
 
 def to_value(z: np.ndarray) -> np.ndarray:
@@ -79,6 +113,16 @@ Z0 = to_z(np.array([s[2] for s in SPEC]))
 
 def to_overrides(z: np.ndarray) -> dict:
     v = {n: float(x) for n, x in zip(NAMES, to_value(z))}
+    o = _base_overrides(v)
+    for n, path, *_ in SPEC:
+        if n not in BASE_NAMES:
+            _set_path(o, path, v[n])
+    if any(n.startswith("eff_") for n in NAMES):
+        _set_path(o, "vision.ecps_efference.enabled", True)
+    return o
+
+
+def _base_overrides(v: dict) -> dict:
     return {
         "decoder": {
             "smoothing": v["smoothing"],

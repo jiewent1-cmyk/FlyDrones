@@ -61,7 +61,28 @@ class EcpsRetina(Retina):
         r.range_m = None
         r.baro_m = None
         r._t = 0.0
+        # C1 efference copy (RL roadmap, 2026-10-08): self-motion expands the flow field too (Parth-Joshi0's Tello:
+        # 19 escapes a minute). The looming floor rises with the forward command and the turn rate of the previous tick
+        # (both set by EcpsPilot), and the turn part decays with tau_s after a turn:
+        #   floor = loom_floor + a * |forward| + b * max(|yaw_rate| / 100 dps, decayed)
+        ef = (cfg.get("vision", {}) or {}).get("ecps_efference", {}) or {}
+        r.eff_on = bool(ef.get("enabled", False))
+        r.eff_a, r.eff_b, r.eff_tau = float(ef.get("a", 0.0)), float(ef.get("b", 0.0)), float(ef.get("tau_s", 0.5))
+        # blank term (added after the C1 screen: 81% of empty-cage false saccades came from `blank`, 58% of them within
+        # 1 s of a turn, i.e. the turn swept the view onto a textureless area faster than the baseline adapts):
+        #   min_frac = blank min_frac + c * turn
+        r.eff_c = float(ef.get("c", 0.0))
+        r.fwd_cmd = 0.0
+        r._eff_turn = 0.0
+        r._floor0 = r.loom_floor
+        r._blank_min0 = r.blank_min
         return r
+
+    def _efference(self) -> None:
+        dt = 1.0 / self.blank_hz
+        self._eff_turn = max(abs(self.yaw_rate_dps) / 100.0, self._eff_turn * float(np.exp(-dt / max(self.eff_tau, 1e-3))))
+        self.loom_floor = self._floor0 + self.eff_a * abs(self.fwd_cmd) + self.eff_b * self._eff_turn
+        self.blank_min = self._blank_min0 + self.eff_c * self._eff_turn
 
     def _ventral_feature(self, vf) -> None:
         dt = 1.0 / self.blank_hz
@@ -90,6 +111,8 @@ class EcpsRetina(Retina):
         self.last_near = {"L": self._near["L"], "R": self._near["R"], "f_L": f["L"], "f_R": f["R"]}
 
     def encode(self, frame):
+        if self.eff_on:
+            self._efference()
         vf = super().encode(frame)
         self._ventral_feature(vf)
         if frame is None or self.prev is None:
