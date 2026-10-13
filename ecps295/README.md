@@ -45,6 +45,8 @@ flowchart LR
 | S7d / S7e / S7b | optical-flow navigation, route B, companion faults · 光流导航、路线 B、机载故障 | [2](reports/02_gps_free_navigation.en.md) · [中](reports/02_gps_free_navigation.zh.md) |
 | S8 | ablation, 1,260 flights · 消融 | [3](reports/03_s8_ablation.en.md) · [中](reports/03_s8_ablation.zh.md) |
 | RL | CMA-ES decoder, control arms, Gazebo multi-instance · CMA-ES 与对照臂 | [4](reports/04_cmaes_optimisation.en.md) · [中](reports/04_cmaes_optimisation.zh.md) |
+| H0–H3, C1 | hardware alignment (flow + ToF + route B), efference copy · 硬件对齐、传出副本 | [5](reports/05_hardware_alignment.en.md) · [中](reports/05_hardware_alignment.zh.md) |
+| C0/C2/C4, D | connectome controls, bypass vs intact, out-of-distribution · 连接组对照、分布外测试 | [6](reports/06_connectome_controls_ood.en.md) · [中](reports/06_connectome_controls_ood.zh.md) |
 
 The sections below are the lab notebook: setup, commands and raw tables in the order the work was done.
 以下各节是实验记录：按时间顺序记录的环境、命令和原始表格。

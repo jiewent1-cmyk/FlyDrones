@@ -3,11 +3,14 @@ v4 base + C1/H3 candidates. Decides which arms are worth a Gazebo run for the pa
 
   lowbox_s0..49 x brain seeds {k, k+100, k+200}  (120 s)   cage20 x 32 (120 s)   empty field x 32 (60 s, all saccades false)
 python -m rl.hw_arms --procs 10 [--out rl/out/hw_arms.jsonl]
+python -m rl.hw_arms --conds c4_s1 h2_s1 ... --out rl/out/seeds.jsonl   (exported minifly/<name>.yaml, arm from the
+                                                                          export header; v4 is always included)
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -25,6 +28,13 @@ COND = {"v4": (V4, "intact"), "brainoff": (V4, "brainoff"), "noloom": (V4, "nolo
         "v4_eff": (str(E / "minifly" / "v4_eff.yaml"), "intact"),
         "h2_s3": (str(E / "minifly" / "h2_s3.yaml"), "intact"),
         "h2_s3_eff": (str(E / "minifly" / "h2_s3_eff.yaml"), "intact")}
+
+
+def exported(name: str) -> tuple[str, str]:
+    """minifly/<name>.yaml from rl/export_arms.py; its first line names the arm: '# <run> (arm <arm>, space ...)'."""
+    v = E / "minifly" / f"{name}.yaml"
+    m = re.match(r"# \S+ \(arm (\w+),", v.read_text().split("\n", 1)[0])
+    return str(v), m.group(1) if m else "intact"
 
 
 def jobs() -> list[dict]:
@@ -77,7 +87,11 @@ def main() -> None:
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--out", default=str(E / "rl" / "out" / "hw_arms.jsonl"))
     ap.add_argument("--report", action="store_true", help="only summarise an existing --out")
+    ap.add_argument("--conds", nargs="+", help="exported configs to test instead of the built-in arms (v4 is added)")
     a = ap.parse_args()
+    if a.conds:
+        COND.clear()
+        COND.update({"v4": (V4, "intact"), **{c: exported(c) for c in a.conds if c != "v4"}})
     if a.report:
         report([json.loads(l) for l in open(a.out)]); return
     done = set()

@@ -17,6 +17,7 @@ import csv
 import json
 import math
 import multiprocessing as mp
+import os
 import subprocess
 import sys
 import time
@@ -89,7 +90,10 @@ if a.config and _src.endswith(".npz") and not Path(_src).is_absolute():  # brain
 if a.mode in ("approach", "patrol"):
     cfg["decoder"]["cruise"] = a.cruise
     cfg["safety"]["max_forward"] = a.max_forward
-brain = Brain(load_connectome(cfg["brain"]["source"]), cfg)
+ARM = os.environ.get("ECPS_ARM", "intact")  # rl.arms control arm (as the server copy)
+from rl import arms as _arms  # noqa: E402
+
+brain = Brain(_arms.connectome_for(load_connectome(cfg["brain"]["source"]), ARM), cfg)
 dyn = {k: ECPS295_DYN[k] for k in ("v_max", "vz_max", "yaw_rate_max_dps")}
 dyn.update(cfg.get("ecps_drone", {}) or {})  # e.g. a faster yaw limit for saccades
 drone = GazeboCameraMavlinkDrone(
@@ -116,6 +120,7 @@ if a.decoder == "ecps":
     from ecps_decoder import EcpsDecoder
 
     pilot.decoder = EcpsDecoder(cfg)
+_arms.install(ARM, brain, pilot, drone, cfg, a.seed)
 HZ = cfg["control"]["hz"]
 
 if a.layout:
@@ -445,6 +450,7 @@ summary = {
     "height_guard_s": round(getattr(pilot, "hg_ticks", 0) / HZ, 1),
     "ext_height": a.ext_height,
     "overrides": a.set,
+    "arm": ARM,
     # companion height vs truth (alt = body origin; the ToF sits 15 mm lower)
     "ext_h_err_max_m": max((abs(r["ext_h"] - (r["alt"] - TOF_DZ)) for r in rows if r["ext_h"] is not None), default=None),
     "ventral_events": getattr(getattr(pilot.retina, "ventral", None), "events", [])[:40],

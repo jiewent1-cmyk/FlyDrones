@@ -141,6 +141,8 @@ class TwinCamera:
         self.lamp_amp = float(os.environ.get("TWIN_LAMPS", 0.25))
         self.net_k = float(os.environ.get("TWIN_NET_K", 10.0))  # strand coverage gain: GPU rasterises thin strands >= ~1 px
         self.rng = np.random.default_rng(seed)
+        self.gain = 1.0  # D low light: exposure gain on linear radiance (Gazebo: lower light diffuse / camera gain)
+        self.flat = False  # D textureless: every solid face one albedo, no sun shading, plain mat, no tape
         self._scen_seed = None
         self._scen = None
 
@@ -172,7 +174,9 @@ class TwinCamera:
         inside = (np.abs(fx) < world.floor_half) & (np.abs(fy) < world.floor_half)
         tiles = ((np.floor(fx / world.tile) + np.floor(fy / world.tile)) % 2).astype(bool)
         floor = np.where(inside, np.where(tiles, world.tile_hi, world.tile_lo), world.ground)
-        for tn_, te_, ln_, ang_ in world.floor_tape:
+        if self.flat:
+            floor = np.where(inside, (world.tile_hi + world.tile_lo) / 2, world.ground)
+        for tn_, te_, ln_, ang_ in ([] if self.flat else world.floor_tape):
             ca, sa = math.cos(ang_), math.sin(ang_)  # strip axis in ENU: (east, north) = (ca, sa)
             rn, re_ = fx - tn_, fy - te_
             along_ = re_ * ca + rn * sa
@@ -212,8 +216,10 @@ class TwinCamera:
                 ny = np.where((ay_ > ax_) & (ay_ >= az_), -np.sign(dy), 0.0)
                 nz = np.where((az_ > ax_) & (az_ > ay_), -np.sign(dz), 0.0)
                 lam = np.clip(nx * SUN[0] + ny * SUN[1] + nz * SUN[2], 0.0, 1.0)
+                if self.flat:
+                    lam = np.full(dx.shape, 0.5)
                 alb = np.full(dx.shape, o.albedo)
-                if o.taped:
+                if o.taped and not self.flat:
                     c, sz = (lo + hi) / 2, hi - lo
                     hp = [(p + tmin * dd - cc) / ss for p, dd, cc, ss in zip((px, py, pz), (dx, dy, dz), c, sz)]
                     band = [np.abs(np.abs(q) - 0.25) * ss < 0.025 for q, ss in zip(hp, sz)]
@@ -238,6 +244,8 @@ class TwinCamera:
                 c = np.where(dist < half_fp + 0.002, np.clip(self.net_k * 0.004 / (2 * half_fp), 0, 1), 0.0)
                 cov = 1 - (1 - cov) * (1 - c)
             shade = np.where(hit, shade * (1 - cov) + self._shade(o.albedo, 0.5) * cov, shade)
+        if self.gain != 1.0:
+            shade = shade * self.gain
         img = np.clip(shade, 0, 1) ** (1 / 2.2)
         if self.noise:
             img = img + self.rng.standard_normal(img.shape) * self.noise
@@ -252,6 +260,19 @@ def flow_dr(seed: int) -> dict:
     r = np.random.default_rng(70_000 + seed)
     return {"nav": "flow", "tau_terr": float(np.exp(r.uniform(np.log(0.5), np.log(4.0)))), "flow_rw": float(r.uniform(0.02, 0.06)),
             "flow_bias": 0.94, "hover_alt": 0.8, "hover_jitter": 0.1}
+
+
+OOD_DRIFT, OOD_GUST = 0.03, 0.10  # wind: steady drift (m/s) left by GUIDED, gust noise (default wind 0.03); v4 on
+# lowbox_s0-19 (2/20 runs with contact in distribution): drift 0.12 / 0.06 / 0.03 / 0 -> 20 / 19 / 12 / 5, so 0.03
+OOD_MODES = {
+    "lowlight": "camera gain x0.3 on linear radiance, image noise 0.007 -> 0.02 (dim room, high camera gain)",
+    "notex": "textureless: one albedo per box, flat (unlit) faces, no tape, plain mat, no floor strips",
+    "halfcam": "left or right half of the image covered (dark, value 0.08), side drawn per episode seed",
+    "wind": "steady drift OOD_DRIFT m/s from a per-seed direction + gusts OOD_GUST (default 0.03) m/s/sqrt(s)",
+    "tof": "downward ToF faults: per s a 10 % chance of a 1-4 s stuck (stale) reading, plus 3 % out-of-range samples"
+           " (1.2 m); the flow-EKF scale uses the same faulty range",
+    "ghost": "boxes not rendered but still collide (garyb9 ghost check: is the avoidance seen?)",
+}
 
 
 class TwinDrone(Drone):
@@ -283,6 +304,7 @@ class TwinDrone(Drone):
         tof_hz: float = 10.0,
         hover_alt: float | None = None,
         hover_jitter: float = 0.0,
+        ood: str | None = None,
     ):
         self.world = world
         self.pos = np.array(start, dtype=float)
@@ -317,6 +339,38 @@ class TwinDrone(Drone):
         self.nrng = np.random.default_rng(50_000 + seed)
         # flow + route B in Gazebo cruises higher than the GPS runs (S8 lowbox: median 0.81 m, p10-p90 0.62-0.98 m)
         self.hover_alt = None if hover_alt is None else hover_alt + float(np.random.default_rng(60_000 + seed).uniform(-hover_jitter, hover_jitter))
+        # D stage (out of distribution); own RNG streams so the in-distribution path is untouched
+        assert ood in (None, *OOD_MODES), ood
+        self.ood = ood
+        self.view = world  # what the camera sees
+        orng = np.random.default_rng(80_000 + seed)
+        self.drift = np.zeros(3)
+        self.half = None
+        self._faults = []
+        if ood == "lowlight":
+            self.cam.gain, self.cam.noise = 0.3, 0.02
+        elif ood == "notex":
+            self.cam.flat = True
+        elif ood == "halfcam":
+            self.half = "L" if orng.random() < 0.5 else "R"
+        elif ood == "wind":
+            a = orng.uniform(0, 2 * math.pi)
+            self.drift = OOD_DRIFT * np.array([math.cos(a), math.sin(a), 0.0])
+            self.wind = OOD_GUST
+        elif ood == "tof":
+            t = 0.0
+            while t < 600.0:  # fault windows (start, end), one draw per second
+                if orng.random() < 0.10:
+                    d = orng.uniform(1.0, 4.0)
+                    self._faults.append((t, t + d))
+                    t += d
+                t += 1.0
+            self._orng = orng
+        elif ood == "ghost":
+            import copy
+
+            self.view = copy.copy(world)
+            self.view.obstacles = [o for o in world.obstacles if o.net]
 
     def takeoff(self) -> None:  # Gazebo run_g4: drone.takeoff() blocks until airborne; the brain does not tick
         self.flying = True
@@ -348,7 +402,13 @@ class TwinDrone(Drone):
     def rangefinder_m(self) -> float | None:
         if self.t - self._tof_t >= self.tof_dt - 1e-9:  # 10 Hz sample and hold
             self._tof_t = self.t
-            self._tof = float(np.clip(self._range_true() + self.nrng.normal(0, 0.01), 0.03, 1.2))
+            v = float(np.clip(self._range_true() + self.nrng.normal(0, 0.01), 0.03, 1.2))
+            if self.ood == "tof":
+                if any(a <= self.t < b for a, b in self._faults):
+                    v = self._tof if self._tof is not None else v  # stuck: keep the stale reading
+                elif self._orng.random() < 0.03:
+                    v = 1.2  # out of range
+            self._tof = v
         return self._tof
 
     def baro_m(self) -> float | None:
@@ -356,6 +416,8 @@ class TwinDrone(Drone):
 
     def _flow_scale(self) -> float:
         rng = max(self._range_true(), 0.05)
+        if self.ood == "tof" and self._tof is not None:
+            rng = max(self._tof, 0.05)  # the EKF scales flow by the (faulty) measured range
         return self.flow_bias * max(self.pos[2] - self.terr, 0.05) / rng
 
     def telemetry(self) -> Telemetry:
@@ -378,7 +440,14 @@ class TwinDrone(Drone):
         )
 
     def frame(self) -> np.ndarray:
-        img = self.cam.render(self.world, self.pos, self.yaw)
+        img = self.cam.render(self.view, self.pos, self.yaw)
+        if self.half:
+            w = img.shape[1] // 2
+            img = img.copy()
+            if self.half == "L":
+                img[:, :w] = 20
+            else:
+                img[:, w:] = 20
         ss = self.cam.supersample
         if ss > 1:  # Gazebo renders 640x480 and the bridge / Retina area-average it down
             h, w = img.shape
@@ -398,6 +467,8 @@ class TwinDrone(Drone):
         if self.nav == "flow":
             vxy = vxy / max(self._flow_scale(), 0.3)  # GUIDED drives the (biased) estimated velocity to the target
         target = np.array([vxy[0], vxy[1], c.throttle * self.vz_max])
+        if self.ood == "wind":
+            target = target + self.drift  # GUIDED leaves a steady-state drift under a steady wind
         k = 1 - np.exp(-dt / self.tau)
         self.vel += (target - self.vel) * k + self.rng.standard_normal(3) * self.wind * math.sqrt(dt)
         self.yaw_rate += (c.yaw * self.yr_max - self.yaw_rate) * (1 - math.exp(-dt / self.tau_yaw))

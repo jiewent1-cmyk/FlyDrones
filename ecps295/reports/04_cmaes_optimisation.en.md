@@ -4,6 +4,9 @@
 > Gazebo re-tests on a cloud server (Gazebo 8.10 + sim clock) · status: A0, A2, A3, B1 done; A1/B2 Gazebo re-tests and
 > fitness v2 in progress · 中文版：[04_cmaes_optimisation.zh.md](04_cmaes_optimisation.zh.md)
 
+> **Update 2026-10-13:** the GPS-cage results here were re-done under the real sensor set (optical flow + ToF + route B) in
+> [Report 5](05_hardware_alignment.en.md) and [Report 6](06_connectome_controls_ood.en.md); the control-arm conclusions there supersede §4.
+
 ## Abstract
 
 The v1 → v3_2 history in Report 1 was manual coordinate descent over about 40 hand-tuned parameters. We automated the

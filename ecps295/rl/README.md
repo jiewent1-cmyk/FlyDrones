@@ -148,7 +148,16 @@ w_cov = 2、4、8 时，覆盖率分别为 0.58、0.57、0.62（v3_2 是 0.50）
 - H2 / H3：3 个 v4 基座的 CMA 种子中，h2_s3 通过，作为保守版：墙体和 cage20 上最小间隙 +0.11–0.13 m（p < 0.001），覆盖率低 0.05–0.12。没有候选能显著降低 lowbox 接触。
 - C1：空场误扫视 81% 来自 blank。blank 项把空场虚警从 2.75 次/分钟降到 1.22 次/分钟（快仿真），Gazebo 两台机器上都不变差（lowbox 合计 21 → 15/100，不显著）。默认版本改为 v4_eff。
 - C0 / C2（服务器 574 次）：brainoff 有接触的运行 cage20 6 → 32/32、lowbox 10 → 33/50。真实接线的每 100 m 接触在两个场景都好于 5/5 个 shuffle，但两级 bootstrap CI 刚好包含 0。
-- C4（bypass，与 H2 同协议）：快仿真里不比 intact 差，Gazebo 复测进行中。
+- C4（bypass，与 H2 同协议，各 8 个 CMA 种子）：bypass 优于 intact。独立快仿真测试 lowbox 有接触的运行中位数 15.5 对 32.5（p = 0.010），Gazebo（ROG）2.5 对 10.5（p = 0.015）；快仿真与 Gazebo 逐配置 ρ = 0.75。代价是空场误转向更多。详见[报告六](../reports/06_connectome_controls_ood.zh.md)。
+
+### 3.7 分布外测试（D 阶段，2026-10-12 起）
+
+- `twin.py`：`TwinDrone(ood=...)`，`OOD_MODES` = lowlight、notex、halfcam、wind（`OOD_DRIFT = 0.03`）、tof、ghost；使用独立随机数流，`ood=None` 时与原结果逐位一致（锚点不变）。
+- `ood.py`：在与 `hw_arms --conds` 相同的世界、种子和随机化下运行导出配置；`--report --base` 给出种子层面 bypass 对 intact 的比较和相对分布内的变化量。
+- `hw_arms.py --conds <name> ...`：测试 `minifly/<name>.yaml` 导出配置（臂从导出文件首行读取），v4 自动加入。
+- `../gazebo/ood_world.py`：生成 Gazebo 世界的 notex / ghost 版本。`../run_g4.py` 读取 `ECPS_ARM`（默认 intact），在 Gazebo 中运行 `rl.arms` 的对照臂。
+- 结论：去纹理时 bypass 失去优势、intact 不退化（快仿真 p = 0.001，Gazebo p = 0.028），是第一个支持连接组的结果；其余模式下 bypass 仍领先或两者相当。
+- 结果数据：`results/twin/hw/`（CMA 运行与 `tests.csv.gz`）、`results/gazebo/hw_runs.csv`；作图 `../reports/make_figures_hw.py`。
 
 ## 4. 局限与注意事项
 
@@ -159,7 +168,7 @@ w_cov = 2、4、8 时，覆盖率分别为 0.58、0.57、0.62（v3_2 是 0.50）
 
 ## 5. 待办
 
-- C4 的 Gazebo 复测（ROG / 台式机），写进论文的对照部分。
-- D 分布外测试（光照、纹理、风扰、ToF 故障）。
+- notex lowbox_s20–49 的 Gazebo 扩充（ROG 进行中，511 次），确认去纹理结果。
+- E 蘑菇体可塑性（可选，Mac mini / Jetson 上的初筛已开始，代码尚未合入本分支）。
 - lowbox 接触的结构性改动（不向看不见的方向移动、短时空间记忆、侧后向 ToF），暂缓。
 - F 安全层与 L0–L4 分级上真机。

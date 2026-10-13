@@ -1,0 +1,27 @@
+/Users/jacky/rl_exp/venv/lib/python3.11/site-packages/cma/s.py:17: UserWarning: Could not import matplotlib.pyplot, therefore ``cma.plot()`` etc. is not available
+  _warnings.warn('Could not import matplotlib.pyplot, therefore'
+warm start {'yaw_gain': 0.025, 'yaw_dnp03_w': 0.8, 'smoothing': 0.2, 'brake_dnp03': 0.02, 'brake_dnp01': 0.03, 'brake_decay': 0.97, 'escape_thr': 20.0, 'sacc_thr': 15.0, 'sacc_dur': 1.5, 'sacc_backoff': 0.3, 'sacc_backoff_s': 0.6, 'sacc_on_brake': 0.6, 'sacc_refr': 1.0, 'sacc_keep_dir': 5.0, 'caut_hold': 2.0, 'caut_ramp': 2.0, 'caut_on_brake': 0.6, 'retreat_thr': 20.0, 'retreat_speed': 0.5, 'retreat_min': 1.5, 'vent_drop': 0.1, 'vent_rise': 0.12}
+gen  0  196s  v3_2 F=-1.702 pC=0.25 near=0.9 cov=0.37 | best F=-0.730 pC=0.00 near=0.8 cov=0.38 | median F=-0.980 sigma=0.186
+gen  1  198s  v3_2 F=-1.621 pC=0.42 near=1.0 cov=0.41 | best F=-0.868 pC=0.33 near=0.8 cov=0.46 | median F=-1.308 sigma=0.177
+gen  2  202s  v3_2 F=-1.778 pC=0.42 near=0.9 cov=0.42 | best F=-0.392 pC=0.08 near=0.2 cov=0.40 | median F=-0.973 sigma=0.171
+gen  3  198s  v3_2 F=-2.325 pC=0.42 near=0.8 cov=0.34 | best F=-0.764 pC=0.08 near=0.1 cov=0.31 | median F=-1.506 sigma=0.168
+  VAL gen 4: mean F=-0.957 pC=0.33 near=0.8 cov=0.46 | v3_2 F=-1.825 pC=0.17 near=1.0 cov=0.33
+gen  4  199s  v3_2 F=-2.274 pC=0.50 near=1.2 cov=0.34 | best F=-0.597 pC=0.08 near=0.1 cov=0.34 | median F=-0.940 sigma=0.165
+gen  5  198s  v3_2 F=-1.574 pC=0.25 near=0.8 cov=0.39 | best F=-0.727 pC=0.08 near=0.4 cov=0.45 | median F=-1.088 sigma=0.162
+gen  6  201s  v3_2 F=-3.014 pC=0.50 near=1.2 cov=0.33 | best F=-0.940 pC=0.25 near=0.4 cov=0.33 | median F=-1.096 sigma=0.163
+gen  7  196s  v3_2 F=-1.547 pC=0.17 near=0.6 cov=0.38 | best F=-0.605 pC=0.08 near=0.2 cov=0.31 | median F=-0.954 sigma=0.163
+gen  8  202s  v3_2 F=-2.018 pC=0.17 near=0.8 cov=0.29 | best F=-0.635 pC=0.00 near=0.0 cov=0.23 | median F=-1.038 sigma=0.167
+  VAL gen 9: mean F=-1.081 pC=0.17 near=0.3 cov=0.25 | v3_2 F=-1.825 pC=0.17 near=1.0 cov=0.33
+gen  9  209s  v3_2 F=-1.341 pC=0.25 near=0.7 cov=0.41 | best F=-0.613 pC=0.00 near=0.0 cov=0.25 | median F=-0.772 sigma=0.169
+gen 10  206s  v3_2 F=-1.919 pC=0.33 near=1.2 cov=0.34 | best F=-1.112 pC=0.25 near=0.3 cov=0.31 | median F=-1.781 sigma=0.168
+gen 11  211s  v3_2 F=-2.153 pC=0.42 near=1.3 cov=0.36 | best F=-0.480 pC=0.00 near=0.0 cov=0.26 | median F=-0.730 sigma=0.163
+gen 12  205s  v3_2 F=-1.633 pC=0.25 near=0.8 cov=0.35 | best F=-0.143 pC=0.00 near=0.1 cov=0.45 | median F=-0.897 sigma=0.162
+gen 13  202s  v3_2 F=-1.679 pC=0.17 near=0.6 cov=0.39 | best F=-0.270 pC=0.08 near=0.2 cov=0.47 | median F=-0.678 sigma=0.160
+  VAL gen 14: mean F=-1.268 pC=0.38 near=0.8 cov=0.33 | v3_2 F=-1.825 pC=0.17 near=1.0 cov=0.33
+gen 14  209s  v3_2 F=-2.047 pC=0.25 near=0.8 cov=0.35 | best F=-0.443 pC=0.00 near=0.2 cov=0.33 | median F=-0.729 sigma=0.155
+gen 15  206s  v3_2 F=-1.187 pC=0.08 near=0.7 cov=0.35 | best F=-0.395 pC=0.00 near=0.0 cov=0.33 | median F=-0.631 sigma=0.148
+gen 16  205s  v3_2 F=-1.699 pC=0.33 near=1.5 cov=0.38 | best F=-0.495 pC=0.08 near=0.2 cov=0.30 | median F=-0.894 sigma=0.143
+gen 17  209s  v3_2 F=-2.175 pC=0.50 near=1.4 cov=0.32 | best F=-0.838 pC=0.42 near=0.8 cov=0.41 | median F=-1.010 sigma=0.138
+gen 18  211s  v3_2 F=-2.744 pC=0.33 near=1.8 cov=0.32 | best F=-0.414 pC=0.17 near=0.3 cov=0.41 | median F=-0.759 sigma=0.135
+  VAL gen 19: mean F=-1.169 pC=0.21 near=0.6 cov=0.30 | v3_2 F=-1.825 pC=0.17 near=1.0 cov=0.33
+gen 19  205s  v3_2 F=-1.585 pC=0.25 near=0.8 cov=0.35 | best F=-0.495 pC=0.08 near=0.2 cov=0.33 | median F=-0.747 sigma=0.131

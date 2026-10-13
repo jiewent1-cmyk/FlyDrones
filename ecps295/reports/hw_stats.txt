@@ -1,0 +1,122 @@
+== fig9 lowbox contact runs (ROG, lowbox_s0-49)
+  v4 (hand-built)          10/50
+  v4_oc5                   11/50
+  v3_2                     10/50
+  es2 (CMA, GPS cage)      11/50
+  es3 (CMA, GPS cage)      11/50
+  wcov2                    10/50
+  wcov4                    15/50
+  wcov8                    9/50
+  h2_s1 (CMA, v4 base)     6/50
+  h2_s2                    15/49
+  h2_s3                    10/50
+  v4_eff (C1)              9/50
+== fig9 split-half rho (8 models, 50 worlds, 2000 random halves): contact -0.45, contacts / 100 m -0.24, min clearance 0.64, time over boxes 0.67, EKF error 0.67, coverage 0.81, path length 0.93
+== fig10 H3 (server) candidate - v4
+  lowbox_s0–49         h2_s1  contact runs 10->6/49 (saved 9 new 5, p=0.42) dclr -0.006 dcov -0.028
+  lowbox_s0–49         h2_s2  contact runs 10->5/50 (saved 10 new 5, p=0.30) dclr -0.040 dcov +0.083
+  lowbox_s0–49         h2_s3  contact runs 9->5/48 (saved 8 new 4, p=0.39) dclr +0.063 dcov -0.087
+  lowbox_s0–49         es3    contact runs 4->5/30 (saved 4 new 5, p=1.00) dclr -0.041 dcov +0.064
+  wall approaches ×32  h2_s1  contact runs 0->0/32 (saved 0 new 0, p=1.00) dclr -0.201 dcov +0.001
+  wall approaches ×32  h2_s2  contact runs 0->0/32 (saved 0 new 0, p=1.00) dclr +0.022 dcov -0.004
+  wall approaches ×32  h2_s3  contact runs 0->0/32 (saved 0 new 0, p=1.00) dclr +0.133 dcov -0.045
+  wall approaches ×32  es3    contact runs 0->0/32 (saved 0 new 0, p=1.00) dclr +0.139 dcov +0.042
+  cage20 ×32           h2_s1  contact runs 6->6/32 (saved 4 new 4, p=1.00) dclr -0.001 dcov -0.095
+  cage20 ×32           h2_s2  contact runs 6->11/32 (saved 5 new 10, p=0.30) dclr -0.022 dcov +0.030
+  cage20 ×32           h2_s3  contact runs 6->1/32 (saved 6 new 1, p=0.12) dclr +0.106 dcov -0.117
+  cage20 ×32           es3    contact runs 6->1/32 (saved 6 new 1, p=0.12) dclr +0.034 dcov +0.008
+== fig11 C0/C2 (server Gazebo) contacts/100 m and contact runs
+  lowbox  v4        c100 1.80 [0.72,3.13]  runs 10/50
+  lowbox  shuffle1  c100 4.73 [1.86,8.10]  runs 11/50
+  lowbox  shuffle2  c100 5.89 [2.40,10.22]  runs 15/50
+  lowbox  shuffle3  c100 5.86 [2.81,9.51]  runs 15/49
+  lowbox  shuffle4  c100 5.00 [1.98,9.05]  runs 15/50
+  lowbox  shuffle5  c100 3.56 [1.65,5.76]  runs 12/50
+  lowbox  noloom    c100 21.38 [13.96,29.84]  runs 33/49
+  lowbox  brainoff  c100 18.21 [12.21,25.09]  runs 33/50
+  cage20  v4        c100 1.10 [0.25,2.20]  runs 6/32
+  cage20  shuffle1  c100 1.44 [0.60,2.41]  runs 9/32
+  cage20  shuffle2  c100 2.03 [0.79,3.58]  runs 8/30
+  cage20  shuffle3  c100 3.25 [0.64,6.65]  runs 6/32
+  cage20  shuffle4  c100 1.81 [0.73,3.08]  runs 9/32
+  cage20  shuffle5  c100 4.41 [1.44,7.91]  runs 8/32
+  cage20  noloom    c100 47.22 [37.59,57.03]  runs 32/32
+  cage20  brainoff  c100 45.22 [34.71,56.75]  runs 32/32
+== fig11 twin prescreen (rl.hw_arms) contact runs
+  twin lowbox  v4        34/150
+  twin cage20  v4        6/32
+  twin lowbox  shuffle1  43/150
+  twin cage20  shuffle1  20/32
+  twin lowbox  shuffle2  54/150
+  twin cage20  shuffle2  22/32
+  twin lowbox  shuffle3  71/150
+  twin cage20  shuffle3  21/32
+  twin lowbox  shuffle4  50/150
+  twin cage20  shuffle4  23/32
+  twin lowbox  shuffle5  52/150
+  twin cage20  shuffle5  17/32
+  twin lowbox  noloom    101/150
+  twin cage20  noloom    32/32
+  twin lowbox  brainoff  96/150
+  twin cage20  brainoff  32/32
+== fig12 seed table (bypass c4 vs intact h2, same protocol)
+  c4_s1  val F -0.82 (gen 19)  twin lowbox 12/150 (v4 34, p=0.000)  cage20 8/32  FA/min 3.57  Gazebo lowbox 3/49 (v4 11, p=0.021)
+  c4_s2  val F -0.90 (gen 4)  twin lowbox 13/150 (v4 34, p=0.001)  cage20 1/32  FA/min 1.19  Gazebo lowbox 2/50 (v4 11, p=0.004)
+  c4_s3  val F -0.61 (gen 14)  twin lowbox 52/150 (v4 34, p=0.025)  cage20 2/32  FA/min 4.10  Gazebo lowbox 13/50 (v4 11, p=0.824)
+  c4_s4  val F -0.94 (gen 14)  twin lowbox 17/150 (v4 34, p=0.006)  cage20 7/32  FA/min 2.94  Gazebo lowbox 6/50 (v4 11, p=0.125)
+  c4_s5  val F -0.96 (gen 4)  twin lowbox 22/150 (v4 34, p=0.081)  cage20 8/32  FA/min 1.75  Gazebo lowbox 2/50 (v4 11, p=0.004)
+  c4_s6  val F -0.96 (gen 14)  twin lowbox 10/150 (v4 34, p=0.000)  cage20 2/32  FA/min 6.35  Gazebo lowbox 2/50 (v4 11, p=0.004)
+  c4_s7  val F -0.96 (gen 9)  twin lowbox 20/150 (v4 34, p=0.029)  cage20 9/32  FA/min 2.94  Gazebo lowbox 5/50 (v4 11, p=0.146)
+  c4_s8  val F -0.78 (gen 4)  twin lowbox 14/150 (v4 34, p=0.001)  cage20 6/32  FA/min 4.54  Gazebo lowbox 2/50 (v4 11, p=0.004)
+  h2_s1  val F -1.57 (gen 19)  twin lowbox 33/150 (v4 34, p=1.000)  cage20 9/32  FA/min 1.81  Gazebo lowbox 6/50 (v4 11, p=0.180)
+  h2_s2  val F -1.24 (gen 14)  twin lowbox 32/150 (v4 34, p=0.864)  cage20 19/32  FA/min 2.13  Gazebo lowbox 15/49 (v4 11, p=0.388)
+  h2_s3  val F -1.62 (gen 9)  twin lowbox 38/150 (v4 34, p=0.636)  cage20 12/32  FA/min 1.38  Gazebo lowbox 10/50 (v4 11, p=1.000)
+  h2_s4  val F -1.96 (gen 14)  twin lowbox 32/150 (v4 34, p=0.856)  cage20 5/32  FA/min 2.03  Gazebo lowbox 11/50 (v4 11, p=1.000)
+  h2_s5  val F -1.64 (gen 14)  twin lowbox 35/150 (v4 34, p=1.000)  cage20 13/32  FA/min 1.60  Gazebo lowbox 6/50 (v4 11, p=0.267)
+  h2_s6  val F -1.73 (gen 19)  twin lowbox 27/150 (v4 34, p=0.337)  cage20 13/32  FA/min 2.72  Gazebo lowbox 15/50 (v4 11, p=0.454)
+  h2_s7  val F -1.42 (gen 19)  twin lowbox 28/150 (v4 34, p=0.418)  cage20 15/32  FA/min 1.53  Gazebo lowbox 3/50 (v4 11, p=0.039)
+  h2_s8  val F -1.53 (gen 9)  twin lowbox 47/150 (v4 34, p=0.079)  cage20 12/32  FA/min 1.75  Gazebo lowbox 16/50 (v4 11, p=0.332)
+  F: bypass median -0.92  intact median -1.59  exact MW p=0.00016
+  tw: bypass median 15.50  intact median 32.50  exact MW p=0.01041
+  gz: bypass median 2.50  intact median 10.50  exact MW p=0.01476
+== fig13 twin vs Gazebo per config: Spearman rho 0.75 p=0.0009
+  empty-field false turns/min: bypass median 3.25 intact 1.78 p=0.038
+== fig14 OOD (twin, seed level, change in runs with contact vs in-distribution k_0 subset)
+  lowbox  lowlight  n=50  Δ bypass median +4.5  intact +0.0  p=0.234
+  lowbox  notex     n=50  Δ bypass median +6.5  intact -2.0  p=0.001
+  lowbox  halfcam   n=50  Δ bypass median +9.0  intact +10.5  p=0.382
+  lowbox  wind      n=50  Δ bypass median +17.5  intact +21.5  p=0.015
+  lowbox  tof       n=50  Δ bypass median +0.0  intact -1.5  p=0.721
+  lowbox  ghost     n=50  Δ bypass median +24.0  intact +19.0  p=0.195
+  cage20  lowlight  n=32  Δ bypass median +1.5  intact +1.0  p=0.721
+  cage20  notex     n=32  Δ bypass median +1.0  intact -3.5  p=0.050
+  cage20  halfcam   n=32  Δ bypass median +24.5  intact +19.0  p=0.038
+  cage20  wind      n=32  Δ bypass median +5.5  intact +9.0  p=0.130
+  cage20  tof       n=32  Δ bypass median +0.5  intact +2.5  p=0.195
+  cage20  ghost     n=32  Δ bypass median +10.5  intact +18.5  p=0.050
+== fig14 Gazebo notex (ROG lowbox_s0-19)
+  c4_s1: in-dist 3 -> notex 1 (n=19)
+  c4_s2: in-dist 2 -> notex 2 (n=20)
+  c4_s3: in-dist 2 -> notex 8 (n=20)
+  c4_s4: in-dist 2 -> notex 1 (n=20)
+  c4_s5: in-dist 0 -> notex 5 (n=20)
+  c4_s6: in-dist 0 -> notex 2 (n=20)
+  c4_s7: in-dist 0 -> notex 2 (n=20)
+  c4_s8: in-dist 0 -> notex 0 (n=20)
+  h2_s1: in-dist 4 -> notex 3 (n=20)
+  h2_s2: in-dist 5 -> notex 1 (n=20)
+  h2_s3: in-dist 5 -> notex 3 (n=20)
+  h2_s4: in-dist 6 -> notex 1 (n=20)
+  h2_s5: in-dist 2 -> notex 3 (n=20)
+  h2_s6: in-dist 6 -> notex 1 (n=20)
+  h2_s7: in-dist 1 -> notex 1 (n=20)
+  h2_s8: in-dist 7 -> notex 6 (n=20)
+  Δ bypass median +1.0 intact -1.5 p=0.028; in-dist medians 1.0 vs 5.0 p=0.007; notex medians 2.0 vs 2.0 p=0.959
+== fig16 C1 efference copy
+  twin empty field v4: 2.75/min [1.91,3.72]
+  twin empty field v4_eff: 1.22/min [0.78,1.78]
+  twin empty field h2_s3: 1.38/min [0.88,1.97]
+  twin empty field h2_s3_eff: 0.94/min [0.59,1.31]
+  Gazebo ROG lowbox: v4 11 -> v4_eff 9 / 50, saved 4 new 2, p=0.69
+  Gazebo server lowbox: v4 10 -> v4_eff 6 / 50, saved 7 new 3, p=0.34
+  Gazebo server cage20: v4 6 -> v4_eff 6 / 32, saved 6 new 6, p=1.00

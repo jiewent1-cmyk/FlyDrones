@@ -1,0 +1,216 @@
+# c4_s8 (arm bypass, space v4hw) best held-out validation gen 4: F=-0.7785 pC=0.125 cov=0.328
+#   yaw_gain: 0.06
+#   yaw_dnp03_w: 1.3471
+#   smoothing: 0.0854
+#   brake_dnp03: 0.0064
+#   brake_dnp01: 0.0241
+#   brake_decay: 0.99
+#   escape_thr: 36.5007
+#   sacc_thr: 11.7684
+#   sacc_dur: 1.7962
+#   sacc_backoff: 0.3
+#   sacc_backoff_s: 0.6
+#   sacc_on_brake: 0.4908
+#   sacc_refr: 2.2948
+#   sacc_keep_dir: 5.6323
+#   caut_hold: 1.6707
+#   caut_ramp: 2.6024
+#   caut_on_brake: 1.1441
+#   retreat_thr: 8.7732
+#   retreat_speed: 0.5
+#   retreat_min: 1.7478
+#   vent_drop: 0.0748
+#   vent_rise: 0.1399
+#   c0: 36.8088
+#   k_flow: 0.2338
+#   k_hal: 0.4641
+#   k_loom: 2.0019
+#   k_blank: 0.4282
+#   k_near: 0.1925
+#   k_gf: 0.4428
+#   th_gf: 7.1245
+brain:
+  source: minifly_v4.npz
+safety:
+  max_yaw: 1.0
+decoder:
+  axes:
+    yaw:
+      gain: 0.06
+      terms:
+        DNg02_R: 1.0
+        DNg02_L: -1.0
+        DNp03_L: 1.3470653224183917
+        DNp03_R: -1.3470653224183917
+  escape:
+    mode: saccade
+    threshold_hz: 36.50074651143345
+  ecps:
+    brake_decay: 0.99
+    saccade:
+      enabled: true
+      terms:
+      - DNp03_L
+      - DNp03_R
+      threshold_hz: 11.768355056219
+      duration_s: 1.7962430096340465
+      yaw: 1.0
+      backoff: 0.3
+      backoff_s: 0.6
+      on_brake: 0.4907564976796216
+      refractory_s: 2.294776194895483
+      keep_direction_s: 5.6322756743558475
+    caution:
+      hold_s: 1.6707443069827532
+      ramp_s: 2.602364288708345
+      on_brake: 1.1440806704477906
+    retreat:
+      enabled: true
+      terms:
+      - MDN_L
+      - MDN_R
+      threshold_hz: 8.773182416401607
+      speed: 0.5
+      min_s: 1.7477763204537613
+      hold_s: 1.0
+      max_s: 2.0
+      then_saccade: true
+    throttle_per_forward: 0.14
+    throttle_yaw_decouple: 0.011
+  smoothing: 0.08544617089464121
+  brake_terms:
+    DNp03_L: 0.006389376670065303
+    DNp03_R: 0.006389376670065303
+    DNp01_L: 0.024069639140231486
+    DNp01_R: 0.024069639140231486
+ecps_drone:
+  yaw_rate_max_dps: 60
+outputs:
+  DNg02_L:
+    types:
+    - ^DNg02
+    side: L
+  DNg02_R:
+    types:
+    - ^DNg02
+    side: R
+  DNp03_L:
+    types:
+    - ^DNp03$
+    side: L
+  DNp03_R:
+    types:
+    - ^DNp03$
+    side: R
+  DNp01_L:
+    types:
+    - ^DNp01$
+    - ^GF$
+    side: L
+  DNp01_R:
+    types:
+    - ^DNp01$
+    - ^GF$
+    side: R
+  MDN_L:
+    types:
+    - ^MDN$
+    side: L
+    note: moonwalker DNs, backward walking (Bidaye et al. 2014)
+  MDN_R:
+    types:
+    - ^MDN$
+    side: R
+    note: moonwalker DNs, backward walking (Bidaye et al. 2014)
+inputs:
+  LCb_L:
+    types:
+    - ^LCb$
+    side: L
+    feature: blank
+    eye: L
+    max_hz: 150
+  LCb_R:
+    types:
+    - ^LCb$
+    side: R
+    feature: blank
+    eye: R
+    max_hz: 150
+  LCn_L:
+    types:
+    - ^LCn$
+    side: L
+    feature: near
+    eye: L
+    max_hz: 120
+  LCn_R:
+    types:
+    - ^LCn$
+    side: R
+    feature: near
+    eye: R
+    max_hz: 120
+  LCv_L:
+    types:
+    - ^LCv$
+    side: L
+    feature: ventral
+    eye: L
+    max_hz: 150
+  LCv_R:
+    types:
+    - ^LCv$
+    side: R
+    feature: ventral
+    eye: R
+    max_hz: 150
+vision:
+  ecps_blank:
+    energy_thr: 0.0002
+    rows:
+    - 1
+    - 4
+    gain: 2.5
+    min_frac: 0.55
+    baseline_s: 6.0
+    side_gain: 2.0
+  ecps_near:
+    enabled: true
+    rows:
+    - 2
+    - 6
+    gain: 3.0
+    min_flow: 0.08
+    max_yaw_dps: 12.0
+    smooth: 0.15
+    outer_cols: 3
+  ecps_ventral:
+    enabled: true
+    drop_m: 0.07484012550400568
+    min_rate_mps: 0.6
+    window_s: 0.3
+    step_hold_s: 1.0
+    rise_m: 0.13992522361780563
+    rise_span_m: 0.15
+    smooth_s: 0.4
+    baseline_s: 6.0
+ecps_pilot:
+  height_source:
+    enabled: true
+    stale_s: 0.5
+    land_after_s: 3.0
+  height_guard:
+    enabled: false
+    ceiling_m: 1.0
+    floor_m: 0.35
+    gain: 1.5
+bypass:
+  c0: 36.80881331131039
+  k_flow: 0.23382454506947675
+  k_hal: 0.46410143225901523
+  k_loom: 2.001892612759479
+  k_blank: 0.42824732434447565
+  k_near: 0.19253037887126104
+  k_gf: 0.4427577281386472
+  th_gf: 7.12448375756428

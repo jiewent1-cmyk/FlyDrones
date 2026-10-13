@@ -7,12 +7,16 @@ committed in this branch.
 `ecps295-sim` 分支的中英双语实验报告：在 Gazebo 数字孪生中，由果蝇连接组驱动的 295 g 四旋翼通过 ArduPilot 无 GPS 飞行。
 所有图表都由 [`make_figures.py`](make_figures.py) 从本分支已提交的结果文件生成。
 
+**Current status · 当前进度:** [EN](00_status.en.md) · [中文](00_status.zh.md)
+
 | # | Topic · 主题 | English | 中文 | Key result · 关键结果 |
 |---|---|---|---|---|
 | 1 | Digital twin, MiniFly v0 → v4 · 数字孪生与 MiniFly 演进 | [EN](01_twin_and_minifly.en.md) | [中文](01_twin_and_minifly.zh.md) | wall suite 6/6 → 0/6 contacts · 墙体测试撞墙 6/6 → 0/6 |
 | 2 | GPS-free navigation, route B, companion faults · 无 GPS 导航、路线 B、机载故障 | [EN](02_gps_free_navigation.en.md) | [中文](02_gps_free_navigation.zh.md) | FC landings 4/5 → 0/5, height error ~1 m → 0.1 m · 飞控降落 4/5 → 0/5 |
 | 3 | S8 ablation, 1,260 flights · S8 消融，1,260 次飞行 | [EN](03_s8_ablation.en.md) | [中文](03_s8_ablation.zh.md) · [完整版](../results/ablation_2026-10-06/REPORT_zh.md) | LCb, saccade, route B, efference copy are load-bearing · 关键组件得到确认 |
 | 4 | CMA-ES decoder optimisation and control arms · CMA-ES 优化与对照臂 | [EN](04_cmaes_optimisation.en.md) | [中文](04_cmaes_optimisation.zh.md) | 8/32 → 2/32 contact runs, n.s. after the slew fix · slew 修复后不显著 |
+| 5 | Hardware alignment: flow + ToF + route B, H0–H3, C1 · 硬件对齐与 C1 传出副本 | [EN](05_hardware_alignment.en.md) | [中文](05_hardware_alignment.zh.md) | lowbox contacts insensitive to the decoder; h2_s3 conservative, v4_eff default · lowbox 接触与解码器无关；v4_eff 成为默认 |
+| 6 | Connectome controls (C0/C2/C4) and out-of-distribution tests (D) · 连接组对照与分布外测试 | [EN](06_connectome_controls_ood.en.md) | [中文](06_connectome_controls_ood.zh.md) | network needed, but bypass beats intact (p = 0.015); intact more robust without texture (p = 0.028) · 网络必需，但 bypass 优于 intact；去纹理时 intact 更稳 |
 
 ## Figures · 图表
 
@@ -22,14 +26,21 @@ committed in this branch.
 | ![](figures/fig3_e2_wall_clearance.png) **Fig 3** E2 wall clearance · 墙前间距 | ![](figures/fig4_e3_fault_injection.png) **Fig 4** E3 fault injection · 故障注入 |
 | ![](figures/fig5_s7e_route_b.png) **Fig 5** Route B vs flow EKF · 路线 B 对比 | ![](figures/fig6_cmaes_convergence.png) **Fig 6** CMA-ES convergence · 收敛曲线 |
 | ![](figures/fig7_cage20_gazebo.png) **Fig 7** Gazebo cage20 hold-out · 留出网笼测试 | ![](figures/fig8_a1_control_arms.png) **Fig 8** A1 control arms · 对照臂 |
+| ![](figures/fig9_h1_lowbox_reliability.png) **Fig 9** Lowbox contacts and metric reliability · lowbox 接触与指标信度 | ![](figures/fig10_h3_acceptance.png) **Fig 10** H3 acceptance vs v4 · H3 验收 |
+| ![](figures/fig11_c0_c2_hw.png) **Fig 11** C0 / C2 under flow nav · 光流导航下的 C0/C2 | ![](figures/fig12_bypass_vs_intact.png) **Fig 12** Bypass vs intact, 8 + 8 seeds · bypass 对 intact |
+| ![](figures/fig13_twin_gazebo_transfer.png) **Fig 13** Twin → Gazebo transfer · 快仿真到 Gazebo 的迁移 | ![](figures/fig14_ood.png) **Fig 14** Out-of-distribution tests · 分布外测试 |
+| ![](figures/fig15_c4_h2_curves.png) **Fig 15** CMA-ES hold-out curves · 留出集收敛曲线 | ![](figures/fig16_c1_efference.png) **Fig 16** C1 efference copy · 传出副本 |
 
 ```bash
-cd ecps295 && python reports/make_figures.py    # numpy + matplotlib; rewrites reports/figures/*.png
+cd ecps295 && python reports/make_figures.py      # figures 1-8 (numpy + matplotlib)
+cd ecps295 && python reports/make_figures_hw.py   # figures 9-16 + hw_stats.txt (also scipy)
 ```
 
 **Conventions · 约定.** Every Gazebo run counts only if its whole-run real-time factor is ≥ 0.95 (server runs use a
 sim-time clock instead). Paired comparisons use the same world and brain seed; p-values are Holm-corrected per metric.
 Positions are simulator truth, not the EKF estimate. S8 (Report 3) was run before the SafetyGovernor slew fix
-`8b8eef9`.
+`8b8eef9`. Reports 5–6 use optical flow + ToF + route B (no GPS) throughout; seed-level comparisons use exact
+Mann-Whitney tests with each CMA seed as one unit.
 Gazebo 运行仅在整段 RTF ≥ 0.95 时有效（服务器上改用仿真时钟）；配对比较使用相同世界和大脑种子，p 值按指标做 Holm 校正；
-位置一律取仿真真值而非 EKF 估计；S8（报告三）早于 SafetyGovernor slew 修复 `8b8eef9`。
+位置一律取仿真真值而非 EKF 估计；S8（报告三）早于 SafetyGovernor slew 修复 `8b8eef9`。报告五、六全部使用光流 + ToF + 路线 B
+（无 GPS）；种子层面的比较把每个 CMA 种子当作一个单位，用精确 Mann-Whitney 检验。

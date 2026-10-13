@@ -1,0 +1,199 @@
+# h2_s5 (arm intact, space v4hw) best held-out validation gen 14: F=-1.6416 pC=0.083 cov=0.294
+#   yaw_gain: 0.06
+#   yaw_dnp03_w: 1.3649
+#   smoothing: 0.4753
+#   brake_dnp03: 0.0025
+#   brake_dnp01: 0.1922
+#   brake_decay: 0.99
+#   escape_thr: 14.3516
+#   sacc_thr: 7.5453
+#   sacc_dur: 1.7905
+#   sacc_backoff: 0.2763
+#   sacc_backoff_s: 0.6
+#   sacc_on_brake: 1.022
+#   sacc_refr: 1.3399
+#   sacc_keep_dir: 0.0
+#   caut_hold: 5.9698
+#   caut_ramp: 0.0
+#   caut_on_brake: 1.3187
+#   retreat_thr: 10.0237
+#   retreat_speed: 0.4574
+#   retreat_min: 1.7299
+#   vent_drop: 0.0759
+#   vent_rise: 0.1557
+brain:
+  source: minifly_v4.npz
+safety:
+  max_yaw: 1.0
+decoder:
+  axes:
+    yaw:
+      gain: 0.06
+      terms:
+        DNg02_R: 1.0
+        DNg02_L: -1.0
+        DNp03_L: 1.364935745791117
+        DNp03_R: -1.364935745791117
+  escape:
+    mode: saccade
+    threshold_hz: 14.351558562820127
+  ecps:
+    brake_decay: 0.99
+    saccade:
+      enabled: true
+      terms:
+      - DNp03_L
+      - DNp03_R
+      threshold_hz: 7.545302100440656
+      duration_s: 1.7904851576415963
+      yaw: 1.0
+      backoff: 0.2763012909092092
+      backoff_s: 0.6
+      on_brake: 1.0219837704894283
+      refractory_s: 1.3399381793561966
+      keep_direction_s: 0.0
+    caution:
+      hold_s: 5.969800171785864
+      ramp_s: 0.0
+      on_brake: 1.3187492161788177
+    retreat:
+      enabled: true
+      terms:
+      - MDN_L
+      - MDN_R
+      threshold_hz: 10.0236689330345
+      speed: 0.45744878158739544
+      min_s: 1.7299004313595476
+      hold_s: 1.0
+      max_s: 2.0
+      then_saccade: true
+    throttle_per_forward: 0.14
+    throttle_yaw_decouple: 0.011
+  smoothing: 0.4753128616464581
+  brake_terms:
+    DNp03_L: 0.0024643475329637595
+    DNp03_R: 0.0024643475329637595
+    DNp01_L: 0.19224240993690594
+    DNp01_R: 0.19224240993690594
+ecps_drone:
+  yaw_rate_max_dps: 60
+outputs:
+  DNg02_L:
+    types:
+    - ^DNg02
+    side: L
+  DNg02_R:
+    types:
+    - ^DNg02
+    side: R
+  DNp03_L:
+    types:
+    - ^DNp03$
+    side: L
+  DNp03_R:
+    types:
+    - ^DNp03$
+    side: R
+  DNp01_L:
+    types:
+    - ^DNp01$
+    - ^GF$
+    side: L
+  DNp01_R:
+    types:
+    - ^DNp01$
+    - ^GF$
+    side: R
+  MDN_L:
+    types:
+    - ^MDN$
+    side: L
+    note: moonwalker DNs, backward walking (Bidaye et al. 2014)
+  MDN_R:
+    types:
+    - ^MDN$
+    side: R
+    note: moonwalker DNs, backward walking (Bidaye et al. 2014)
+inputs:
+  LCb_L:
+    types:
+    - ^LCb$
+    side: L
+    feature: blank
+    eye: L
+    max_hz: 150
+  LCb_R:
+    types:
+    - ^LCb$
+    side: R
+    feature: blank
+    eye: R
+    max_hz: 150
+  LCn_L:
+    types:
+    - ^LCn$
+    side: L
+    feature: near
+    eye: L
+    max_hz: 120
+  LCn_R:
+    types:
+    - ^LCn$
+    side: R
+    feature: near
+    eye: R
+    max_hz: 120
+  LCv_L:
+    types:
+    - ^LCv$
+    side: L
+    feature: ventral
+    eye: L
+    max_hz: 150
+  LCv_R:
+    types:
+    - ^LCv$
+    side: R
+    feature: ventral
+    eye: R
+    max_hz: 150
+vision:
+  ecps_blank:
+    energy_thr: 0.0002
+    rows:
+    - 1
+    - 4
+    gain: 2.5
+    min_frac: 0.55
+    baseline_s: 6.0
+    side_gain: 2.0
+  ecps_near:
+    enabled: true
+    rows:
+    - 2
+    - 6
+    gain: 3.0
+    min_flow: 0.08
+    max_yaw_dps: 12.0
+    smooth: 0.15
+    outer_cols: 3
+  ecps_ventral:
+    enabled: true
+    drop_m: 0.07591391907528042
+    min_rate_mps: 0.6
+    window_s: 0.3
+    step_hold_s: 1.0
+    rise_m: 0.15573441617331085
+    rise_span_m: 0.15
+    smooth_s: 0.4
+    baseline_s: 6.0
+ecps_pilot:
+  height_source:
+    enabled: true
+    stale_s: 0.5
+    land_after_s: 3.0
+  height_guard:
+    enabled: false
+    ceiling_m: 1.0
+    floor_m: 0.35
+    gain: 1.5

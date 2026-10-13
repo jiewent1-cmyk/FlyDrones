@@ -4,6 +4,9 @@
 > Gazebo 复测在云服务器上进行（Gazebo 8.10 + 仿真时钟）· 状态：A0、A2、A3、B1 已完成；A1/B2 的 Gazebo 复测和适应度
 > v2 进行中 · English: [04_cmaes_optimisation.en.md](04_cmaes_optimisation.en.md)
 
+> **2026-10-13 更新：** 本报告的 GPS 网笼结果已在真机传感器配置（光流 + ToF + 路线 B）下重做，见[报告五](05_hardware_alignment.zh.md)
+> 和[报告六](06_connectome_controls_ood.zh.md)；对照臂的结论以那里为准。
+
 ## 摘要
 
 报告一中 v1 → v3_2 的演进，本质上是在约 40 个手调参数上做人工坐标下降。我们把其中解码器部分（17 个参数）交给快仿真上的
