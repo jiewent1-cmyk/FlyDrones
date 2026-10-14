@@ -47,6 +47,8 @@ flowchart LR
 | RL | CMA-ES decoder, control arms, Gazebo multi-instance · CMA-ES 与对照臂 | [4](reports/04_cmaes_optimisation.en.md) · [中](reports/04_cmaes_optimisation.zh.md) |
 | H0–H3, C1 | hardware alignment (flow + ToF + route B), efference copy · 硬件对齐、传出副本 | [5](reports/05_hardware_alignment.en.md) · [中](reports/05_hardware_alignment.zh.md) |
 | C0/C2/C4, D | connectome controls, bypass vs intact, out-of-distribution · 连接组对照、分布外测试 | [6](reports/06_connectome_controls_ood.en.md) · [中](reports/06_connectome_controls_ood.zh.md) |
+| S1–S5, N1–N3 | structural fixes, ToF range shield, ToF into the brain, shield-in-the-loop CMA · 结构改动、测距安全层 | [7](reports/07_range_sensing_shield.en.md) · [中](reports/07_range_sensing_shield.zh.md) |
+| E | mushroom-body plasticity (negative) · 蘑菇体可塑性（阴性） | [8](reports/08_mushroom_body.en.md) · [中](reports/08_mushroom_body.zh.md) |
 
 The sections below are the lab notebook: setup, commands and raw tables in the order the work was done.
 以下各节是实验记录：按时间顺序记录的环境、命令和原始表格。

@@ -234,6 +234,96 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         e = (s.lon_int - lon0 * 1e7) * k * math.cos(math.radians(lat0))
         return n, e, s.alt - alt0
 
+    # ------------------------------------------------------------------ S3 / S4 rangers (route review 2026-10-13)
+    def _ray(self, n: float, e: float, a: float, ang: float) -> float:
+        """Horizontal distance from (n, e) at height a to the first layout box (nets included) along bearing ang, max
+        2 m; the same slab test as rl.twin.TwinDrone._ray."""
+        best = 2.0
+        dn, de = math.cos(ang), math.sin(ang)
+        for o in getattr(getattr(self, "room", None), "boxes", None) or []:
+            if not o.lo[2] <= a <= o.hi[2]:
+                continue
+            t0, t1 = 0.0, best
+            for p, d, lo, hi in ((n, dn, o.lo[0], o.hi[0]), (e, de, o.lo[1], o.hi[1])):
+                if abs(d) < 1e-9:
+                    if not lo <= p <= hi:
+                        t0 = math.inf
+                        break
+                else:
+                    u, v = (lo - p) / d, (hi - p) / d
+                    t0, t1 = max(t0, min(u, v)), min(t1, max(u, v))
+            if t0 <= t1:
+                best = min(best, t0)
+        return best
+
+    def _ray3(self, p: tuple, d: tuple) -> float:
+        """3D slab test from p = (north, east, up) along the unit vector d (north, east, up) against the layout boxes
+        and, in flight, the floor; max 2 m."""
+        best = min(2.0, p[2] / -d[2]) if d[2] < -1e-9 and p[2] > 0.3 else 2.0
+        for o in getattr(getattr(self, "room", None), "boxes", None) or []:
+            t0, t1 = 0.0, best
+            for i in range(3):
+                if abs(d[i]) < 1e-9:
+                    if not o.lo[i] <= p[i] <= o.hi[i]:
+                        t0 = math.inf
+                        break
+                else:
+                    u, v = (o.lo[i] - p[i]) / d[i], (o.hi[i] - p[i]) / d[i]
+                    t0, t1 = max(t0, min(u, v)), min(t1, max(u, v))
+            if t0 <= t1:
+                best = min(best, t0)
+        return best
+
+    def _cone3(self, n: float, e: float, a: float, s, b: float, h: float) -> float:
+        """Shortest slant range over the whole ToF cone (axis + 8 rim rays at half-angle h) for body bearing b (rad),
+        rotated by the SIM_STATE attitude. Unlike the planar fan it also sees box tops just below the sensor."""
+        cr, sr, cp, sp = math.cos(s.roll), math.sin(s.roll), math.cos(s.pitch), math.sin(s.pitch)
+        cy, sy = math.cos(s.yaw), math.sin(s.yaw)
+        best = 2.0
+        for k in range(9):
+            r, phi = (0.0, 0.0) if k == 0 else (h, (k - 1) * math.pi / 4)
+            az, el = b + r * math.cos(phi), r * math.sin(phi)
+            x, y, z = math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), -math.sin(el)  # body FRD
+            dn = cp * cy * x + (sr * sp * cy - cr * sy) * y + (cr * sp * cy + sr * sy) * z
+            de = cp * sy * x + (sr * sp * sy + cr * cy) * y + (cr * sp * sy - sr * cy) * z
+            dd = -sp * x + sr * cp * y + cr * cp * z
+            best = min(best, self._ray3((n, e, a), (dn, de, -dd)))
+        return best
+
+    def ranges(self, beams, fov_deg: float = 0.0, rate_hz: float = 10.0, noise_m: float = 0.01) -> list[float]:
+        """Horizontal ToF beams (body bearings in deg, + = right) emulated from SIM_STATE truth and the world layout
+        (run_g4 --layout sets self.room): same geometry, cone, noise and sample-and-hold as rl.twin.TwinDrone.ranges().
+        SITL only; reads 2.0 (no echo) until truth arrives."""
+        import os
+        import random
+
+        if not hasattr(self, "_beams"):
+            self._beams = {}
+        key = (tuple(beams), fov_deg, rate_hz, noise_m)
+        st = self._beams.get(key)
+        if st is None:
+            st = self._beams[key] = [-1.0, [2.0] * len(beams), random.Random(86_000 + len(self._beams))]
+        now = time.monotonic()
+        if now - st[0] >= 1.0 / rate_hz - 1e-6:
+            tru = self.truth_ned()
+            s = self.m.messages.get("SIM_STATE") if self.m is not None else None
+            if tru is not None and s is not None:
+                st[0] = now
+                n, e, a = tru
+                h = math.radians(fov_deg) / 2
+                if h > 0 and os.environ.get("ECPS_TOF_CONE3D") == "1":  # N1b: full cone + attitude (box tops, floor)
+                    raw = [self._cone3(n, e, a, s, math.radians(b), h) for b in beams]
+                else:
+                    offs = (-h, 0.0, h) if h > 0 else (0.0,)
+                    raw = [min(self._ray(n, e, a, s.yaw + math.radians(b) + o) for o in offs) for b in beams]
+                st[1] = [max(0.0, min(2.0, r - 0.06 + (st[2].gauss(0.0, noise_m) if noise_m > 0 else 0.0))) for r in raw]
+        return st[1]
+
+    def side_ranges(self) -> dict:
+        """S3 rear / left / right rangers (rl.twin.TwinDrone.side_ranges: single rays, 10 Hz, 1 cm noise)."""
+        r = self.ranges((180.0, -90.0, 90.0), 0.0, 10.0, 0.01)
+        return {"rear": r[0], "left": r[1], "right": r[2]}
+
     # ------------------------------------------------------------------ takeoff (F4)
     def takeoff(self) -> None:
         if self.autopilot != "ardupilot":

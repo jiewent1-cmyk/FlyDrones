@@ -22,7 +22,7 @@ episodes and about 1,900 Gazebo flights**, the picture is mixed, and we report i
   more spontaneous turns in an empty field (3.3 vs 1.8/min, p = 0.04).
 - **D — the first result for the connectome.** Remove the texture from boxes and floor (*notex*) and bypass loses its
   advantage while intact does not: change in runs with contact +6.5 vs −2.0 in the twin (p = 0.001), reproduced in
-  Gazebo (+1.0 vs −1.5, p = 0.028). Under wind, half-blind camera, low light or ToF faults bypass stays ahead or both
+  Gazebo on 50 worlds (+4.0 vs −1.5, p = 0.001). Under wind, half-blind camera, low light or ToF faults bypass stays ahead or both
   degrade alike.
 
 ## 1. Arms
@@ -119,7 +119,8 @@ as good, at the price of more spontaneous turning.
 `rl/ood.py` runs the 16 exported configurations + v4 on the same worlds, brain seeds and randomisation as the
 independent test, so the in-distribution runs are a paired baseline (11,736 twin episodes, 0 errors, Mac mini +
 Jetson). `gazebo/ood_world.py` builds notex and ghost copies of Gazebo worlds (notex: emissive single-colour boxes,
-no tape, no sun shading, mat a uniform grey 0.425; ghost: collision only); 484 ROG flights.
+no tape, no sun shading, mat a uniform grey 0.425; ghost: collision only); 994 ROG flights (notex lowbox_s0–49 × 17
+configurations, ghost/normal cage20 × 8 × 9).
 
 ![OOD](figures/fig14_ood.png)
 
@@ -135,10 +136,12 @@ arguments: if the connectome helps, intact should degrade less.*
 | tof | 0.0 / −1.5 (0.72) | +0.5 / +2.5 (0.20) | both unaffected |
 | ghost | +24 / +19 (0.20) | +10.5 / +18.5 (0.05) | avoidance is visual; part of bypass's cage20 edge is "blind" |
 
-- **notex reproduces in Gazebo** (ROG, lowbox_s0–19 × 17 configurations): in distribution bypass hits less (median
-  1 vs 5, p = 0.007); without texture both are at 2 (p = 0.96); change +1.0 vs −1.5 (p = 0.028). Caveat: 20 worlds per
-  configuration, small counts; intact hitting *less* without texture may come from the emissive boxes contrasting more
-  with the floor, not from intact getting better.
+- **notex reproduces in Gazebo** (ROG, lowbox_s0–49 × 17 configurations, extended from 20 worlds on 10-13): in
+  distribution bypass hits less (median 2.5 vs 10.5, p = 0.015); without texture the gap is gone (6.5 vs 8.0,
+  p = 0.65); seed-level change +4.0 vs −1.5 (p = 0.001; it was +1.0 vs −1.5, p = 0.028 on the first 20 worlds).
+  Caveat: intact hitting *less* without texture may come from the emissive boxes contrasting more with the floor,
+  not from intact getting better. The notex worlds had more take-off failures ("no position estimate" at arming,
+  s25–s38); all 46 were re-run successfully.
 - **ghost in Gazebo** (cage20 × 8, v4 + seeds 1–4): every configuration hits heavily (intact 8/8 for all four seeds,
   v4 8/8; bypass 4, 8, 3, 8; p = 0.34). The twin's "bypass avoids partly without seeing" appears only on c4_s1/s3 and
   is weak in Gazebo.
@@ -151,7 +154,7 @@ arguments: if the connectome helps, intact should degrade less.*
   the paper must say so.
 - The one place where the network is more robust is texture removal — consistent with LCb/blank and looming cues
   that do not depend on surface texture, against a bypass that leans on flow magnitude. This is the most interesting
-  thread to extend (notex lowbox_s20–49 is running on the ROG now, 511 runs).
+  thread to extend; it held up when the Gazebo test grew from 20 to 50 worlds.
 
 ## 6. Data and reproduction
 

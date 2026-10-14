@@ -71,6 +71,7 @@ calibration models — draw two random halves of the 50 worlds and correlate the
   confirm "backing causes the hits" (10/50 → 12, 8, 5/49; p = 0.27). Conclusion: the drone **sees the stack too late or
   not at all**, so decoder tuning has reached its ceiling on lowbox. Structural fixes (never move toward unseen
   space, short-term spatial memory, side/rear ToF) are on the list but were deferred by decision.
+  *Update 10-14: they were run on 10-13, followed by a ToF range shield — see [Report 7](07_range_sensing_shield.en.md).*
 
 ## 4. H2 / H3 — re-optimising on the v4 base and accepting against v4
 
@@ -123,7 +124,7 @@ by c × turn and decays with τ (`vision.ecps_efference`, off by default).
 | H1 twin calibration | ✅ (gate revised) | contacts are not rankable in Gazebo; randomised twin passes the revised gate on s0–29, not on s30–49 |
 | H2 / H3 | ✅ | h2_s3 accepted as a conservative variant; no candidate lowers lowbox contacts |
 | C1 efference copy | ✅ | v4_eff becomes the default |
-| Structural fixes for lowbox | ⏸ deferred | the cause analysis points here |
+| Structural fixes for lowbox | ✅ (10-13) | done in [Report 7](07_range_sensing_shield.en.md): range shield, lowbox 0/50 in Gazebo |
 
 The control arms of the connectome question were then repeated in this setting — see
 [Report 6](06_connectome_controls_ood.en.md).

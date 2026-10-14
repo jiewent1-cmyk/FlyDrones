@@ -395,16 +395,17 @@ def fig_ood(G, T):
         ax.set_ylabel(f"Δ runs with contact (of {len(T[('ood', 'c4_s1', 'notex', sset)])})")
         ax.grid(axis="x", visible=False)
 
-    ax = axs[2]  # Gazebo notex: lowbox_s0-19 notex vs the same worlds and seeds in distribution
-    log("== fig14 Gazebo notex (ROG lowbox_s0-19)")
+    ax = axs[2]  # Gazebo notex: lowbox_s0-49 notex vs the same worlds and seeds in distribution
+    log("== fig14 Gazebo notex (ROG lowbox_s0-49)")
     d = {"bypass": [], "intact": []}
     for arm, pre in (("bypass", "c4"), ("intact", "h2")):
         for s in SEEDS:
             name = f"{pre}_s{s}"
             O = G[(f"md_{name}", "lowbox_notex")]
-            O = {(w.replace("_notex", ""), k): r for (w, k), r in O.items() if int(w.split("_s")[1].split("_")[0]) < 20}
+            O = {(w.replace("_notex", ""), k): r for (w, k), r in O.items()}
             base = G.get((f"mc4_{name}", "lowbox")) or G.get((f"fx_{name}", "lowbox"))
             ks = sorted(set(O) & set(base))
+            assert len(ks) >= 49, (name, len(ks))  # c4_s1 in distribution: 49 (one failed take-off)
             a, b = sum(base[k]["contact_episodes"] > 0 for k in ks), sum(O[k]["contact_episodes"] > 0 for k in ks)
             d[arm].append((a, b))
             log(f"  {name}: in-dist {a} -> notex {b} (n={len(ks)})")
@@ -423,7 +424,7 @@ def fig_ood(G, T):
     ax.set_xticks([-0.18, 0.18, 0.82, 1.18], ["in-dist", "notex", "in-dist", "notex"], fontsize=8)
     ax.text(0, -0.13, "bypass", transform=ax.get_xaxis_transform(), ha="center", color=BYP, fontsize=9)
     ax.text(1, -0.13, "intact", transform=ax.get_xaxis_transform(), ha="center", color=INT, fontsize=9)
-    ax.set_ylabel("runs with contact / 20")
+    ax.set_ylabel("runs with contact / 50")
     ax.set_title(f"Gazebo notex (Δ p = {p:.3f})")
     ax.grid(axis="x", visible=False)
     h = [plt.Line2D([], [], marker="o", ls="", color=c, label=l) for c, l in ((BYP, "bypass seeds"),

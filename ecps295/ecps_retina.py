@@ -74,6 +74,18 @@ class EcpsRetina(Retina):
         r.eff_c = float(ef.get("c", 0.0))
         r.fwd_cmd = 0.0
         r._eff_turn = 0.0
+        # S5 (route review 2026-10-13): horizontal ToF beams (EcpsPilot sets `tof` from drone.ranges() every tick) feed
+        # the `near` grids next to the flow centering cue, so a close reading on one side drives LCn on that side and the
+        # brain's own saccade turns away. Texture independent: no flow, blank or gyro gating. Beams within max_bearing of
+        # the nose count (bearing < 0 -> left eye, > 0 -> right, 0 -> both); proximity = clip(1 - d / d0, 0, 1) * gain.
+        # Same beam spec as the S4 shield -> the same sensor readings (drone.ranges() caches per spec).
+        t = (cfg.get("vision", {}) or {}).get("ecps_tof", {}) or {}
+        r.tof_on = bool(t.get("enabled", False))
+        r.tof_beams = tuple(float(b) for b in t.get("beams", (-25.0, 25.0, 90.0, 180.0, -90.0)))
+        r.tof_fov, r.tof_rate, r.tof_noise = float(t.get("fov_deg", 27.0)), float(t.get("rate_hz", 10.0)), float(t.get("noise_m", 0.01))
+        r.tof_d0, r.tof_gain, r.tof_max_bearing = float(t.get("d0", 0.8)), float(t.get("gain", 1.0)), float(t.get("max_bearing", 60.0))
+        r.tof = None
+        r.last_tof = {"L": 0.0, "R": 0.0}
         r._floor0 = r.loom_floor
         r._blank_min0 = r.blank_min
         return r
@@ -105,9 +117,17 @@ class EcpsRetina(Retina):
         if self.near_on and textured and min(f.values()) > self.near_min_flow and abs(self.yaw_rate_dps) < self.near_max_yaw:
             asym = (f["R"] - f["L"]) / (f["R"] + f["L"] + 1e-6)  # > 0: right side nearer
             target = {"R": float(np.clip(asym * self.near_gain, 0, 1)), "L": float(np.clip(-asym * self.near_gain, 0, 1))}
+        tof = {"L": 0.0, "R": 0.0}
+        if getattr(self, "tof_on", False) and self.tof is not None:
+            for b, d in zip(self.tof_beams, self.tof):
+                if abs(b) <= self.tof_max_bearing:
+                    p = min(1.0, float(np.clip(1.0 - d / self.tof_d0, 0.0, 1.0)) * self.tof_gain)
+                    for e in ("L",) if b < 0 else ("R",) if b > 0 else ("L", "R"):
+                        tof[e] = max(tof[e], p)
+            self.last_tof = tof
         for e in "LR":
             self._near[e] = (1 - self.near_tau) * self._near[e] + self.near_tau * target[e]
-            vf.eyes[e].grids["near"] = np.full((self.rows, self.cols), self._near[e], np.float32)
+            vf.eyes[e].grids["near"] = np.full((self.rows, self.cols), max(self._near[e], tof[e]), np.float32)
         self.last_near = {"L": self._near["L"], "R": self._near["R"], "f_L": f["L"], "f_R": f["R"]}
 
     def encode(self, frame):

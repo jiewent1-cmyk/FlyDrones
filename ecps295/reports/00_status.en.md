@@ -1,4 +1,4 @@
-# Project status — 2026-10-13
+# Project status — 2026-10-14
 
 > Snapshot of the simulation and RL work on branch `ecps295-sim` across all experiment machines.
 > 中文版：[00_status.zh.md](00_status.zh.md) · reports index: [README.md](README.md)
@@ -13,30 +13,45 @@
 | C1 efference copy | ✅ | v4_eff halves empty-field false alarms, default from now on | [5](05_hardware_alignment.en.md) |
 | C0 / C2 under flow nav | ✅ | brain needed (≈ 10–40× contacts without it); real wiring beats 5/5 shuffles, weakly | [6](06_connectome_controls_ood.en.md) |
 | C4 bypass vs intact (8 + 8 seeds) | ✅ | bypass better (Gazebo p = 0.015, twin p = 0.010); readout is not the bottleneck | [6](06_connectome_controls_ood.en.md) |
-| D out-of-distribution (6 modes, twin + Gazebo) | ✅ / 🔄 | intact more robust without texture (twin p = 0.001, Gazebo p = 0.028); Gazebo notex extension running | [6](06_connectome_controls_ood.en.md) |
-| E mushroom-body plasticity (optional) | 🔄 started | first screen launched on the Mac mini and Jetson; code not on the branch yet | — |
-| Structural lowbox fixes (no motion into unseen space, memory, side ToF) | ⏸ deferred | indicated by the H1 cause analysis | [5](05_hardware_alignment.en.md) |
+| D out-of-distribution (6 modes, twin + Gazebo) | ✅ | intact more robust without texture (twin p = 0.001; Gazebo on 50 worlds p = 0.001) | [6](06_connectome_controls_ood.en.md) |
+| E mushroom-body plasticity | ✅ negative | 6 settings, 48 lifetimes: learned weights no better than shuffled ones | [8](08_mushroom_body.en.md) |
+| Structural lowbox fixes S1–S3 | ✅ | no back-off: no effect; memory: n.s.; side/rear rangers −38 % contact runs | [7](07_range_sensing_shield.en.md) |
+| N route review: range shield S4, ToF into the brain S5 | ✅ twin + Gazebo | 5 ToF + shield: lowbox 0/150 (twin), 0/50 (Gazebo, 27° cone); s5 1/50 with 42 % fewer shield interventions | [7](07_range_sensing_shield.en.md) |
+| N1 larger sample (second brain seed) | 🔄 | v4 done (lowbox 8/50); s5 on the same set ~40/58, done ≈ 10-14 08:00 PT | [7](07_range_sensing_shield.en.md) |
+| N3 CMA with the shield in the loop | 🔄 | seed 1 (s5): gains fitness by flying less, not adopted; seed 1 (sh5u) running | [7](07_range_sensing_shield.en.md) |
+| N4 stress tests, N5 pre-registered acceptance, N6 ToF bench + real drone | ⬜ | N6 needs the hardware decision (5 × VL53L1X) | — |
 | F safety layer + L0–L4 real-flight ladder | ⬜ | slew fix done; first flight planned 10-28 | — |
 
 ## Machines and what they are doing now
 
-| Machine | Role | Now (2026-10-13, 03:00 PDT) |
+| Machine | Role | Now (2026-10-14, 00:40 PDT) |
 |---|---|---|
-| ROG laptop (Ryzen 9 5900HX, RTX 3070 Laptop) | Gazebo 8.15, 3 lockstep instances | D extension: notex lowbox_s20–49 × 17 configs (511 runs) |
-| Mac mini M4 | fast twin, fastest per core | E stage screen (mushroom body) |
-| Jetson AGX Orin | fast twin overflow | E stage screen |
+| ROG laptop (Ryzen 9 5900HX, RTX 3070 Laptop) | Gazebo 8.15, 3 lockstep instances | s5 on the second brain seed (lowbox k+100, cage20 k8–15), 58 runs; pauses 01:00–07:00 PT |
+| Mac mini M4 | fast twin, fastest per core | idle (N3 s5 seed finished 10-13 23:39) |
+| Jetson AGX Orin | fast twin overflow | N3 seed 1 with the sh5u shield, generation 15/20 |
 | Lab server (Xeon 6330, 8× RTX 4090, shared) | many Gazebo instances with sim clock | idle for this project; used only when needed |
 | Desktop (R5 7500X3D, RTX 5060) | Gazebo node, 2 instances | off (in use by the owner) |
 
-All machines reproduce the same twin anchors bit for bit (`python -m rl.gates all`, 12/12 on this tree).
+All machines reproduce the same twin anchors bit for bit (`python -m rl.gates all`, 12/12 on this tree). ROG and the
+desktop run nothing between 01:00 and 07:00 Los Angeles time; their runners pause by themselves.
 
 ## Numbers behind this branch
 
 | | Count |
 |---|---|
-| Hardware-aligned Gazebo runs in `rl/results/gazebo/hw_runs.csv` | 4,427 |
-| Fast-twin test episodes in `rl/results/twin/hw/tests.csv.gz` | 18,370 |
-| CMA-ES runs in `rl/results/twin/hw/` | 20 (h2 × 8, c4 × 8, c1 × 4) |
+| Hardware-aligned Gazebo runs in `rl/results/gazebo/hw_runs.csv` | 5,357 |
+| Fast-twin test episodes in `rl/results/twin/hw/tests.csv.gz` (controls, seeds, OOD) | 18,370 |
+| Fast-twin episodes in `rl/results/twin/n/tests.csv.gz` (S1–S5 screens, diagnosis) | 6,126 |
+| Fast-twin episodes in `rl/results/twin/mb/tests.csv.gz` (stage E) | 10,944 |
+| CMA-ES runs in `rl/results/twin/hw/` | 21 (h2 × 8, c4 × 8, c1 × 4, n3 × 1) |
+
+## Decisions pending
+
+- **Hardware:** add five VL53L1X single-zone ToF sensors (front pair at ±25°, right, rear, left; about 2.5 g on the
+  companion's I²C) and feed them to both the brain and the shield (s5). A bench test (cage net, black boxes, box tops
+  just below the sensor) must come before flight.
+- **Paper framing:** from "connectome controller avoids obstacles" to "connectome controller + range shield, optimised
+  with the shield in the loop"; the connectome question stays with C0/C2/C4 and the OOD tests.
 
 ## Paper
 

@@ -337,6 +337,7 @@ class TwinDrone(Drone):
         self.terr = 0.0  # EKF terrain height estimate
         self.tof_dt, self._tof_t, self._tof = 1.0 / tof_hz, -1.0, None
         self.nrng = np.random.default_rng(50_000 + seed)
+        self._seed, self._side_t, self._side, self._srng = seed, -1.0, None, None  # side_ranges(), built on first use
         # flow + route B in Gazebo cruises higher than the GPS runs (S8 lowbox: median 0.81 m, p10-p90 0.62-0.98 m)
         self.hover_alt = None if hover_alt is None else hover_alt + float(np.random.default_rng(60_000 + seed).uniform(-hover_jitter, hover_jitter))
         # D stage (out of distribution); own RNG streams so the in-distribution path is untouched
@@ -410,6 +411,57 @@ class TwinDrone(Drone):
                     v = 1.2  # out of range
             self._tof = v
         return self._tof
+
+    def _ray(self, ang: float) -> float:
+        """Horizontal distance from the body centre to the first obstacle (box or net) at flight height, max 2 m."""
+        n, e, a = self.pos
+        dn, de = math.cos(ang), math.sin(ang)
+        best = 2.0
+        for o in self.world.obstacles:
+            if not o.lo[2] <= a <= o.hi[2]:
+                continue
+            t0, t1 = 0.0, best
+            for p, d, lo, hi in ((n, dn, o.lo[0], o.hi[0]), (e, de, o.lo[1], o.hi[1])):
+                if abs(d) < 1e-9:
+                    if not lo <= p <= hi:
+                        t0 = math.inf
+                        break
+                else:
+                    u, v = (lo - p) / d, (hi - p) / d
+                    t0, t1 = max(t0, min(u, v)), min(t1, max(u, v))
+            if t0 <= t1:
+                best = min(best, t0)
+        return best
+
+    def side_ranges(self) -> dict:
+        """Structural fix S3 (ecps_struct rangers): rear / left / right VL53L0X-class rangers on the frame edge
+        (0.06 m from the centre), 10 Hz sample and hold, 1 cm noise, own RNG stream."""
+        if self._side is None or self.t - self._side_t >= self.tof_dt - 1e-9:
+            if self._srng is None:
+                self._srng = np.random.default_rng(85_000 + self._seed)
+            self._side_t = self.t
+            self._side = {k: float(np.clip(self._ray(self.yaw + off) - 0.06 + self._srng.normal(0, 0.01), 0.0, 2.0))
+                          for k, off in (("rear", math.pi), ("left", -math.pi / 2), ("right", math.pi / 2))}
+        return self._side
+
+    def ranges(self, beams: tuple, fov_deg: float = 0.0, rate_hz: float = 10.0, noise_m: float = 0.01) -> list[float]:
+        """S4 shield (ecps_struct, route review 2026-10-13): horizontal ToF beams at body bearings `beams` (deg, 0 = nose,
+        + = right), sensor 0.06 m from the centre. A beam with fov_deg > 0 reads the nearest of 3 rays across its cone
+        (single-zone VL53L1X ~27 deg); sample and hold at rate_hz, Gaussian noise from its own RNG stream per beam set,
+        so side_ranges() and the flow / ToF noise are untouched."""
+        if not hasattr(self, "_beams"):
+            self._beams = {}
+        key = (tuple(beams), fov_deg, rate_hz, noise_m)
+        st = self._beams.get(key)
+        if st is None:
+            st = self._beams[key] = [-1.0, None, np.random.default_rng(86_000 + self._seed)]
+        if st[1] is None or self.t - st[0] >= 1.0 / rate_hz - 1e-9:
+            st[0] = self.t
+            h = math.radians(fov_deg) / 2
+            offs = (-h, 0.0, h) if h > 0 else (0.0,)
+            st[1] = [float(np.clip(min(self._ray(self.yaw + math.radians(b) + o) for o in offs) - 0.06
+                                   + (st[2].normal(0, noise_m) if noise_m > 0 else 0.0), 0.0, 2.0)) for b in beams]
+        return st[1]
 
     def baro_m(self) -> float | None:
         return float(self.pos[2] + self.nrng.normal(0, 0.03))

@@ -109,6 +109,7 @@ def run_episode(
     dyn_over: dict | None = None,
     keep_rows: bool = False,
     arm: str = "intact",
+    mb: dict | None = None,
 ) -> dict:
     cfg = build_cfg(variant, seed, overrides=overrides)
     src = cfg["brain"]["source"]
@@ -124,6 +125,14 @@ def run_episode(
     pilot.retina = EcpsRetina.from_config(cfg)
     pilot.decoder = EcpsDecoder(cfg)
     arms.install(arm, brain, pilot, drone, cfg, seed)
+    mbody = None
+    if mb:  # stage E mushroom body: {"cfg": {...}, "g": list or None, "learn": bool}
+        from mb import MushroomBody
+        from mb import install as mb_install
+
+        mbody = MushroomBody(mb.get("cfg"), mb.get("g"), mb.get("learn", False))
+        mb_install(mbody, brain, pilot, drone)
+        pun, seen, nov_until, ovr_prev = [], set(), -1.0, False
 
     drone.connect()
     pilot.warmup(pilot.decoder.settle_s + 0.1, DT)
@@ -167,6 +176,22 @@ def run_episode(
         escapes += esc and not escape_prev
         escape_prev = esc
         rows.append((n, e, a, clearance(world, n, e, a), info.cmd.forward, info.cmd.yaw))
+        if mbody is not None:  # teaching signals from the twin's ground truth
+            tn = k * DT
+            c, cp = rows[-1][3], rows[-2][3] if len(rows) > 1 else rows[-1][3]
+            if cp >= 0 > c:
+                pun.append((tn + 1.0, 1.0))  # contact
+            elif cp >= 0.1 > c:
+                pun.append((tn + 0.3, 0.3))  # near miss
+            if ovr and not ovr_prev and mbody.p.get("teach_ovr", True):
+                pun.append((tn + 0.3, 0.3))  # governor / fence turn takes over
+            ovr_prev = ovr
+            cell_k = (math.floor(n / 0.5), math.floor(e / 0.5))
+            if cell_k not in seen:
+                seen.add(cell_k)
+                nov_until = tn + 0.3  # new coverage cell
+            pun = [q for q in pun if q[0] > tn]
+            mbody.teach(max((q[1] for q in pun), default=0.0), 1.0 if tn < nov_until else 0.0, DT)
         dn.append((max(info.rates.get("DNp03_L", 0), info.rates.get("DNp03_R", 0)), max(info.rates.get("DNp01_L", 0), info.rates.get("DNp01_R", 0)),
                    info.rates.get("DNg02_L", 0) + info.rates.get("DNg02_R", 0)))
         if pilot.safety.land_requested:
@@ -217,6 +242,12 @@ def run_episode(
     turns = [(side, sum(r[5] for r in rows[k : k + w]) / max(1, len(rows[k : k + w]))) for k, side in dir_cases]
     out["dir_cases"] = len(turns)
     out["dir_correct"] = sum(1 for side, y in turns if y * side < 0)
+    if getattr(pilot, "struct", None) is not None:
+        out.update(pilot.struct.summary())
+    if mbody is not None:
+        out.update(mbody.summary())
+        if mbody.learn:
+            out["mb_g"] = [round(float(x), 5) for x in mbody.g]
     if keep_rows:
         out["rows"] = rows
     return out

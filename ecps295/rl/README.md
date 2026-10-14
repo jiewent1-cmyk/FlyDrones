@@ -156,8 +156,23 @@ w_cov = 2、4、8 时，覆盖率分别为 0.58、0.57、0.62（v3_2 是 0.50）
 - `ood.py`：在与 `hw_arms --conds` 相同的世界、种子和随机化下运行导出配置；`--report --base` 给出种子层面 bypass 对 intact 的比较和相对分布内的变化量。
 - `hw_arms.py --conds <name> ...`：测试 `minifly/<name>.yaml` 导出配置（臂从导出文件首行读取），v4 自动加入。
 - `../gazebo/ood_world.py`：生成 Gazebo 世界的 notex / ghost 版本。`../run_g4.py` 读取 `ECPS_ARM`（默认 intact），在 Gazebo 中运行 `rl.arms` 的对照臂。
-- 结论：去纹理时 bypass 失去优势、intact 不退化（快仿真 p = 0.001，Gazebo p = 0.028），是第一个支持连接组的结果；其余模式下 bypass 仍领先或两者相当。
+- 结论：去纹理时 bypass 失去优势、intact 不退化（快仿真 p = 0.001，Gazebo 50 个世界 p = 0.001），是第一个支持连接组的结果；其余模式下 bypass 仍领先或两者相当。
 - 结果数据：`results/twin/hw/`（CMA 运行与 `tests.csv.gz`）、`results/gazebo/hw_runs.csv`；作图 `../reports/make_figures_hw.py`。
+
+### 3.8 结构改动与测距安全层（S1–S5、N 阶段，2026-10-13 起）
+
+- `../ecps_struct.py`：`StructGuard`（配置在 `ecps_pilot.struct` 下，默认全关）。S1 扫视不后退；S2 短时空间记忆（EKF 坐标里的威胁点，20 s）；S3 侧后测距规则；S4 `RangeShield`：每束测距约束指令速度 v·u ≤ α(d − d_safe)，低于 d_safe 时后撤，前进被压住 1 s 时向开阔侧脱困。
+- `../ecps_retina.py`：S5 `vision.ecps_tof`，机头 ±60° 以内的测距接进 `near`（LCn）网格。`../ecps_pilot.py` 每 tick 从 `drone.ranges()` 取读数，并调用安全层。
+- `twin.py`：`side_ranges()`、`ranges(beams, fov, rate, noise)`（独立随机数流）。`../mavlink_twin.py`：Gazebo 里用 SITL 真值 + 世界布局计算测距，`ECPS_TOF_CONE3D=1` 时按完整 27° 圆锥（随姿态旋转、含地面）。`../run_g4.py` 记录安全层计数、`tof_cone3d`、`tof_retina`。
+- `shield_screen.py`：S4 / S5 筛选（配置用覆盖项定义，不需要 YAML）；`diag_contacts.py`：逐次接触分类。`cmaes_run.py`：`--shield <配置> --fitness v5 --space v4hw_sh`（N3，安全层在环，介入比例计入代价，搜索空间加巡航速度和 d_safe、α）。`batch.py`：`ECPS_QUIET_PT=1` 时洛杉矶时间 00:55–07:00 不启动新回合。
+- 配置：`minifly/s1_noback`、`s2_mem`、`s2_memw`、`s3_rng`、`s23`、`s12`（快仿真），`sh5u`、`shfu`、`s5`（Gazebo）。
+- 结论：5 颗单区 ToF（前向 ±25° 两颗 + 右、后、左）加安全层，lowbox 有接触的运行快仿真 34/150 → 0/150、Gazebo（圆锥测距）11/50 → 0/50（p = 0.001），覆盖率不变；读数同时进大脑（s5）时 Gazebo 1/50，安全层介入少 42%。N3 第一个种子靠少飞提高分数，不采用。详见[报告七](../reports/07_range_sensing_shield.zh.md)。
+- 结果数据：`results/twin/n/`、`results/twin/hw/n3s5_s1/`、`results/gazebo/hw_runs.csv`（`msh_*`、`msh3_*`、`ms5_*`、`mb_v4`、`st_*`）；作图 `../reports/make_figures_n.py`。
+
+### 3.9 蘑菇体可塑性（E 阶段，2026-10-13，阴性）
+
+- `../mb.py`：300 个 KC（k-WTA，5% 活跃）、一个 MBON（m = 活跃 KC 权重均值，只抑制）、资格迹 + 相位性多巴胺；m < 1 时减速，可选扫视驱动和测距输入。g = 1 时逐位一致。`mb_life.py`：一次生命 = 30 个 90 s 程序世界回合，冻结 g 后在 k_0 测试集上与"打乱的 g"和 v4 比较；`e_screen.sh` 批量跑。`episode.py` / `batch.py` 透传 `mb`。
+- 结论：6 种设置（48 次生命）学到的 g 都不比打乱的 g 好，训练前后半段接触没有下降；减少的接触来自整体减速。详见[报告八](../reports/08_mushroom_body.zh.md)。结果数据：`results/twin/mb/`。
 
 ## 4. 局限与注意事项
 
@@ -168,7 +183,7 @@ w_cov = 2、4、8 时，覆盖率分别为 0.58、0.57、0.62（v3_2 是 0.50）
 
 ## 5. 待办
 
-- notex lowbox_s20–49 的 Gazebo 扩充（ROG 进行中，511 次），确认去纹理结果。
-- E 蘑菇体可塑性（可选，Mac mini / Jetson 上的初筛已开始，代码尚未合入本分支）。
-- lowbox 接触的结构性改动（不向看不见的方向移动、短时空间记忆、侧后向 ToF），暂缓。
-- F 安全层与 L0–L4 分级上真机。
+- N1 扩大样本：s5 在第二个大脑种子上的 58 次 Gazebo（ROG 进行中），s5 配对样本扩到 116 对。
+- N3 安全层在环的 CMA：sh5u 种子（Jetson 进行中）；之后把覆盖率改为硬约束，≥ 5 个种子，并做"bypass + 安全层"对照。
+- N4 压力测试（最差布局搜索，快仿真加高度波动和光流漂移注入）、N5 预注册 Gazebo 验收。
+- N6 ToF 台架（笼网、黑箱、箱顶略低于传感器）与 F 安全层、L0–L4 分级上真机。

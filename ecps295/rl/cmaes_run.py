@@ -37,16 +37,20 @@ BASE = V32  # reference / base variant (H2: minifly/v4.yaml); the reference arm 
 DYN: dict | None = None  # TwinDrone overrides (H2: nav=flow + calibrated estimator)
 LOW_FRAC = 0.0  # share of training / validation episodes in lowbox-style worlds
 W_INT = 0.0  # B3: cost per unit of intervention_frac (share of ticks where governor / fence turn overrode the decoder)
+SHIELD_OV: dict | None = None  # N3 (route review 2026-10-13): rl.shield_screen cond merged into EVERY job, reference included
+W_SH = 0.3  # v5: cost per unit share of ticks the shield clamped the command (keeps the brain from leaning on the shield)
 
 
 def ep_score(r: dict, seconds: float) -> float:
     s = ep_score_v1(r, seconds) - W_INT * r.get("intervention_frac", 0.0)
-    if FITNESS in ("v3", "v4"):
+    if FITNESS in ("v3", "v4", "v5"):
         s -= W_BACK * r.get("back_m", 0.0) + W_EST * r.get("est_err_max_m", 0.0)
-    if FITNESS == "v4":  # C1 (2026-10-08): + 0.1 per false alarm a minute (rl.trigger_metrics, pre-registered definition)
+    if FITNESS in ("v4", "v5"):  # C1 (2026-10-08): + 0.1 per false alarm a minute (rl.trigger_metrics, pre-registered definition)
         s -= W_FA * (r.get("false_alarms_per_min") or 0.0)
-    if FITNESS in ("v2", "v3", "v4"):
-        cov_min = 0.35 if FITNESS in ("v3", "v4") else COV_MIN  # v4 covers ~0.38 on lowbox (revision doc: floor 0.35)
+    if FITNESS == "v5":  # N3 (2026-10-13): shield in the loop; its interventions are a dense safety cost
+        s -= W_SH * r.get("shield_clamp_ticks", 0) / max(1, r.get("ticks", 1))
+    if FITNESS in ("v2", "v3", "v4", "v5"):
+        cov_min = 0.35 if FITNESS in ("v3", "v4", "v5") else COV_MIN  # v4 covers ~0.38 on lowbox (revision doc: floor 0.35)
         return s - W_PROX * r.get("proximity", 0.0) - W_SHORT * max(0.0, cov_min - r["coverage"])
     return s
 
@@ -99,6 +103,10 @@ def _dyn(e: dict) -> dict | None:
 
 
 def jobs_for(tag: str, overrides: dict | None, eps: list[dict], seconds: float, arm: str = "intact") -> list[dict]:
+    if SHIELD_OV:
+        from rl.episode import deep_merge
+
+        overrides = deep_merge(SHIELD_OV, overrides or {})
     return [
         {
             "tag": tag,
@@ -128,10 +136,12 @@ def main() -> None:
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--val-every", type=int, default=5, help="evaluate the distribution mean on the held-out set")
     ap.add_argument("--val-k", type=int, default=24)
-    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap", "v4hw", "v4hw_eff"])
+    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap", "v4hw", "v4hw_eff", "v4hw_sh"])
     ap.add_argument("--arm", default="intact", help="rl.arms control arm optimised with the same budget")
     ap.add_argument("--w-cov", type=float, default=1.0, help="coverage weight in the episode score (B2 Pareto sweep)")
-    ap.add_argument("--fitness", default="v1", choices=["v1", "v2", "v3", "v4"])
+    ap.add_argument("--fitness", default="v1", choices=["v1", "v2", "v3", "v4", "v5"])
+    ap.add_argument("--shield", default="", help="N3: rl.shield_screen cond whose overrides go into every job (shield in the loop)")
+    ap.add_argument("--w-sh", type=float, default=0.3, help="v5: cost per unit share of shield-clamped ticks")
     ap.add_argument("--base", default="", help="base / reference variant YAML (default minifly/v3_2.yaml; H2: minifly/v4.yaml)")
     ap.add_argument("--nav", default="truth", choices=["truth", "flow"], help="TwinDrone navigation (H1 flow estimator)")
     ap.add_argument("--flow", default="", help='estimator settings for --nav flow: JSON, e.g. {"tau_terr":1.5,"flow_rw":0.03}, or "dr" (rl.twin.flow_dr per episode)')
@@ -141,8 +151,12 @@ def main() -> None:
     ap.add_argument("--x0-yaml", default="", help="warm start from the decoder values in this variant YAML (rl.validate export)")
     a = ap.parse_args()
     params.set_space(a.space)
-    global W_COV, FITNESS, W_INT, BASE, DYN, LOW_FRAC
-    W_COV, FITNESS, W_INT = a.w_cov, a.fitness, a.w_int
+    global W_COV, FITNESS, W_INT, BASE, DYN, LOW_FRAC, SHIELD_OV, W_SH
+    W_COV, FITNESS, W_INT, W_SH = a.w_cov, a.fitness, a.w_int, a.w_sh
+    if a.shield:
+        from rl.shield_screen import CONDS as _SC
+
+        SHIELD_OV = _SC[a.shield][2]
     BASE = str(E / a.base) if a.base else V32
     if a.nav == "flow":
         DYN = "dr" if a.flow == "dr" else {"nav": "flow", **(json.loads(a.flow) if a.flow else {})}

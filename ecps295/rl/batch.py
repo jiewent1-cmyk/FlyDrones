@@ -27,7 +27,20 @@ def world_path(w: str) -> str:
     return w if w.endswith(".json") else str(WORLDS / f"ecps295_{w}.layout.json")
 
 
+def _quiet_wait() -> None:
+    """ROG / desktop rule (user, 2026-10-13): no jobs 01:00-07:00 Los Angeles time. Opt-in there with ECPS_QUIET_PT=1;
+    no job starts after 00:55 (one episode is < 30 s of wall time)."""
+    if os.environ.get("ECPS_QUIET_PT") != "1":
+        return
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    while 55 <= (lambda n: n.hour * 60 + n.minute)(datetime.now(ZoneInfo("America/Los_Angeles"))) < 420:
+        time.sleep(60)
+
+
 def _job(job: dict) -> dict:
+    _quiet_wait()
     from rl.episode import run_episode
     from rl.twin import World
 
@@ -57,10 +70,11 @@ def _job(job: dict) -> dict:
             start=tuple(job.get("start", (0.0, 0.0))),
             dyn_over=job.get("dyn_over"),
             arm=job.get("arm", "intact"),
+            mb=job.get("mb"),
         )
     except Exception as ex:  # keep the batch alive; the failure is in the record
         r = {"error": repr(ex)}
-    r.update({k: job[k] for k in job if k not in ("overrides",)})
+    r.update({k: job[k] for k in job if k not in ("overrides", "mb")})  # mb carries a 300-float g
     r["wall_s"] = round(time.perf_counter() - t0, 1)
     return r
 

@@ -24,6 +24,8 @@ from __future__ import annotations
 import math
 import time
 
+from ecps_struct import StructGuard
+
 from flydrones.motor import FlightCommand
 from flydrones.runtime import Pilot, TickInfo
 
@@ -38,6 +40,7 @@ class EcpsPilot(Pilot):
         fence_margin_m: float = 0.35,
         height_guard: dict | None = None,
         height_source: dict | None = None,
+        struct: dict | None = None,
         **kw,
     ):
         super().__init__(*args, **kw)
@@ -64,6 +67,8 @@ class EcpsPilot(Pilot):
         self._last_yaw_dps = 0.0
         self._last_fwd = 0.0
         self.watchdog_events: list[tuple[float, str]] = []
+        sg = StructGuard(struct)  # 2026-10-13 blind-side fixes (ecps_struct.py), off unless configured
+        self.struct = sg if sg.enabled else None
 
     def _event(self, t: float, what: str) -> None:
         if not self.watchdog_events or self.watchdog_events[-1][1] != what:
@@ -108,6 +113,9 @@ class EcpsPilot(Pilot):
         if hasattr(self.retina, "range_m"):  # v4 ventral cue: downward ToF + baro height (latest telemetry)
             self.retina.range_m = getattr(self.drone, "rangefinder_m", lambda: None)()
             self.retina.baro_m = getattr(self.drone, "baro_m", lambda: None)()
+        if getattr(self.retina, "tof_on", False) and hasattr(self.drone, "ranges"):  # S5: horizontal ToF -> near grids
+            rt = self.retina
+            rt.tof = self.drone.ranges(rt.tof_beams, rt.tof_fov, rt.tof_rate, rt.tof_noise)
         vision = self.retina.encode(frame)
         g = None
         if self.gestures is not None:
@@ -150,6 +158,8 @@ class EcpsPilot(Pilot):
                 self._event(t, "height guard: too low")
         if self.fence_turn and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
             cmd = self._fence_turn(cmd, tel, t)
+        if self.struct is not None:
+            cmd = self.struct.filter(cmd, tel, self.decoder, self.drone, t)
         if self.safety.land_requested:
             self.drone.land()
         else:

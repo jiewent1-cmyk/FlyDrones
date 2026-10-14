@@ -73,6 +73,14 @@ EFF_EXTRA = [
     ("eff_c", "vision.ecps_efference.c", 0.0, 0.0, 0.6, False),  # blank: min_frac + c * turn
 ]
 SPEC_V4HW_EFF = SPEC_V4HW + EFF_EXTRA
+# N3 (route review 2026-10-13): shield in the loop (rl.cmaes_run --shield). With the S4 range shield removing contacts,
+# speed becomes a free parameter (cruise = max_forward), and the shield's own margin / gain are searched within safe bounds
+SH_EXTRA = [
+    ("cruise", "decoder.cruise", 0.5, 0.35, 0.9, False),
+    ("sh_dsafe", "ecps_pilot.struct.shield.d_safe", 0.25, 0.20, 0.40, False),
+    ("sh_alpha", "ecps_pilot.struct.shield.alpha", 1.0, 0.5, 2.0, True),
+]
+SPEC_V4HW_SH = SPEC_V4HW + SH_EXTRA
 BASE_NAMES = list(NAMES)
 
 
@@ -80,7 +88,7 @@ def set_space(name: str) -> None:
     """'default' (es1, es2), 'wide' (es3, A1, B2), 'turncap' (wide with a 1.2-2.5 s saccade, B fitness v2) or 'v4hw'
     (H2: v4 base, hardware caps, + retreat / ventral parameters)."""
     global SPEC, Z0, NAMES, N
-    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP, "v4hw": SPEC_V4HW, "v4hw_eff": SPEC_V4HW_EFF}.get(name, SPEC_DEFAULT)
+    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP, "v4hw": SPEC_V4HW, "v4hw_eff": SPEC_V4HW_EFF, "v4hw_sh": SPEC_V4HW_SH}.get(name, SPEC_DEFAULT)
     NAMES = [s[0] for s in SPEC]
     N = len(SPEC)
     Z0 = to_z(np.array([s[2] for s in SPEC]))
@@ -119,6 +127,8 @@ def to_overrides(z: np.ndarray) -> dict:
             _set_path(o, path, v[n])
     if any(n.startswith("eff_") for n in NAMES):
         _set_path(o, "vision.ecps_efference.enabled", True)
+    if "cruise" in v:  # rl.episode.build_cfg ties them too (cruise 0.5 = max_forward 0.5)
+        _set_path(o, "safety.max_forward", v["cruise"])
     return o
 
 

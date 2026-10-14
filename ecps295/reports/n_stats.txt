@@ -1,0 +1,71 @@
+== fig17 contact onsets by phase / bearing (twin lowbox, 150 episodes per model)
+  v4      phase  n=84 forward 48% turn 19% back 19% hover 14% | seen in camera 2 s before 60%
+  s3_rng  phase  n=28 forward 82% turn 11% back 7% hover 0% | seen in camera 2 s before 89%
+  v4      seen   n=84 seen 60% not seen 40% | seen in camera 2 s before 60%
+  s3_rng  seen   n=28 seen 89% not seen 11% | seen in camera 2 s before 89%
+== fig18 twin S4 / S5 screen (lowbox 150, cage20 32; paired with v4)
+  v4         lowbox 34->34/150 (McNemar p=1.0000) cage20 6/32 | Δcov +0.000 [+0.000,+0.000] | shield-clamped ticks 0.0%
+  v4_c035    lowbox 34->27/150 (McNemar p=0.3368) cage20 3/32 | Δcov -0.025 [-0.046,-0.004] | shield-clamped ticks 0.0%
+  v4_c065    lowbox 34->33/150 (McNemar p=1.0000) cage20 7/32 | Δcov +0.019 [-0.005,+0.042] | shield-clamped ticks 0.0%
+  s3_rng     lowbox 34->21/150 (McNemar p=0.0192) cage20 1/32 | Δcov -0.002 [-0.013,+0.009] | shield-clamped ticks 0.0%
+  sh3        lowbox 34->21/150 (McNemar p=0.0241) cage20 1/32 | Δcov +0.004 [-0.006,+0.013] | shield-clamped ticks 1.6%
+  sh4        lowbox 34->1/150 (McNemar p=0.0000) cage20 0/32 | Δcov -0.034 [-0.050,-0.021] | shield-clamped ticks 13.4%
+  sh4u       lowbox 34->5/150 (McNemar p=0.0000) cage20 0/32 | Δcov -0.004 [-0.015,+0.006] | shield-clamped ticks 4.7%
+  sh5u       lowbox 34->0/150 (McNemar p=0.0000) cage20 0/32 | Δcov -0.001 [-0.014,+0.013] | shield-clamped ticks 3.1%
+  shfu       lowbox 34->0/150 (McNemar p=0.0000) cage20 1/32 | Δcov -0.006 [-0.017,+0.005] | shield-clamped ticks 3.1%
+  shou       lowbox 34->0/150 (McNemar p=0.0000) cage20 0/32 | Δcov +0.005 [-0.007,+0.016] | shield-clamped ticks 3.6%
+  shfu_c065  lowbox 34->0/150 (McNemar p=0.0000) cage20 0/32 | Δcov +0.021 [-0.002,+0.045] | shield-clamped ticks 2.7%
+  s5n        lowbox 34->22/150 (McNemar p=0.0290) cage20 2/32 | Δcov +0.009 [-0.005,+0.023] | shield-clamped ticks 0.0%
+  s5         lowbox 34->0/150 (McNemar p=0.0000) cage20 0/32 | Δcov +0.010 [-0.005,+0.024] | shield-clamped ticks 2.2%
+  s5f        lowbox 34->1/150 (McNemar p=0.0000) cage20 0/32 | Δcov -0.004 [-0.017,+0.009] | shield-clamped ticks 2.0%
+  s5f_g2     lowbox 34->1/150 (McNemar p=0.0000) cage20 0/32 | Δcov +0.005 [-0.009,+0.020] | shield-clamped ticks 1.7%
+  s5f_c065   lowbox 34->0/150 (McNemar p=0.0000) cage20 0/32 | Δcov +0.028 [+0.002,+0.054] | shield-clamped ticks 2.1%
+  shield clamp ticks sh5u -> s5: mean 75 -> 52 (-30%), Wilcoxon p=0.00011
+  shield clamp ticks shfu -> s5f: mean 74 -> 48 (-35%), Wilcoxon p=0.00001
+== fig19 Gazebo (ROG) acceptance, paired with v4 (mc1_v4 lowbox_s0-49, md_v4 cage20 k0-7)
+  v4         lowbox 11/50 contacts/100 m 2.50 | cage20 1/8
+  msh_sh5u   lowbox 11->3/50 (saved 9, new 1, McNemar p=0.0215) contacts/100 m 0.76 | cage20 0/8 | Δcov +0.027 [-0.008,+0.063] | clamp ticks 61
+  msh_shfu   lowbox 11->5/50 (saved 9, new 3, McNemar p=0.1460) contacts/100 m 0.66 | cage20 0/8 | Δcov +0.022 [-0.013,+0.056] | clamp ticks 52
+  msh3_sh5u  lowbox 11->0/50 (saved 11, new 0, McNemar p=0.0010) contacts/100 m 0.00 | cage20 0/8 | Δcov +0.011 [-0.027,+0.050] | clamp ticks 98
+  ms5_s5     lowbox 11->1/50 (saved 10, new 0, McNemar p=0.0020) contacts/100 m 0.23 | cage20 0/8 | Δcov +0.008 [-0.026,+0.043] | clamp ticks 57
+  clamp ticks sh5u(cone) -> s5: 98 -> 57 (-42%), Wilcoxon p=0.0132
+  msh3_sh5u pooled 0/58, one-sided 95% upper bound 0.050
+  v4 second brain seed (mb_v4, k+100): lowbox 8/50, cage20 5/8 (s5 on the same set: in progress)
+== fig20 stage E: frozen-g tests, learned vs KC-shuffled g (8 lifetimes per setting)
+  lowbox e1: learned median 12.5 shuffled 10.5 (Wilcoxon p=0.35) v4 11 | learned coverage 0.372
+  lowbox e2: learned median 10.5 shuffled 12.0 (Wilcoxon p=0.22) v4 11 | learned coverage 0.285
+  lowbox e3: learned median 10.0 shuffled 10.5 (Wilcoxon p=0.74) v4 11 | learned coverage 0.375
+  lowbox e4: learned median 9.0 shuffled 11.5 (Wilcoxon p=0.60) v4 11 | learned coverage 0.374
+  lowbox e5: learned median 10.5 shuffled 9.0 (Wilcoxon p=0.21) v4 11 | learned coverage 0.372
+  lowbox e6: learned median 10.0 shuffled 9.0 (Wilcoxon p=0.73) v4 11 | learned coverage 0.361
+  cage20 e1: learned median 2.5 shuffled 2.0 (Wilcoxon p=0.20) v4 6 | learned coverage 0.423
+  cage20 e2: learned median 2.0 shuffled 3.0 (Wilcoxon p=0.79) v4 6 | learned coverage 0.332
+  cage20 e3: learned median 4.0 shuffled 5.0 (Wilcoxon p=0.74) v4 6 | learned coverage 0.433
+  cage20 e4: learned median 5.0 shuffled 5.5 (Wilcoxon p=0.32) v4 6 | learned coverage 0.440
+  cage20 e5: learned median 4.5 shuffled 5.5 (Wilcoxon p=0.73) v4 6 | learned coverage 0.434
+  cage20 e6: learned median 3.5 shuffled 4.5 (Wilcoxon p=0.64) v4 6 | learned coverage 0.425
+== fig20 contacts in the first vs second half of each training lifetime
+  e1: episodes with contact, first 15 3.50 -> last 15 3.25 (p=0.75), final g mean 0.74
+  e2: episodes with contact, first 15 3.88 -> last 15 2.38 (p=0.14), final g mean 0.61
+  e3: episodes with contact, first 15 3.00 -> last 15 4.00 (p=0.35), final g mean 0.94
+  e4: episodes with contact, first 15 3.50 -> last 15 3.62 (p=0.84), final g mean 0.92
+  e5: episodes with contact, first 15 3.38 -> last 15 3.88 (p=0.55), final g mean 0.93
+  e6: episodes with contact, first 15 3.12 -> last 15 3.12 (p=0.95), final g mean 0.75
+== fig21 N3 (Mac mini, n3s5_s1: s5 shield in the loop, fitness v5, space v4hw_sh)
+  gen  4: F -1.203 contacts 0 coverage 0.300 path 9.5 m interv 0.196 | start F -1.542 coverage 0.357 path 13.4 m interv 0.180
+  gen  9: F -1.365 contacts 2 coverage 0.244 path 7.4 m interv 0.173 | start F -1.542 coverage 0.357 path 13.4 m interv 0.180
+  gen 14: F -1.126 contacts 0 coverage 0.260 path 7.8 m interv 0.169 | start F -1.542 coverage 0.357 path 13.4 m interv 0.180
+  gen 19: F -1.152 contacts 0 coverage 0.251 path 7.6 m interv 0.098 | start F -1.542 coverage 0.357 path 13.4 m interv 0.180
+  20 generations
+== S2 / S3 under the stage-D OOD modes (twin, runs with contact; lowbox /50, cage20 /32)
+  lowbox lowlight v4 13  s2_mem 12  s3_rng 10  s23 8
+  lowbox notex    v4 10  s2_mem 5  s3_rng 2  s23 2
+  lowbox wind     v4 33  s2_mem 28  s3_rng 18  s23 18
+  lowbox ghost    v4 32  s2_mem 29  s3_rng 29  s23 26
+  cage20 lowlight v4 13  s2_mem 11  s3_rng 5  s23 14
+  cage20 notex    v4 14  s2_mem 7  s3_rng 1  s23 0
+  cage20 wind     v4 18  s2_mem 21  s3_rng 11  s23 14
+  cage20 ghost    v4 32  s2_mem 32  s3_rng 32  s23 32
+== desktop Gazebo S2 re-check (lowbox, paired with st_v4)
+  st_s2_mem: 12 -> 8/48 (McNemar p=0.45), Δcov -0.019 [-0.080,+0.042]
+  st_s2_memw: 10 -> 15/45 (McNemar p=0.27), Δcov -0.087 [-0.145,-0.029]

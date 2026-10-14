@@ -94,24 +94,24 @@
   cage20  wind      n=32  Δ bypass median +5.5  intact +9.0  p=0.130
   cage20  tof       n=32  Δ bypass median +0.5  intact +2.5  p=0.195
   cage20  ghost     n=32  Δ bypass median +10.5  intact +18.5  p=0.050
-== fig14 Gazebo notex (ROG lowbox_s0-19)
-  c4_s1: in-dist 3 -> notex 1 (n=19)
-  c4_s2: in-dist 2 -> notex 2 (n=20)
-  c4_s3: in-dist 2 -> notex 8 (n=20)
-  c4_s4: in-dist 2 -> notex 1 (n=20)
-  c4_s5: in-dist 0 -> notex 5 (n=20)
-  c4_s6: in-dist 0 -> notex 2 (n=20)
-  c4_s7: in-dist 0 -> notex 2 (n=20)
-  c4_s8: in-dist 0 -> notex 0 (n=20)
-  h2_s1: in-dist 4 -> notex 3 (n=20)
-  h2_s2: in-dist 5 -> notex 1 (n=20)
-  h2_s3: in-dist 5 -> notex 3 (n=20)
-  h2_s4: in-dist 6 -> notex 1 (n=20)
-  h2_s5: in-dist 2 -> notex 3 (n=20)
-  h2_s6: in-dist 6 -> notex 1 (n=20)
-  h2_s7: in-dist 1 -> notex 1 (n=20)
-  h2_s8: in-dist 7 -> notex 6 (n=20)
-  Δ bypass median +1.0 intact -1.5 p=0.028; in-dist medians 1.0 vs 5.0 p=0.007; notex medians 2.0 vs 2.0 p=0.959
+== fig14 Gazebo notex (ROG lowbox_s0-49)
+  c4_s1: in-dist 3 -> notex 7 (n=49)
+  c4_s2: in-dist 2 -> notex 5 (n=50)
+  c4_s3: in-dist 13 -> notex 25 (n=50)
+  c4_s4: in-dist 6 -> notex 6 (n=50)
+  c4_s5: in-dist 2 -> notex 9 (n=50)
+  c4_s6: in-dist 2 -> notex 5 (n=50)
+  c4_s7: in-dist 5 -> notex 9 (n=50)
+  c4_s8: in-dist 2 -> notex 6 (n=50)
+  h2_s1: in-dist 6 -> notex 7 (n=50)
+  h2_s2: in-dist 15 -> notex 9 (n=49)
+  h2_s3: in-dist 10 -> notex 9 (n=50)
+  h2_s4: in-dist 11 -> notex 9 (n=50)
+  h2_s5: in-dist 6 -> notex 7 (n=50)
+  h2_s6: in-dist 15 -> notex 6 (n=50)
+  h2_s7: in-dist 3 -> notex 4 (n=50)
+  h2_s8: in-dist 16 -> notex 10 (n=50)
+  Δ bypass median +4.0 intact -1.5 p=0.001; in-dist medians 2.5 vs 10.5 p=0.015; notex medians 6.5 vs 8.0 p=0.645
 == fig16 C1 efference copy
   twin empty field v4: 2.75/min [1.91,3.72]
   twin empty field v4_eff: 1.22/min [0.78,1.78]

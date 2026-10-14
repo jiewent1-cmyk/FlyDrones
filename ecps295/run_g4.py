@@ -288,6 +288,7 @@ def tick(t: float, dt: float, phase: str):
             "mute": int(drone.mute),
             "ventral": round(getattr(pilot.retina, "ventral", None).level, 2) if hasattr(pilot.retina, "ventral") else 0.0,
             "box_under": int(box_under(tn, te, ta)),
+            "tof": round(max(getattr(pilot.retina, "last_tof", {"L": 0.0}).values()), 2),  # S5 retina input
             "h_est": None if getattr(pilot, "last_height_est", None) is None else round(pilot.last_height_est, 3),
             "fc_mode": getattr(drone.m.messages.get("HEARTBEAT"), "custom_mode", -1),
             "yaw_rate_dps": tel.yaw_rate_dps,
@@ -501,6 +502,10 @@ if a.mode == "probe":
     }
     summary["probe_delta_vs_hover"] = table
     summary["probe_checks"] = checks
+if getattr(pilot, "struct", None) is not None:  # 2026-10-13 ecps_struct counters (S2 vetoes, S3 pushes, S4 shield)
+    summary.update(pilot.struct.summary())
+summary["tof_cone3d"] = os.environ.get("ECPS_TOF_CONE3D") == "1"  # N1b: Gazebo ToF emulation = full cone (else planar fan)
+summary["tof_retina"] = bool(getattr(getattr(pilot, "retina", None), "tof_on", False))  # N1c: S5 active
 json.dump(summary, open(f"{a.out}.json", "w"), indent=1)
 print(json.dumps(summary, indent=1))
 
