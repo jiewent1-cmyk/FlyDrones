@@ -9,10 +9,27 @@ Nothing under `src/flydrones/` is modified; everything here subclasses or drives
 
 ## At a glance · 概览
 
-A FlyDrones MiniFly connectome brain flies the 295 g / 2S course quadrotor through ArduPilot, in a Gazebo twin of the
-final hardware: fisheye camera, 3901-L0X optical flow + ToF, **no GPS**.
-FlyDrones 的 MiniFly 连接组大脑通过 ArduPilot 驾驶 295 g / 2S 课程四旋翼，运行在最终硬件的 Gazebo 孪生中
-（鱼眼相机、3901-L0X 光流 + ToF、**无 GPS**）。
+A FlyDrones MiniFly connectome brain flies the 2S course quadrotor through ArduPilot, in a Gazebo twin of the
+final hardware: fisheye camera, 3901-L0X optical flow + ToF, **no GPS**. Since 2026-10-14 the final hardware also
+carries **one VL53L7CX 8×8 ToF facing forward and one facing backward**; the companion builds a local 3D occupancy
+map from them and a velocity-level safety shield constrains the brain's commands ("the brain decides, the shield
+constrains"; Gazebo lowbox 0/50 and cage20 0/8 runs with contact vs 11/50 and 1/8 without, see
+[report 7](reports/07_range_sensing_shield.en.md)).
+FlyDrones 的 MiniFly 连接组大脑通过 ArduPilot 驾驶 2S 课程四旋翼，运行在最终硬件的 Gazebo 孪生中
+（鱼眼相机、3901-L0X 光流 + ToF、**无 GPS**）。10-14 起最终硬件还加装**前后各一块 VL53L7CX 8×8 ToF**：机载计算机用它们建
+局部 3D 占据地图，速度级安全层据此约束大脑的指令（"大脑负责意图，安全层负责约束"；Gazebo lowbox 有接触 0/50、cage20 0/8，
+不加测距时为 11/50、1/8，见[报告七](reports/07_range_sensing_shield.zh.md)）。
+
+**Final hardware · 最终硬件** (course kit + additions · 课程套件 + 追加):
+
+| Part · 部件 | Connects to · 接到 | Role · 作用 |
+|---|---|---|
+| Matek F405-WMO, ArduCopter 4.7 (custom build: optical flow + MSP) | — | attitude / position control, EKF3 on flow + ToF + baro · 姿态位置控制、EKF |
+| Matek 3901-L0X (PMW3901 flow + VL53L0X ToF, facing down) | FC UART4 (MSP); GPS keeps only its I²C compass | horizontal velocity and height without GPS · 无 GPS 定位 |
+| Orange Pi Zero 3W (Allwinner A733) | FC UART3, MAVLink2; powered from Vx | MiniFly brain, local 3D map, safety shield; route B height · 大脑、地图、安全层 |
+| 2 × VL53L7CX 8×8 ToF (60° × 60°), front + rear | Orange Pi I²C TWI0 / TWI1, 3.3 V | obstacle ranging → map → shield · 避障测距 |
+| USB UVC camera: ELP OV7725 120° or Waveshare OV9281 (global shutter), chosen after a bench test | Orange Pi USB-C | the brain's eyes · 大脑的视觉输入 |
+| 3D-printed PETG parts: 3901-L0X mount, Orange Pi cover + battery deck, GPS mast | airframe | mounting · 结构件 |
 
 | | Upstream FlyDrones | This branch (v4 + route B) | Evidence |
 |---|---|---|---|
@@ -26,10 +43,14 @@ FlyDrones 的 MiniFly 连接组大脑通过 ArduPilot 驾驶 295 g / 2S 课程�
 flowchart LR
   CAM["fisheye camera"] --> RET["EcpsRetina<br/>flow · looming · blank · near · ventral"]
   TOF["ToF + baro"] --> RET
+  R8["2 × VL53L7CX 8×8<br/>front + rear"] --> MAP["local 3D map"]
+  R8 -->|front zones| RET
+  MAP --> SH["safety shield (CBF)"]
   RET --> MF["MiniFly LIF connectome<br/>+ LCb + LCn + LCv→MDN"]
   MF --> DEC["EcpsDecoder<br/>saccade · caution · retreat · efference copy"]
   DEC --> PIL["EcpsPilot<br/>watchdogs · fence turn-back"]
-  PIL -->|GUIDED velocity| AP["ArduPilot 4.7 SITL"]
+  PIL --> SH
+  SH -->|GUIDED velocity| AP["ArduPilot 4.7 SITL"]
   PIL -->|route B: height above floor| AP
   AP <-->|JSON lockstep| GZ["Gazebo Harmonic"]
 ```

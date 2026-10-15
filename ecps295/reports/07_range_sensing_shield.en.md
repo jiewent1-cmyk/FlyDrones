@@ -5,6 +5,9 @@
 > figures from [`make_figures_n.py`](make_figures_n.py), numbers in [`n_stats.txt`](n_stats.txt) ·
 > 中文版：[07_range_sensing_shield.zh.md](07_range_sensing_shield.zh.md)
 
+> **Update 2026-10-14:** the hardware is now decided — one VL53L7CX 8×8 ToF facing forward, one facing backward, a
+> local 3D map and the same safety shield. See [§8](#8-update-10-14-cheaper-layouts-a-local-3d-map-and-the-hardware-decision).
+
 ## Abstract
 
 Reports 5–6 left one problem open: on lowbox (low boxes plus a 1.1 m stack, optical-flow navigation, no GPS) every
@@ -215,3 +218,51 @@ shield, the search space is v4hw plus cruise speed and the shield's d_safe and �
   python reports/make_figures_n.py                                                      # figures 17-21
   ```
 - `python -m rl.gates all` passes 12/12 on this tree (anchors bit-identical; all new options are off by default).
+
+## 8. Update 10-14: cheaper layouts, a local 3D map and the hardware decision
+
+The code and data behind this section are still on the experiment machines and will be added to this branch with the
+second round of N3. Numbers are from the route review (`ECPS295_RL路线优化调研_20261013.md` §3.4–3.7, course folder).
+
+- **s5 replicates on a second brain seed** (lowbox brain seed k + 100, cage20 k8–15; 116 runs, 0 failures): lowbox
+  8/50 → 1/50 (p = 0.039), cage20 5/8 → 0/8. Both seed sets pooled: lowbox 19/100 → 2/100 (p = 0.0001), cage20
+  6/16 → 0/16 (p = 0.031), coverage unchanged.
+- **N3 round 1 is closed.** With the sh5u shield (Jetson) coverage rose 0.325 → 0.439, but the hold-out gained one
+  contact and the 5 % clearance fell 0.104 → 0.042 m; with s5 (§5) coverage fell. A weighted penalty lets the optimiser
+  pick its own trade-off between safety and coverage.
+- **S6: cheaper or easier-to-mount sensor sets** (twin, two batches of layouts): what matters is one sensor facing backward.
+  Three VL53L1X (front ±25° + rear) match five; layouts without a rear sensor stay at 5–11/150.
+- **S7: front + rear 8×8 → local 3D occupancy map → shield.** Each frame writes the 128 zones into 5 cm voxels
+  (log-odds, forgotten with τ = 10 s). Each tick the shield takes the slice at body height ± 10 cm, finds the nearest
+  obstacle in 36 sectors of 10° within 1 m, and feeds them to the same velocity constraint as virtual beams; the brain
+  still gets only the front zones. In Gazebo the 64 zones per board are cast from SITL truth (`MavlinkTwin.zones()`)
+  while the map is built in the EKF frame, so drift affects it as on the real drone.
+
+Gazebo (ROG, lowbox_s0–49 + cage20 × 8, paired with v4; 0 failures):
+
+| Layout | lowbox runs with contact /50 | McNemar p vs v4 | cage20 /8 | Δ coverage vs v4 | runs with a near miss /58 | 5 % clearance | shield ticks / run |
+|---|---|---|---|---|---|---|---|
+| v4 (no ranging) | 11 | — | 1 | — | 25 | −0.096 m | — |
+| s5 (5 × VL53L1X) | 1 | 0.002 | 0 | +0.008 | 10 | 0.056 m | 57 |
+| f3b (3 × VL53L1X: front ±25° + rear) | 2 | 0.004 | 1 | −0.011 | — | — | — |
+| m2 (front + rear VL53L5CX) | 2 | 0.012 | 0 | +0.020 | — | — | — |
+| w2 (front + rear VL53L7CX, no map) | 3 | 0.039 | 0 | −0.019 | 13 | 0.027 m | 83 |
+| **w2map (w2 + local 3D map)** | **0** | **0.001** | **0** | **+0.023** | **5** | **0.092 m** | 118 |
+| w1map (front VL53L7CX only + map + no backing into unseen space) | 2 | 0.012 | 0 | −0.011 | 4 | 0.083 m | 254 |
+
+- **w2map is the only layout with 0 contacts in both scenes.** Against w2 without the map: contacts 3 → 0
+  (p = 0.25), coverage +0.042 (p = 0.044), cage20 clearance +0.079 m (p = 0.008). The map takes only the body-height
+  slice, so low box tops the drone can fly over no longer slow it down, and obstacles seen before a turn keep
+  constraining sideways motion after it. The closest approach (0.5 cm, lowbox_s32) came while the flow EKF had
+  drifted 0.82 m: drift moving the map is the main residual risk.
+- **Hardware decision (10-14 22:20): front + rear VL53L7CX + local 3D map (w2map).** Two Pololu #3418 boards
+  ($19.95, 0.5 g each), one per I²C bus on the Orange Pi (TWI0 front, TWI1 rear, VIN 3.3 V, about 100 mA each),
+  mounted straight, clear of the propeller disc. The bench test (net and black-box detection, box tops 1–15 cm below
+  the sensor, edge zones that may see the props, map time per frame on the A733) comes before flight.
+- **N3 round 2 (running from 10-14 22:30)** fixes the shield (w2map, d_safe 0.25 m, α 1) and searches only the
+  brain side: 22 v4 decoder parameters with the hardware caps, cruise speed 0.35–0.8 m/s, and the strength of the
+  front zones in LCn (d0, gain). Fitness v6 maximises robust coverage (mean and worst quarter) and treats five safety
+  proxies as hard constraints against the reference (v4 + the same shield) on the same episodes: share of episodes
+  with contact, near misses, worst-quarter clearance, shield intervention, EKF error. Infeasible candidates always
+  rank last. 5 CMA seeds (Mac mini 1, 2, 4; Jetson 3, 5); the best go to a 346-episode twin hold-out and then to a
+  116-pair Gazebo acceptance against w2map.
