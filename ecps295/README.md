@@ -6,7 +6,7 @@ Nothing under `src/flydrones/` is modified; everything here subclasses or drives
 > **Reports · 实验报告 →** [`reports/`](reports/README.md) (English + 中文, with figures) ·
 > S8 ablation full report: [`results/ablation_2026-10-06/REPORT_zh.md`](results/ablation_2026-10-06/REPORT_zh.md) ·
 > CMA-ES / RL: [`rl/README.md`](rl/README.md)
-> System architecture (layers, MiniFly generations, safety layer, wiring, Orange Pi / FC deployment): [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+> Documentation (architecture, hardware, FC parameters, simulation guide, flight-test plan, glossary): [`docs/`](docs/README.md)
 
 ## At a glance · 概览
 

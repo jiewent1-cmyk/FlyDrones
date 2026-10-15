@@ -5,6 +5,9 @@
 > The upstream FlyDrones architecture (generic `Brain` / `Retina` / `MotorDecoder` / `SafetyGovernor` pipeline) is in
 > [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md); this document covers what the ECPS 295 project built on
 > top of it.
+>
+> Related: [HARDWARE.md](HARDWARE.md) · [FLIGHT_CONTROLLER.md](FLIGHT_CONTROLLER.md) · [SIMULATION_GUIDE.md](SIMULATION_GUIDE.md) ·
+> [FLIGHT_TEST_PLAN.md](FLIGHT_TEST_PLAN.md) · [GLOSSARY.md](GLOSSARY.md)
 
 **Status tags used below**
 
@@ -571,7 +574,7 @@ flowchart LR
 
   subgraph HW["Real drone (planned)"]
     H1["bench: ToF, camera, Pi timing"]
-    H2["L0–L4 flight ladder<br/>tethered → hover → route B → cage"]
+    H2["R0–R6 cage stages<br/>hover → shield → route B → faults → walls → patrol"]
   end
 
   RT --> T1
