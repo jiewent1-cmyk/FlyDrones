@@ -1,11 +1,15 @@
 # ecps295: digital twin of the ECPS 295 course drone
 
+<p align="center"><img src="../assets/art/hero.jpg" alt="A fruit fly linked to a quadcopter by streams of light" width="100%"></p>
+
 Simulation work for UCI ECPS 295 (Fall 2026), following the course's phase-1 simulation route.
 Nothing under `src/flydrones/` is modified; everything here subclasses or drives upstream code.
 
 > **Reports · 实验报告 →** [`reports/`](reports/README.md) (English + 中文, with figures) ·
 > S8 ablation full report: [`results/ablation_2026-10-06/REPORT_zh.md`](results/ablation_2026-10-06/REPORT_zh.md) ·
 > CMA-ES / RL: [`rl/README.md`](rl/README.md)
+
+<p align="center"><img src="../assets/art/sim.jpg" alt="A quadcopter weaving through obstacles in a GPS-free simulation" width="80%"></p>
 > Documentation (architecture, hardware, FC parameters, simulation guide, flight-test plan, glossary): [`docs/`](docs/README.md)
 
 ## At a glance · 概览

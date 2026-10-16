@@ -122,6 +122,8 @@ No camera, drone or GPU needed for any of the above.
 
 ## How it works
 
+<p align="center"><img src="assets/art/pipeline.jpg" alt="Camera, fly eye, spiking brain, descending neurons, drone" width="100%"></p>
+
 <p align="center"><img src="assets/architecture.svg" alt="Architecture diagram" width="100%"></p>
 
 | stage | neurons (cell types) | role in the real fly | FlyDrones signal |
