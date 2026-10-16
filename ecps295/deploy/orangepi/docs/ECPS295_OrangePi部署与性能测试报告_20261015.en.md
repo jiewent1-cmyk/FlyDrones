@@ -376,9 +376,19 @@ Data: `data/*_bench_P*` (`ticks.csv` / `system.csv` / `run.json` per run) and `d
 |---|---|---|
 | main loop, 20 Hz | cpu6-7 (A76), p50 22 ms per tick | latest frame → `EcpsRetina` (visual features, ventral cue) → MiniFly v4 brain (982-neuron LIF network) → `EcpsDecoder` (descending neurons → flight command, escape state machine) → `SafetyGovernor` (altitude, fence, speed, flight timer) → `EcpsPilot` watchdogs → local 3D map + RangeShield → MAVLink velocity setpoint (only while the control gate is open) |
 | telemetry (in the main loop) | same | reads the FC each tick; heartbeat (sysid 254, 1 Hz) and route-B height (`VISION_POSITION_ESTIMATE`, 20 Hz); re-requests the streams every 5 s; sends no height from a range / baro reading older than 0.5 s (fixed 10-16, see 10.4) |
+| **local 3D mapping** (`ecps_map.LocalMap`, inside the safety layer of the main loop) | cpu6-7, p50 3.9 ms / p99 6.4 ms per tick (performance; schedutil 5.5 / 8.8 ms) | every new 8×8 frame of the front / rear VL53L7CX writes its rays into a 5 cm voxel occupancy map at the EKF pose; the nearest obstacle per direction within ±10 cm of flight height becomes a 360° virtual range ring for the RangeShield. Details below |
 | camera thread | same process | V4L2 MJPEG 640×480 decode → gray 192×144 |
 | ToF threads ×2 | same process | front and rear VL53L7CX (TWI0 / TWI1), 8×8 @ 15 Hz |
 | PIL receive thread (`--pil` only) | same process | replaces the camera and ToF threads with the Gazebo frames and ToF readings sent by ROG, see 10.3 |
+
+**What the mapping on the Pi does** (`ecps295/ecps_map.py`, config `struct.shield.map` in `minifly/s7_w2map.yaml`):
+
+- Map: a fixed 8 m × 8 m × 1.6 m grid around the take-off point, 5 cm voxels (160 × 160 × 32 ≈ 0.82 M, float32 ≈ 3.3 MB) of log-odds, in the flight controller's optical-flow EKF frame (yaw only; the sensors are mounted level).
+- Update: 64 rays per frame per sensor; voxels a ray crosses become free, its end voxel occupied; no echo marks free space up to 3.5 m; returns below the floor threshold are the floor. Two sensors at 15 Hz.
+- Forgetting: every voxel decays toward unknown with a 10 s time constant, so misplacement from EKF drift fades instead of piling up (no SLAM / drift correction yet).
+- Query: each tick, occupied voxels within ±10 cm of flight height and the query radius, nearest per body-frame sector, go to the RangeShield as virtual ranges. Obstacles seen beside or behind the drone keep bounding its motion after it turns; low box tops below the airframe are passable.
+- Why on the Pi: it is part of the only configuration with lowbox 0/50 and cage20 0/8 in Gazebo (w2map); the two 8×8 boards without the map gave 3/50.
+- Cost: about 8–13 % of the 50 ms budget with per-frame ray sampling in Python; there is headroom for a doubled ToF rate or 1 MHz I²C.
 
 Each run writes `logs/<stamp>_<mode>/`: `ticks.csv` (per-stage timing, commands, DN rates per tick), `system.csv` (1 Hz temperatures, clocks, load), `run.json` (summary).
 
