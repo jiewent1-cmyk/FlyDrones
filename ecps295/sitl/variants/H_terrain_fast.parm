@@ -1,0 +1,10 @@
+# H (N4 fix, 2026-10-15): EKF3 terrain state follows box tops, so optical flow is scaled with the distance to the surface below.
+# EstimateTerrainOffset (AP_NavEKF3_OptFlowFusion.cpp) adds (horizontal distance moved)^2 * TERR_GRAD^2 + dt^2 * P66 to the
+# terrain variance per range update. At 0.1-0.3 m/s the gradient term is ~1e-6 with 0.1 (0.2 = documented max), so with
+# RNG_M_NSE 0.5 the gain is ~0.007 per 20 Hz update (time constant > 10 s): over a box HAGL stays near the floor distance and
+# the flow is scaled 1.4-2.8x too high. Offline replay of 9 Gazebo logs (replay vs logged XKF5.TOfs rms ~1 cm):
+# 10 / 0.1 cuts the velocity error injected over boxes by 95 % in total (86-96 % per log); 0.2 / 0.5 (S7d) by 9 %.
+# AP_NavEKF3 4.7 does not constrain either value. Use with ExternalNav (G) or baro height only: with the rangefinder as the
+# height source TERR_GRAD also inflates its tilt noise (PosVelFusion.cpp). Same values intended for the real FC.
+EK3_TERR_GRAD    10
+EK3_RNG_M_NSE    0.1

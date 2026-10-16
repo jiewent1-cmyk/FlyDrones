@@ -262,6 +262,32 @@ def flow_dr(seed: int) -> dict:
             "flow_bias": 0.94, "hover_alt": 0.8, "hover_jitter": 0.1}
 
 
+def flow_dr2(seed: int, fc: str = "default") -> dict:
+    """N4 twin v2 (2026-10-15): downward ToF as the Gazebo 5 x 5 ray cone (min), EKF terrain state as ArduPilot's
+    EstimateTerrainOffset with the flight controller's EK3_TERR_GRAD / EK3_RNG_M_NSE (fc "default" 0.1 / 0.5, "tf10"
+    10 / 0.1), flow random walk 0.005-0.015 and scale 0.94-1.0 (Gazebo g7_w2map on lowbox_s0-19: max error 0.28 m, error
+    growth away from boxes 0.008 m/s; twin with 0.01 / 1.0: 0.33 m, 0.007 m/s), P66 0.002-0.005 (fitted on 9 Gazebo logs)."""
+    r = np.random.default_rng(71_000 + seed)
+    g, n = {"default": (0.1, 0.5), "tf10": (10.0, 0.1)}[fc]
+    return {"nav": "flow", "ventral": "rays", "terr_model": "ekf3", "terr_grad": g, "rng_m_nse": n,
+            "terr_p66": float(r.uniform(0.002, 0.005)), "flow_rw": float(r.uniform(0.005, 0.015)),
+            "flow_bias": float(r.uniform(0.94, 1.0)), "hover_alt": 0.8, "hover_jitter": 0.1}
+
+
+V3_MOTION = {"tau_xy": 0.40, "tau_dec": 0.25, "cmd_delay_ticks": 3, "jit0": 0.04, "jit_yaw": 0.12, "jit_tau": 0.5}
+
+
+V3_PRESETS = {"full": {}, "det": {"jit0": 0.0, "jit_yaw": 0.0}, "half": {"jit0": 0.02, "jit_yaw": 0.06}}
+
+
+def flow_dr3(seed: int, fc: str = "default") -> dict:
+    """twin v3 (2026-10-16): flow_dr2 + the motion model fitted on sim-paced Gazebo (V3_MOTION); env TWIN_V3 picks a
+    preset (full = fitted on speeds, which over-states contacts ~10x; det = no velocity jitter; half)."""
+    import os
+
+    return {**flow_dr2(seed, fc), **V3_MOTION, **V3_PRESETS[os.environ.get("TWIN_V3", "full")]}
+
+
 OOD_DRIFT, OOD_GUST = 0.03, 0.10  # wind: steady drift (m/s) left by GUIDED, gust noise (default wind 0.03); v4 on
 # lowbox_s0-19 (2/20 runs with contact in distribution): drift 0.12 / 0.06 / 0.03 / 0 -> 20 / 19 / 12 / 5, so 0.03
 OOD_MODES = {
@@ -305,6 +331,15 @@ class TwinDrone(Drone):
         hover_alt: float | None = None,
         hover_jitter: float = 0.0,
         ood: str | None = None,
+        ventral: str = "box",
+        terr_model: str = "lag",
+        terr_grad: float = 0.1,
+        rng_m_nse: float = 0.5,
+        terr_p66: float = 0.003,
+        tau_dec: float | None = None,
+        jit0: float = 0.0,
+        jit_yaw: float = 0.0,
+        jit_tau: float = 0.5,
     ):
         self.world = world
         self.pos = np.array(start, dtype=float)
@@ -343,6 +378,31 @@ class TwinDrone(Drone):
         # D stage (out of distribution); own RNG streams so the in-distribution path is untouched
         assert ood in (None, *OOD_MODES), ood
         self.ood = ood
+        # N4 (2026-10-15) fidelity options, defaults = the old model:
+        #  ventral="rays": the downward ToF reads the nearest of 5 x 5 rays across its 27 deg cone, like the Gazebo
+        #    gpu_lidar reduced by ArduPilotPlugin RangeCb (min over the scan). Approaching a box the reading ramps down
+        #    along the box face instead of jumping to the top ("box": vertical distance to the highest top inside the
+        #    cone footprint), so the ventral step fires later, as in Gazebo (backward escapes near low boxes start
+        #    0.15 m from the edge there, 0.24 m in the old twin, which therefore almost never flies over a box).
+        #  terr_model="ekf3": the EKF terrain state is ArduPilot 4.7 NavEKF3_core::EstimateTerrainOffset (1-state filter on
+        #    the 10 Hz range, median of 3 at 20 Hz; process noise = moved distance^2 * EK3_TERR_GRAD^2 + dt^2 * P66,
+        #    noise EK3_RNG_M_NSE) instead of a first-order lag; offline it reproduces the logged Gazebo state to ~1 cm.
+        assert ventral in ("box", "rays") and terr_model in ("lag", "ekf3"), (ventral, terr_model)
+        self.ventral, self.terr_model = ventral, terr_model
+        self.terr_grad, self.rng_m_nse, self.terr_p66 = terr_grad, rng_m_nse, terr_p66
+        self._rt = (None, 0.0)  # _range_rays cache (position / yaw key, value)
+        self._tk = {"t": -1.0, "P": 0.0036, "xy": None, "buf": [], "s_t": -1.0, "s_v": None, "rng": np.random.default_rng(88_000 + seed)}
+        if ventral == "rays":
+            a = np.radians(np.linspace(-13.5, 13.5, 5))
+            H, V = np.meshgrid(a, a)
+            # gpu_lidar ray (cos v cos h, cos v sin h, sin v) in the sensor frame, sensor pitched 90 deg down (x -> -z)
+            self._vrays = np.stack([np.sin(V).ravel(), (np.cos(V) * np.sin(H)).ravel(), -(np.cos(V) * np.cos(H)).ravel()], axis=1)
+        # v3 (2026-10-16, sim-paced Gazebo g7_sc2 lowbox_s0-19): GUIDED stops faster than it starts (tau_dec), and the
+        # vehicle wanders: rms speed 0.07 m/s with no command, ~0.2 m/s while yawing at > 10 deg/s (random direction;
+        # the EKF sees it too, so it is not an estimation error). Modelled as a world-frame OU velocity offset added to
+        # the target, per-axis sd jit0 + jit_yaw * min(|yaw rate| / 20 deg/s, 1), correlation time jit_tau.
+        self.tau_dec, self.jit0, self.jit_yaw, self.jit_tau = tau_dec, jit0, jit_yaw, jit_tau
+        self._jit, self._jrng = np.zeros(2), np.random.default_rng(90_000 + seed)
         self.view = world  # what the camera sees
         orng = np.random.default_rng(80_000 + seed)
         self.drift = np.zeros(3)
@@ -390,6 +450,8 @@ class TwinDrone(Drone):
 
     def _range_true(self) -> float:
         """Downward ToF (VL53L0X, ~27 deg cone): distance to the highest surface inside the cone footprint."""
+        if self.ventral == "rays":
+            return self._range_rays()
         n, e, a = self.pos
         rad = max(a, 0.05) * 0.24
         top = 0.0
@@ -399,6 +461,45 @@ class TwinDrone(Drone):
             if o.lo[0] - rad < n < o.hi[0] + rad and o.lo[1] - rad < e < o.hi[1] + rad:
                 top = max(top, o.hi[2])
         return a - top
+
+    def _range_rays(self) -> float:
+        """N4 ventral="rays": nearest of the 25 cone rays (slant range to the first box face / top, net or the floor), as
+        the Gazebo 5 x 5 gpu_lidar scan reduced by ArduPilotPlugin.RangeCb (min). Sensor 0.045 m behind and 0.015 m below
+        the centre (gazebo/make_quad.py). Cached per position / yaw."""
+        key = (self.pos[0], self.pos[1], self.pos[2], self.yaw)
+        if self._rt[0] == key:
+            return self._rt[1]
+        cy, sy = math.cos(self.yaw), math.sin(self.yaw)
+        B = self._vrays
+        D = np.stack([cy * B[:, 0] - sy * B[:, 1], sy * B[:, 0] + cy * B[:, 1], B[:, 2]], axis=1)
+        o = self.pos + np.array([-0.045 * cy, -0.045 * sy, -0.015])
+        v = float(min(np.min(self._rays3(o, D)), 2.0))
+        self._rt = (key, v)
+        return v
+
+    def _terr_ekf3(self) -> None:
+        """N4 terr_model="ekf3": ArduPilot 4.7 NavEKF3_core::EstimateTerrainOffset on the downward range (z up here;
+        the EKF height is the companion's floor height ~ truth, the moved distance comes from the EKF position)."""
+        k = self._tk
+        if k["s_t"] < 0 or self.t - k["s_t"] >= self.tof_dt - 1e-9:  # its own 10 Hz sample of the sensor
+            k["s_t"] = self.t
+            k["s_v"] = float(np.clip(self._range_true() + k["rng"].normal(0, 0.01), 0.03, 1.2))
+        if k["t"] >= 0 and self.t - k["t"] < 0.05 - 1e-9:  # readRangeFinder stores at 20 Hz
+            return
+        dt = 0.05 if k["t"] < 0 else self.t - k["t"]
+        k["t"] = self.t
+        k["buf"] = (k["buf"] + [k["s_v"]])[-3:]
+        meas = max(float(np.median(k["buf"])), 0.05)
+        if k["xy"] is not None:
+            d2 = min(float(np.sum((self.est - k["xy"]) ** 2)), 100.0)
+            k["P"] += d2 * self.terr_grad ** 2 + dt * dt * self.terr_p66
+        k["xy"] = self.est.copy()
+        innov = max(self.pos[2] - self.terr, 0.05) - meas
+        var = self.rng_m_nse + k["P"]
+        if innov * innov / (25.0 * var) < 1.0:  # EK3_RNG_I_GATE 500
+            self.terr += k["P"] / var * innov
+            k["P"] = max(k["P"] - k["P"] ** 2 / var, 0.0)
+        self.terr = min(self.terr, self.pos[2] - 0.05)
 
     def rangefinder_m(self) -> float | None:
         if self.t - self._tof_t >= self.tof_dt - 1e-9:  # 10 Hz sample and hold
@@ -412,13 +513,14 @@ class TwinDrone(Drone):
             self._tof = v
         return self._tof
 
-    def _ray(self, ang: float) -> float:
-        """Horizontal distance from the body centre to the first obstacle (box or net) at flight height, max 2 m."""
+    def _ray(self, ang: float, skip: frozenset = frozenset()) -> float:
+        """Horizontal distance from the body centre to the first obstacle (box or net) at flight height, max 2 m.
+        `skip`: obstacle names this ray does not see (S6 camera model: nets it fails to segment)."""
         n, e, a = self.pos
         dn, de = math.cos(ang), math.sin(ang)
         best = 2.0
         for o in self.world.obstacles:
-            if not o.lo[2] <= a <= o.hi[2]:
+            if not o.lo[2] <= a <= o.hi[2] or o.name in skip:
                 continue
             t0, t1 = 0.0, best
             for p, d, lo, hi in ((n, dn, o.lo[0], o.hi[0]), (e, de, o.lo[1], o.hi[1])):
@@ -444,24 +546,99 @@ class TwinDrone(Drone):
                           for k, off in (("rear", math.pi), ("left", -math.pi / 2), ("right", math.pi / 2))}
         return self._side
 
-    def ranges(self, beams: tuple, fov_deg: float = 0.0, rate_hz: float = 10.0, noise_m: float = 0.01) -> list[float]:
+    def ranges(self, beams: tuple, fov_deg=0.0, rate_hz: float = 10.0, noise_m: float = 0.01, **model) -> list[float]:
         """S4 shield (ecps_struct, route review 2026-10-13): horizontal ToF beams at body bearings `beams` (deg, 0 = nose,
         + = right), sensor 0.06 m from the centre. A beam with fov_deg > 0 reads the nearest of 3 rays across its cone
         (single-zone VL53L1X ~27 deg); sample and hold at rate_hz, Gaussian noise from its own RNG stream per beam set,
-        so side_ranges() and the flow / ToF noise are untouched."""
+        so side_ranges() and the flow / ToF noise are untouched.
+        S6 (sensor-layout screen, 2026-10-14): fov_deg may be a per-beam list (mixed sensors on one spec), and `model`
+        adds a camera-style range model (ground-contact-line ranging), see _ranges_model(). Without either the readings
+        are bit-identical to before."""
         if not hasattr(self, "_beams"):
             self._beams = {}
-        key = (tuple(beams), fov_deg, rate_hz, noise_m)
+        fk = tuple(float(f) for f in fov_deg) if isinstance(fov_deg, (list, tuple)) else fov_deg
+        key = (tuple(beams), fk, rate_hz, noise_m, tuple(sorted(model.items())))
         st = self._beams.get(key)
         if st is None:
             st = self._beams[key] = [-1.0, None, np.random.default_rng(86_000 + self._seed)]
         if st[1] is None or self.t - st[0] >= 1.0 / rate_hz - 1e-9:
             st[0] = self.t
-            h = math.radians(fov_deg) / 2
-            offs = (-h, 0.0, h) if h > 0 else (0.0,)
-            st[1] = [float(np.clip(min(self._ray(self.yaw + math.radians(b) + o) for o in offs) - 0.06
-                                   + (st[2].normal(0, noise_m) if noise_m > 0 else 0.0), 0.0, 2.0)) for b in beams]
+            if model or isinstance(fk, tuple):
+                st[1] = self._ranges_model(beams, fk, noise_m, st, **model)
+            else:
+                h = math.radians(fov_deg) / 2
+                offs = (-h, 0.0, h) if h > 0 else (0.0,)
+                st[1] = [float(np.clip(min(self._ray(self.yaw + math.radians(b) + o) for o in offs) - 0.06
+                                       + (st[2].normal(0, noise_m) if noise_m > 0 else 0.0), 0.0, 2.0)) for b in beams]
         return st[1]
+
+    def _ranges_model(self, beams, fov, noise_m: float, st: list, noise_k: float = 0.0, max_m: float = 2.0,
+                      p_miss: float = 0.0, p_net: float = 1.0) -> list[float]:
+        """S6 range model: sigma = noise_m + noise_k d^2 (ground-contact-line ranging, d = h / tan(angle below the
+        horizon), so the error grows with d^2); no detection beyond max_m; each reading is lost with p_miss (-> 2 m);
+        each net wall is visible to this sensor for the whole episode with probability p_net (contrast-limited
+        segmentation), an unseen net is read through. Boxes count only at flight height, as for the ToF beams, i.e. the
+        model assumes the vision side also estimates the obstacle height."""
+        rng = st[2]
+        if len(st) < 4:
+            st.append(frozenset(o.name for o in self.world.obstacles if o.net and rng.random() >= p_net))
+        skip = st[3]
+        fovs = fov if isinstance(fov, tuple) else (float(fov),) * len(beams)
+        out = []
+        for b, fv in zip(beams, fovs):
+            h = math.radians(fv) / 2
+            offs = (-h, 0.0, h) if h > 0 else (0.0,)
+            d = min(self._ray(self.yaw + math.radians(b) + o, skip) for o in offs) - 0.06
+            sd = noise_m + noise_k * d * d
+            if sd > 0:
+                d += rng.normal(0, sd)
+            if (p_miss > 0 and rng.random() < p_miss) or d > max_m:
+                d = 2.0
+            out.append(float(np.clip(d, 0.0, 2.0)))
+        return out
+
+    def zones(self, bearing: float, hfov: float, vfov: float, n: int = 8, rate_hz: float = 15.0, noise_m: float = 0.01,
+              max_m: float = 3.5) -> np.ndarray:
+        """S7 (route review 2026-10-14): one level-mounted multi-zone ToF (VL53L5CX / L7CX, n x n zones) facing body
+        bearing `bearing` (deg, + = right), 0.06 m from the centre: slant range of every zone-centre ray to the first
+        box, net or the floor (3D slab test against the world boxes), sample and hold at rate_hz, Gaussian noise from its
+        own RNG stream, nan beyond max_m (no target). Row-major, row 0 = top (ecps_map.zone_dirs order)."""
+        from ecps_map import zone_dirs
+
+        if not hasattr(self, "_zones"):
+            self._zones = {}
+        key = (bearing, hfov, vfov, n, rate_hz, noise_m, max_m)
+        st = self._zones.get(key)
+        if st is None:
+            st = self._zones[key] = [-1.0, None, np.random.default_rng(87_000 + self._seed + len(self._zones)), zone_dirs(bearing, hfov, vfov, n)]
+        if st[1] is None or self.t - st[0] >= 1.0 / rate_hz - 1e-9:
+            st[0] = self.t
+            cy, sy = math.cos(self.yaw), math.sin(self.yaw)
+            B = st[3]
+            D = np.stack([cy * B[:, 0] - sy * B[:, 1], sy * B[:, 0] + cy * B[:, 1], B[:, 2]], axis=1)
+            b = self.yaw + math.radians(bearing)
+            o = self.pos + np.array([0.06 * math.cos(b), 0.06 * math.sin(b), 0.0])
+            r = self._rays3(o, D)
+            if noise_m > 0:
+                r = r + st[2].normal(0.0, noise_m, len(r))
+            st[1] = np.where(r > max_m, np.nan, np.maximum(r, 0.0))
+        return st[1]
+
+    def _rays3(self, o: np.ndarray, D: np.ndarray) -> np.ndarray:
+        """Distance along each unit ray D (N, 3) from o to the first world box (nets included) or the floor, inf if none."""
+        if not hasattr(self, "_box_lo"):
+            self._box_lo = np.array([ob.lo for ob in self.world.obstacles], float).reshape(-1, 3)
+            self._box_hi = np.array([ob.hi for ob in self.world.obstacles], float).reshape(-1, 3)
+        t = np.full(len(D), np.inf)
+        if len(self._box_lo):
+            Dz = np.where(np.abs(D) < 1e-12, 1e-12, D)
+            t1 = (self._box_lo[None, :, :] - o[None, None, :]) / Dz[:, None, :]
+            t2 = (self._box_hi[None, :, :] - o[None, None, :]) / Dz[:, None, :]
+            tmin = np.maximum(np.minimum(t1, t2).max(axis=2), 0.0)
+            tmax = np.maximum(t1, t2).min(axis=2)
+            t = np.where(tmax >= tmin, tmin, np.inf).min(axis=1)
+        floor = np.where(D[:, 2] < -1e-9, o[2] / np.maximum(-D[:, 2], 1e-9), np.inf)
+        return np.minimum(t, floor)
 
     def baro_m(self) -> float | None:
         return float(self.pos[2] + self.nrng.normal(0, 0.03))
@@ -521,7 +698,15 @@ class TwinDrone(Drone):
         target = np.array([vxy[0], vxy[1], c.throttle * self.vz_max])
         if self.ood == "wind":
             target = target + self.drift  # GUIDED leaves a steady-state drift under a steady wind
-        k = 1 - np.exp(-dt / self.tau)
+        if self.jit0 > 0 or self.jit_yaw > 0:
+            sd = self.jit0 + self.jit_yaw * min(abs(math.degrees(self.yaw_rate)) / 20.0, 1.0)
+            a = dt / self.jit_tau
+            self._jit += -self._jit * a + self._jrng.standard_normal(2) * sd * math.sqrt(2 * a)
+            target[:2] = target[:2] + self._jit
+        tau = self.tau
+        if self.tau_dec is not None and np.hypot(*target[:2]) < np.hypot(*self.vel[:2]):
+            tau = np.array([self.tau_dec, self.tau_dec, self.tau[2]])
+        k = 1 - np.exp(-dt / tau)
         self.vel += (target - self.vel) * k + self.rng.standard_normal(3) * self.wind * math.sqrt(dt)
         self.yaw_rate += (c.yaw * self.yr_max - self.yaw_rate) * (1 - math.exp(-dt / self.tau_yaw))
         self.yaw += self.yaw_rate * dt
@@ -539,8 +724,11 @@ class TwinDrone(Drone):
         if self.pos[2] < 0.05:
             self.pos[2], self.vel[2] = 0.05, 0.0
         if self.nav == "flow":
-            surf = self.pos[2] - self._range_true()
-            self.terr += (surf - self.terr) * (1 - math.exp(-dt / self.tau_terr))
+            if self.terr_model == "ekf3":
+                self._terr_ekf3()
+            else:
+                surf = self.pos[2] - self._range_true()
+                self.terr += (surf - self.terr) * (1 - math.exp(-dt / self.tau_terr))
             self.est += self._flow_scale() * self.vel[:2] * dt + self.nrng.standard_normal(2) * self.flow_rw * math.sqrt(dt)
         if hit and not self._touching:
             self.collisions += 1

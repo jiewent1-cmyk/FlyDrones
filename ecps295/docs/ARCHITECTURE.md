@@ -142,7 +142,9 @@ sequenceDiagram
 ```
 
 Timing measured on the ROG laptop: brain tick ≈ 9 ms p95, whole control tick 50.1 ms p95 (report 1 §1.1). The
-Orange Pi (Allwinner A733, 2 × A76) budget still has to be measured (§12).
+On the Orange Pi (Allwinner A733) the whole s7_w2map tick takes p50 22 ms / p99 26 ms on the A76 cores with the
+performance governor, 0 overruns in 15 min; the A55 cores cannot hold 20 Hz
+([deployment report](../deploy/orangepi/docs/ECPS295_OrangePi部署与性能测试报告_20261015.en.md) §4).
 
 ---
 
@@ -455,9 +457,11 @@ Orange Pi cover + battery deck on the top plate, GPS mast, front and rear VL53L7
 
 ## 8. Onboard software deployment: Orange Pi vs flight controller
 
-⬜ **Planned.** In simulation the same Python code runs on a laptop/server and talks to ArduPilot SITL over UDP; on the
-real drone it moves to the Orange Pi unchanged except for the drone backend (camera, ToF and MAVLink sources). The
-deployment below is the target for gate G2 (companion GUIDED hover + processor-in-the-loop, 11-22).
+🟡 **Deployed on the Pi, sensors not wired yet** (2026-10-15/16, [`deploy/orangepi/`](../deploy/orangepi/)). In simulation
+the same Python code runs on a laptop/server and talks to ArduPilot SITL over UDP; on the real drone it runs on the Orange Pi
+unchanged except for the drone backend (`companion/real_drone.py`: camera, ToF and MAVLink sources). Tested on the Pi: SIL
+equivalence 16/16, SITL hand-over / failsafe, and Gazebo processor-in-the-loop (Gazebo + SITL on ROG, the companion on the
+Pi, `pil_rog.py` / `companion/pil_link.py`). What runs on the Pi and why: deployment report §10.
 
 ```mermaid
 flowchart TB
@@ -540,12 +544,12 @@ Bandwidth: about 2.3 kB/s up and 2.5 kB/s down, roughly a fifth of 115200 baud (
 
 | Function | Simulation | Real drone |
 |---|---|---|
-| Camera | Gazebo fisheye → `gazebo/cam_bridge.py` → `/dev/shm` | UVC camera via V4L2 ⬜ |
-| Front / rear 8×8 ToF | `MavlinkTwin.zones()` ray-cast from `SIM_STATE` + world layout 🟡 | VL53L7CX ULD driver on TWI0 / TWI1 ⬜ |
+| Camera | Gazebo fisheye → `gazebo/cam_bridge.py` → `/dev/shm` | UVC camera via V4L2 (`companion/camera.py`) 🟡 bench |
+| Front / rear 8×8 ToF | `MavlinkTwin.zones()` ray-cast from `SIM_STATE` + world layout ✅ | VL53L7CX ULD driver on TWI0 / TWI1 (`companion/tof_vl53l7cx.py`) 🟡 built, sensors not wired |
 | Down-ToF + flow | Gazebo range sensor → patched SITL JSON backend; SITL flow | 3901-L0X over MSP |
 | ArduPilot | SITL Copter-4.7.0 + `sitl/ardupilot_sitl.patch`, lock-step with Gazebo | F405-WMO, same version, same parameters |
 | MAVLink link | UDP to SITL | UART3 via mavlink-router |
-| Compute | ROG / desktop / server / Mac mini / Jetson | Orange Pi A733 ⬜ timing to be measured |
+| Compute | ROG / desktop / server / Mac mini / Jetson | Orange Pi A733, A76 cores: p50 22 ms per 50 ms tick ✅ |
 
 ---
 
@@ -638,20 +642,20 @@ flowchart LR
 | Gazebo | [`gazebo/`](../gazebo/) (airframe, worlds, `cam_bridge.py`, `ood_world.py`), [`run_g4.py`](../run_g4.py), [`scripts/`](../scripts/) |
 | Fast twin / RL | [`rl/twin.py`](../rl/twin.py), [`rl/cmaes_run.py`](../rl/cmaes_run.py), [`rl/params.py`](../rl/params.py), [`rl/arms.py`](../rl/arms.py), [`rl/shield_screen.py`](../rl/shield_screen.py), [`rl/gates.py`](../rl/gates.py) |
 | Plasticity (negative) | [`mb.py`](../mb.py), [`rl/mb_life.py`](../rl/mb_life.py) |
-| Deployment | [`deploy/desktop/`](../deploy/desktop/) (Gazebo node); Orange Pi runtime ⬜ |
+| Deployment | [`deploy/desktop/`](../deploy/desktop/) (Gazebo node); [`deploy/orangepi/`](../deploy/orangepi/) (companion runtime, PIL link); [`pil_rog.py`](../pil_rog.py) (Gazebo side of PIL) |
 
 ---
 
 ## 12. Open items
 
-- **Companion runtime on the Orange Pi** (⬜): real camera and VL53L7CX backends behind the same `drone` interface,
-  mavlink-router config matching `SERIAL2_BAUD`, start-up as a service, logging.
-- **Timing on the A733**: brain tick, map update per ToF frame, end-to-end latency camera → MAVLink; route-B
-  `VISO_DELAY_MS` must match the measured value.
+- **Companion runtime on the Orange Pi** (🟡 deployed 10-15): bench with the real camera and the two VL53L7CX still to
+  do; `ecps-companion.service` must stop cleanly on SIGTERM when no camera / FC is present.
+- **Route-B latency**: `VISO_DELAY_MS` to confirm on the real FC (SITL on the Pi: ≈ 24 ms + UART at 20 Hz RANGEFINDER).
+- **Timed landing**: the flight timer lands in place; check what is below first (a PIL run landed on a box edge).
 - **ToF bench**: net and black-box detection, readings when a box top is 1–15 cm below the sensor, edge zones that
   may see the propellers, 3.3 V current budget.
 - **Firmware**: custom ArduCopter 4.7.0 build with MSP flow / rangefinder and optical-flow fusion must fit the
   F405's 1 MB flash.
 - **Failsafe parameters on the real drone**: `FS_GCS_ENABLE 5` with the companion as GCS is validated in SITL only;
   the course default is 0.
-- **Push**: S6/S7 map code and N3 round 2 are on the experiment machines and will be added to this branch.
+- **Fast twin v3** (motion model refit on sim-paced Gazebo) is under evaluation; options are off by default.

@@ -39,6 +39,14 @@ LOW_FRAC = 0.0  # share of training / validation episodes in lowbox-style worlds
 W_INT = 0.0  # B3: cost per unit of intervention_frac (share of ticks where governor / fence turn overrode the decoder)
 SHIELD_OV: dict | None = None  # N3 (route review 2026-10-13): rl.shield_screen cond merged into EVERY job, reference included
 W_SH = 0.3  # v5: cost per unit share of ticks the shield clamped the command (keeps the brain from leaning on the shield)
+# v6 (2026-10-14, hardware fixed to front + rear VL53L7CX + local map, --shield s7_w2map): coverage is the objective and the
+# dense safety proxies are constraints against the reference flown on the same episodes (common random numbers). v5 bought
+# its score by flying less (n3s5_s1 held-out coverage 0.36 -> 0.25: the 0.35 floor was only a soft penalty). Feasible
+# candidates rank by robust coverage; infeasible ones below every feasible one, by normalised total violation (feasibility
+# rules - CMA-ES only uses the ranks). Constraints g <= 0 (candidate c, reference r):
+#   P(contact) c - r;  near misses / episode c - r - 0.10;  mean of the worst quarter of min clearances r - c - 0.02 m;
+#   shield-clamped share of ticks c - max(1.25 r, r + 0.01);  mean max EKF position error c - r - 0.10 m
+V6_SCALE = {"contact": 0.05, "near": 0.10, "clear": 0.02, "shield": 0.01, "est": 0.10}
 
 
 def ep_score(r: dict, seconds: float) -> float:
@@ -65,10 +73,12 @@ def ep_score_v1(r: dict, seconds: float) -> float:
     )
 
 
-def fitness(eps: list[dict], seconds: float) -> dict:
+def fitness(eps: list[dict], seconds: float, ref: dict | None = None) -> dict:
     ok = [r for r in eps if "error" not in r]
     if len(ok) < len(eps):
         return {"F": -10.0, "errors": len(eps) - len(ok)}
+    if FITNESS == "v6":
+        return fitness_v6(ok, ref)
     j = np.array([ep_score(r, seconds) for r in ok])
     q = max(1, int(round(0.25 * len(j))))
     cvar = float(np.sort(j)[:q].mean())
@@ -88,6 +98,38 @@ def fitness(eps: list[dict], seconds: float) -> dict:
     }
 
 
+def fitness_v6(ok: list[dict], ref: dict | None) -> dict:
+    j = np.array([r["coverage"] - 0.0025 * r["dcmd2"] for r in ok])  # coverage, with v1's command-smoothness term
+    q = max(1, int(round(0.25 * len(j))))
+    obj = 0.5 * float(j.mean()) + 0.5 * float(np.sort(j)[:q].mean())
+    contact = np.array([r["contact_episodes"] for r in ok])
+    m = {
+        "obj": round(obj, 4),
+        "p_contact": round(float((contact > 0).mean()), 3),
+        "contacts": int(contact.sum()),
+        "near": round(float(np.mean([r["near_miss_episodes"] for r in ok])), 3),
+        "coverage": round(float(np.mean([r["coverage"] for r in ok])), 3),
+        "path": round(float(np.mean([r["path_m"] for r in ok])), 1),
+        "minclr_p05": round(float(np.percentile([r["min_clearance_m"] for r in ok], 5)), 3),
+        "minclr_cvar": round(float(np.sort([r["min_clearance_m"] for r in ok])[:q].mean()), 4),
+        "sh_share": round(float(np.mean([r.get("shield_clamp_ticks", 0) / max(1, r.get("ticks", 1)) for r in ok])), 4),
+        "est": round(float(np.mean([r.get("est_err_max_m", 0.0) for r in ok])), 3),
+        "interv": round(float(np.mean([r.get("intervention_frac", 0.0) for r in ok])), 4),
+    }
+    if ref is None:  # the reference itself
+        return {"F": m["obj"], "feasible": True, **m}
+    g = {
+        "contact": m["p_contact"] - ref["p_contact"],
+        "near": m["near"] - ref["near"] - 0.10,
+        "clear": ref["minclr_cvar"] - m["minclr_cvar"] - 0.02,
+        "shield": m["sh_share"] - max(1.25 * ref["sh_share"], ref["sh_share"] + 0.01),
+        "est": m["est"] - ref["est"] - 0.10,
+    }
+    viol = {k: round(max(0.0, v) / V6_SCALE[k], 3) for k, v in g.items() if v > 1e-9}
+    F = m["obj"] if not viol else -1.0 - sum(viol.values())
+    return {"F": round(F, 4), "feasible": not viol, "viol": viol, **m}
+
+
 def _world(e: dict) -> str:
     """Training / validation world: lowbox-style for a LOW_FRAC share of the episodes (decided from the world seed)."""
     low = (e["world_seed"] * 2654435761 % 2**32) / 2**32 < LOW_FRAC
@@ -95,6 +137,10 @@ def _world(e: dict) -> str:
 
 
 def _dyn(e: dict) -> dict | None:
+    if isinstance(DYN, str) and DYN.startswith("dr2"):  # N4 twin v2 (rl.twin.flow_dr2), "dr2:tf10" = fast EKF terrain
+        from rl.twin import flow_dr2
+
+        return flow_dr2(e["world_seed"], DYN.split(":")[1] if ":" in DYN else "default")
     if DYN == "dr":  # H2: flow-EKF domain randomisation, drawn per episode from its world seed (common to all candidates)
         from rl.twin import flow_dr
 
@@ -136,10 +182,10 @@ def main() -> None:
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--val-every", type=int, default=5, help="evaluate the distribution mean on the held-out set")
     ap.add_argument("--val-k", type=int, default=24)
-    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap", "v4hw", "v4hw_eff", "v4hw_sh"])
+    ap.add_argument("--space", default="default", choices=["default", "wide", "turncap", "v4hw", "v4hw_eff", "v4hw_sh", "v4hw_map", "v4hw_map2"])
     ap.add_argument("--arm", default="intact", help="rl.arms control arm optimised with the same budget")
     ap.add_argument("--w-cov", type=float, default=1.0, help="coverage weight in the episode score (B2 Pareto sweep)")
-    ap.add_argument("--fitness", default="v1", choices=["v1", "v2", "v3", "v4", "v5"])
+    ap.add_argument("--fitness", default="v1", choices=["v1", "v2", "v3", "v4", "v5", "v6"])
     ap.add_argument("--shield", default="", help="N3: rl.shield_screen cond whose overrides go into every job (shield in the loop)")
     ap.add_argument("--w-sh", type=float, default=0.3, help="v5: cost per unit share of shield-clamped ticks")
     ap.add_argument("--base", default="", help="base / reference variant YAML (default minifly/v3_2.yaml; H2: minifly/v4.yaml)")
@@ -159,7 +205,7 @@ def main() -> None:
         SHIELD_OV = _SC[a.shield][2]
     BASE = str(E / a.base) if a.base else V32
     if a.nav == "flow":
-        DYN = "dr" if a.flow == "dr" else {"nav": "flow", **(json.loads(a.flow) if a.flow else {})}
+        DYN = a.flow if a.flow in ("dr", "dr2", "dr2:tf10") else {"nav": "flow", **(json.loads(a.flow) if a.flow else {})}
     else:
         DYN = None
     LOW_FRAC = a.lowbox_frac
@@ -216,9 +262,9 @@ def main() -> None:
         by = {}
         for r in res:
             by.setdefault(r["tag"], []).append(r)
-        fits = [fitness(by[f"c{i}"], a.seconds) for i in range(len(Z))]
-        es.tell(Z, [-f["F"] for f in fits])
         base = fitness(by["v3_2"], a.seconds)
+        fits = [fitness(by[f"c{i}"], a.seconds, ref=base) for i in range(len(Z))]
+        es.tell(Z, [-f["F"] for f in fits])
         best = int(np.argmax([f["F"] for f in fits]))
         rec = {
             "gen": gen,
@@ -230,6 +276,8 @@ def main() -> None:
             "sigma": round(float(es.sigma), 4),
             "F_median": round(float(np.median([f["F"] for f in fits])), 4),
         }
+        if FITNESS == "v6":
+            rec["n_feasible"] = sum(bool(f.get("feasible")) for f in fits)
         with open(out / "gens.jsonl", "a") as f:
             f.write(json.dumps(rec) + "\n")
         pickle.dump((es, gen + 1), open(ck, "wb"))
@@ -245,7 +293,7 @@ def main() -> None:
                 vb.setdefault(r["tag"], []).append(r)
             if "v3_2" in vb:
                 vbase.write_text(json.dumps(fitness(vb["v3_2"], a.seconds)))
-            vm = fitness(vb["mean"], a.seconds)
+            vm = fitness(vb["mean"], a.seconds, ref=json.loads(vbase.read_text()))
             vrec = {"gen": gen, "mean": vm, "v3_2": json.loads(vbase.read_text()), "z": [float(x) for x in es.mean]}
             with open(out / "val.jsonl", "a") as f:
                 f.write(json.dumps(vrec) + "\n")
@@ -258,7 +306,7 @@ def main() -> None:
         print(
             f"gen {gen:2d} {rec['wall_s']:4d}s  v3_2 F={base['F']:+.3f} pC={base['p_contact']:.2f} near={base['near']:.1f} cov={base['coverage']:.2f}"
             f" | best F={fits[best]['F']:+.3f} pC={fits[best]['p_contact']:.2f} near={fits[best]['near']:.1f} cov={fits[best]['coverage']:.2f}"
-            f" | median F={rec['F_median']:+.3f} sigma={rec['sigma']:.3f}",
+            f" | median F={rec['F_median']:+.3f} sigma={rec['sigma']:.3f}" + (f" feasible {rec['n_feasible']}/{len(Z)}" if FITNESS == "v6" else ""),
             flush=True,
         )
     np.save(out / "mean_z.npy", es.mean)

@@ -82,7 +82,10 @@ class EcpsRetina(Retina):
         t = (cfg.get("vision", {}) or {}).get("ecps_tof", {}) or {}
         r.tof_on = bool(t.get("enabled", False))
         r.tof_beams = tuple(float(b) for b in t.get("beams", (-25.0, 25.0, 90.0, 180.0, -90.0)))
-        r.tof_fov, r.tof_rate, r.tof_noise = float(t.get("fov_deg", 27.0)), float(t.get("rate_hz", 10.0)), float(t.get("noise_m", 0.01))
+        fv = t.get("fov_deg", 27.0)
+        r.tof_fov = tuple(float(f) for f in fv) if isinstance(fv, (list, tuple)) else float(fv)  # S6: per-beam list allowed
+        r.tof_rate, r.tof_noise = float(t.get("rate_hz", 10.0)), float(t.get("noise_m", 0.01))
+        r.tof_kw = {k: float(t[k]) for k in ("noise_k", "max_m", "p_miss", "p_net") if k in t}  # S6 camera-style model
         r.tof_d0, r.tof_gain, r.tof_max_bearing = float(t.get("d0", 0.8)), float(t.get("gain", 1.0)), float(t.get("max_bearing", 60.0))
         r.tof = None
         r.last_tof = {"L": 0.0, "R": 0.0}

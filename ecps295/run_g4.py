@@ -121,10 +121,22 @@ if a.decoder == "ecps":
 
     pilot.decoder = EcpsDecoder(cfg)
 _arms.install(ARM, brain, pilot, drone, cfg, a.seed)
+if getattr(drone, "drift_mps", 0.0) > 0:  # N4 drift stress: paired runs (same brain seed) drift the same way
+    import random as _random
+
+    drone.drift_dir = _random.Random(77_000 + a.seed).uniform(0.0, 2 * math.pi)
 HZ = cfg["control"]["hz"]
 
 if a.layout:
     drone.room = room_from_layout(a.layout)  # read by the dashboard ROOM panel
+
+PIL = os.environ.get("ECPS_PIL")  # 2026-10-16 processor-in-the-loop: the brain runs on the Orange Pi (pil_rog.py)
+pil = None
+if PIL:
+    from pil_rog import PilRog
+
+    _sh = getattr(getattr(pilot, "struct", None), "shield", None)
+    pil = PilRog(PIL, drone, a.shm, list(getattr(_sh, "map_sensors", None) or []))
 
 PROP_TIP_R = 0.13  # body centre to prop tip: 0.08 m arm diagonal + 0.0508 m prop radius
 
@@ -257,7 +269,7 @@ def tick(t: float, dt: float, phase: str):
         drone.frozen = True
         print(f"fault injection: camera frozen at t={t:.1f} s", flush=True)
     c0 = time.perf_counter()
-    info = pilot.tick(t, dt)
+    info = pilot.tick(t, dt) if pil is None else pil.info(drone.telemetry())
     compute_ms = (time.perf_counter() - c0) * 1000
     if rec is not None:
         rec.read()
@@ -298,6 +310,8 @@ def tick(t: float, dt: float, phase: str):
             "cmd_throttle": info.cmd.throttle,
             "cmd_yaw": info.cmd.yaw,
             "cmd_forward": info.cmd.forward,
+            "cmd_lateral": getattr(info.cmd, "lateral", 0.0),
+            **_shield_dbg(pilot),
             "escape": int(info.cmd.escape),
             "frame_age_ms": round(drone.frame_age_s() * 1000, 1),
             "brain_rtf": info.rtf,
@@ -306,6 +320,7 @@ def tick(t: float, dt: float, phase: str):
             "compute_ms": round(compute_ms, 2),  # whole Pilot.tick: frame, retina, brain, decoder, safety, send
             "brain_ms": round(dt * 1000 / info.rtf, 2) if info.rtf > 0 else float("nan"),
             **{k: round(v, 2) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
+            **(pil.row() if pil is not None else {}),
         }
     )
     if a.gif:
@@ -318,8 +333,65 @@ def tick(t: float, dt: float, phase: str):
 clock = {"t": 0.0}  # flight time across phases
 
 
+def _shield_dbg(pilot) -> dict:
+    """2026-10-15 debug columns: what the range shield saw this tick (nearest constraint reading / body bearing, number of
+    constraints the requested command violated); empty without a shield."""
+    sh = getattr(getattr(pilot, "struct", None), "shield", None)
+    if sh is None:
+        return {}
+    d, b, n = getattr(sh, "dbg", (None, None, 0))
+    return {"sh_near": d, "sh_brg": b, "sh_bind": n}
+
+
+SIMCLOCK = os.environ.get("ECPS_SIMCLOCK") == "1"  # 2026-10-15: pace the brain by simulated time (see _run_phase_sim)
+pace = {"sim_s": 0.0, "wall_s": 0.0}
+
+
+def _sim_now() -> float | None:
+    """Simulated time (s) from the FC's time_boot_ms (SITL runs in lockstep with Gazebo). Reading telemetry refreshes the
+    cached MAVLink messages; the pilot reads the same cache, so nothing is lost."""
+    drone.telemetry()
+    ts = [getattr(drone.m.messages.get(k), "time_boot_ms", None) for k in ("ATTITUDE", "LOCAL_POSITION_NED")] if drone.m is not None else []
+    ts = [x for x in ts if x is not None]
+    return max(ts) / 1000.0 if ts else None
+
+
+def _run_phase_sim(phase: str, secs: float, s0: float) -> bool:
+    """Tick every DT of simulated time for secs of simulated time; dt passed to the brain is simulated time."""
+    last, last_wall, w0 = s0, time.monotonic(), time.monotonic()
+    # flydrones SafetyGovernor times max_flight_s on tel.t = wall clock: at RTF ~0.8 it landed the drone after ~90 s simulated
+    pilot.safety.max_flight = max(pilot.safety.max_flight, 3 * secs + 60)
+    while True:
+        now = _sim_now()
+        if time.monotonic() - w0 > 3 * secs + 60:
+            print(f"simclock: wall-clock guard hit in {phase} (sim {0 if now is None else now - s0:.1f} of {secs} s)", flush=True)
+            return True
+        if now is None or now - last < DT - 1e-6:
+            if now is not None and now - s0 >= secs:
+                break
+            time.sleep(0.002)
+            continue
+        if now - s0 >= secs:
+            break
+        dt = min(0.25, now - last)
+        w = time.monotonic()
+        tick_dt_ms.append((w - last_wall) * 1000)
+        last, last_wall = now, w
+        tick(clock["t"], dt, phase)
+        clock["t"] += dt
+        if pilot.safety.land_requested:
+            pace["sim_s"] += now - s0; pace["wall_s"] += time.monotonic() - w0
+            return False
+    pace["sim_s"] += last - s0; pace["wall_s"] += time.monotonic() - w0
+    return True
+
+
 def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0):
     """Tick the brain at HZ for secs; in probe mode also drive the vehicle with a scripted body velocity."""
+    if SIMCLOCK and a.mode != "probe":
+        s0 = _sim_now()
+        if s0 is not None:
+            return _run_phase_sim(phase, secs, s0)
     t_end = time.monotonic() + secs
     last = time.monotonic()
     while time.monotonic() < t_end:
@@ -342,6 +414,8 @@ def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0):
 drone.connect()
 print("warming up the brain on the ground...", flush=True)
 pilot.warmup(pilot.decoder.settle_s + 0.1, DT)
+if pil is not None:
+    pil.start()
 drone.takeoff()
 print(f"airborne at {drone.telemetry().alt_m:.2f} m, frames so far {drone.frames_new}", flush=True)
 try:
@@ -366,8 +440,12 @@ try:
             if not run_phase(p[0], p[1], *p[2:]):
                 break
     else:
+        if pil is not None:
+            pil.go = 1
         run_phase(a.mode, a.seconds)
 finally:
+    if pil is not None:
+        pil.stop()  # go = 0: the Pi releases control before we land
     drone.mute = False  # the run is over: land normally
     drone.send(FlightCommand.hover("stop"))
     drone.passive = False
@@ -504,6 +582,13 @@ if a.mode == "probe":
     summary["probe_checks"] = checks
 if getattr(pilot, "struct", None) is not None:  # 2026-10-13 ecps_struct counters (S2 vetoes, S3 pushes, S4 shield)
     summary.update(pilot.struct.summary())
+summary["drift_mps"] = getattr(drone, "drift_mps", 0.0)  # N4 drift stress (ECPS_DRIFT_MPS), 0 = off
+summary["drift_dir_deg"] = round(math.degrees(getattr(drone, "drift_dir", 0.0)), 1)
+summary["shield_drift_ticks"] = getattr(getattr(getattr(pilot, "struct", None), "shield", None), "drift_ticks", 0)
+if pil is not None:
+    summary.update(pil.summary())
+summary["simclock"] = SIMCLOCK  # 2026-10-15: brain paced by simulated time
+summary["sim_s"], summary["wall_s"] = round(pace["sim_s"], 1), round(pace["wall_s"], 1)
 summary["tof_cone3d"] = os.environ.get("ECPS_TOF_CONE3D") == "1"  # N1b: Gazebo ToF emulation = full cone (else planar fan)
 summary["tof_retina"] = bool(getattr(getattr(pilot, "retina", None), "tof_on", False))  # N1c: S5 active
 json.dump(summary, open(f"{a.out}.json", "w"), indent=1)

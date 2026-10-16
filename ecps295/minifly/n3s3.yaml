@@ -1,0 +1,216 @@
+# n3s3: s7_w2map + n3m_s3 best VAL gen 9 (F 0.272, cov 0.375 vs ref 0.328); cruise 0.588 -> pass --cruise/--max-forward
+brain:
+  source: minifly_v4.npz
+safety:
+  max_yaw: 1.0
+  max_forward: 0.5877095146828395
+decoder:
+  axes:
+    yaw:
+      gain: 0.012563153581546398
+      terms:
+        DNg02_R: 1.0
+        DNg02_L: -1.0
+        DNp03_L: 0.19822699476156397
+        DNp03_R: -0.19822699476156397
+  escape:
+    mode: saccade
+    threshold_hz: 64.85340117344626
+  ecps:
+    brake_decay: 0.9787194696099181
+    saccade:
+      enabled: true
+      terms:
+      - DNp03_L
+      - DNp03_R
+      threshold_hz: 8.911338868201108
+      duration_s: 1.4170417997488873
+      yaw: 1.0
+      backoff: 0.2928217527718232
+      backoff_s: 0.4571574829821202
+      on_brake: 0.2
+      refractory_s: 0.0
+      keep_direction_s: 4.038726724817868
+    caution:
+      hold_s: 0.0
+      ramp_s: 0.9483204615378121
+      on_brake: 0.22183559884732063
+    retreat:
+      enabled: true
+      terms:
+      - MDN_L
+      - MDN_R
+      threshold_hz: 11.789581423481486
+      speed: 0.5
+      min_s: 1.150846364446128
+      hold_s: 1.0
+      max_s: 2.0
+      then_saccade: true
+    throttle_per_forward: 0.14
+    throttle_yaw_decouple: 0.011
+  smoothing: 0.14608425486115145
+  brake_terms:
+    DNp03_L: 0.011792945821321767
+    DNp03_R: 0.011792945821321767
+    DNp01_L: 0.0663255369253996
+    DNp01_R: 0.0663255369253996
+  cruise: 0.5877095146828395
+ecps_drone:
+  yaw_rate_max_dps: 60
+outputs:
+  DNg02_L:
+    types:
+    - ^DNg02
+    side: L
+  DNg02_R:
+    types:
+    - ^DNg02
+    side: R
+  DNp03_L:
+    types:
+    - ^DNp03$
+    side: L
+  DNp03_R:
+    types:
+    - ^DNp03$
+    side: R
+  DNp01_L:
+    types:
+    - ^DNp01$
+    - ^GF$
+    side: L
+  DNp01_R:
+    types:
+    - ^DNp01$
+    - ^GF$
+    side: R
+  MDN_L:
+    types:
+    - ^MDN$
+    side: L
+    note: moonwalker DNs, backward walking (Bidaye et al. 2014)
+  MDN_R:
+    types:
+    - ^MDN$
+    side: R
+    note: moonwalker DNs, backward walking (Bidaye et al. 2014)
+inputs:
+  LCb_L:
+    types:
+    - ^LCb$
+    side: L
+    feature: blank
+    eye: L
+    max_hz: 150
+  LCb_R:
+    types:
+    - ^LCb$
+    side: R
+    feature: blank
+    eye: R
+    max_hz: 150
+  LCn_L:
+    types:
+    - ^LCn$
+    side: L
+    feature: near
+    eye: L
+    max_hz: 120
+  LCn_R:
+    types:
+    - ^LCn$
+    side: R
+    feature: near
+    eye: R
+    max_hz: 120
+  LCv_L:
+    types:
+    - ^LCv$
+    side: L
+    feature: ventral
+    eye: L
+    max_hz: 150
+  LCv_R:
+    types:
+    - ^LCv$
+    side: R
+    feature: ventral
+    eye: R
+    max_hz: 150
+vision:
+  ecps_blank:
+    energy_thr: 0.0002
+    rows:
+    - 1
+    - 4
+    gain: 2.5
+    min_frac: 0.55
+    baseline_s: 6.0
+    side_gain: 2.0
+  ecps_near:
+    enabled: true
+    rows:
+    - 2
+    - 6
+    gain: 3.0
+    min_flow: 0.08
+    max_yaw_dps: 12.0
+    smooth: 0.15
+    outer_cols: 3
+  ecps_ventral:
+    enabled: true
+    drop_m: 0.10508232142398027
+    min_rate_mps: 0.6
+    window_s: 0.3
+    step_hold_s: 1.0
+    rise_m: 0.13548335780708726
+    rise_span_m: 0.15
+    smooth_s: 0.4
+    baseline_s: 6.0
+  ecps_tof:
+    enabled: true
+    beams:
+    - -26.25
+    - -18.75
+    - -11.25
+    - -3.75
+    - 3.75
+    - 11.25
+    - 18.75
+    - 26.25
+    fov_deg: 7.5
+    rate_hz: 15.0
+    d0: 0.5
+    gain: 1.3650768886501723
+ecps_pilot:
+  height_source:
+    enabled: true
+    stale_s: 0.5
+    land_after_s: 3.0
+  height_guard:
+    enabled: false
+    ceiling_m: 1.0
+    floor_m: 0.35
+    gain: 1.5
+  struct:
+    shield:
+      enabled: true
+      beams: []
+      unstick_s: 1.0
+      map:
+        enabled: true
+        sensors:
+        - hfov: 60.0
+          vfov: 60.0
+          n: 8
+          rate_hz: 15.0
+          noise_m: 0.01
+          max_m: 3.5
+          bearing: 0.0
+        - hfov: 60.0
+          vfov: 60.0
+          n: 8
+          rate_hz: 15.0
+          noise_m: 0.01
+          max_m: 3.5
+          bearing: 180.0

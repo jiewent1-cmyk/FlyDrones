@@ -1,0 +1,23 @@
+[Unit]
+Description=ECPS295 companion (MiniFly v4 + w2map shield, route-B height)
+After=mavlink-router.service
+Wants=mavlink-router.service
+
+[Service]
+Type=simple
+# shadow: heartbeat + route-B height, NO velocity commands. Change to --mode guided only after the ground tests
+# in the deployment report (FLIGHT_TEST_PLAN R0/R1). Override with: systemctl edit ecps-companion
+Environment=ECPS_MODE=shadow
+# A76 cluster (policy6 = cpu6-7) at full clock while the companion runs: tick p50 32 -> 22 ms (report P1 vs P5)
+ExecStartPre=/bin/sh -c 'echo performance > /sys/devices/system/cpu/cpufreq/policy6/scaling_governor'
+ExecStopPost=/bin/sh -c 'echo schedutil > /sys/devices/system/cpu/cpufreq/policy6/scaling_governor'
+ExecStart=/opt/ecps295/venv/bin/python -u /opt/ecps295/companion/ecps_companion.py --mode ${ECPS_MODE} --quiet
+CPUAffinity=6 7
+Nice=-10
+Restart=on-failure
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

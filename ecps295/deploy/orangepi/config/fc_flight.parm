@@ -1,0 +1,13 @@
+# ECPS295 real-drone flight parameters: companion-loss failsafe (decided 2026-10-16).
+# Only the companion (sysid 254) counts as a GCS. A connected Mission Planner (sysid 255) can still show telemetry,
+# change parameters and switch modes, but its heartbeats no longer keep FS_GCS quiet, and its RC overrides are ignored
+# (not needed: the pilot flies with the RC transmitter). Verified on the Pi SITL: sitl_hil_test.py with FLIGHT_GCS=1.
+# The SITL/Gazebo variant ecps295/sitl/variants/companion_fs.parm keeps HI 255 (the sims take off with 255 RC overrides).
+MAV_GCS_SYSID    254
+MAV_GCS_SYSID_HI 254
+# 5 = Land
+FS_GCS_ENABLE    5
+FS_GCS_TIMEOUT   2
+# Route-B height delay with the companion requesting RANGEFINDER at 20 Hz (Pi SITL 10-16: ~30 ms + sensor delay);
+# check against VISP vs RFND in the first flight log
+VISO_DELAY_MS    40

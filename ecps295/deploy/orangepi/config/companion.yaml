@@ -1,0 +1,53 @@
+# ECPS295 companion hardware config (Orange Pi Zero 3W). Read by companion/ecps_companion.py --hw.
+model: s7_w2map.yaml          # ecps295/minifly/<model>: final hardware config (front + rear VL53L7CX + local 3D map)
+
+mavlink:
+  url: udpin:127.0.0.1:14560  # mavlink-router endpoint "companion" (/etc/mavlink-router/main.conf)
+  fc_sysid: 1
+  stream_hz: 20
+  rangefinder_hz: 20          # FC RANGEFINDER stream = route-B height source (twin: 10 Hz); VISO_DELAY_MS 40 on the FC
+  handover_alt_m: 0.3         # control is only taken once the FC reports >= this height (pilot took off), never on the ground
+  ext_height: true            # route B: VISION_POSITION_ESTIMATE z = -height above floor, 20 Hz
+                              # needs EK3_SRC1_POSZ 6, VISO_TYPE 1 on the FC (sitl/variants/G_extnav_height.parm)
+
+camera:
+  source: uvc                 # uvc | sim | replay:<dir> | off
+  device: /dev/video0
+  width: 640
+  height: 480
+  fourcc: MJPG
+  fps: 30
+  out_w: 192                  # as gazebo/cam_bridge.py: gray, area-downsampled
+  out_h: 144
+
+tof:
+  source: real                # real | sim | off
+  sensors:
+    front:
+      bearing: 0
+      bus: 0                  # TWI0 = /dev/i2c-0, header pins 3 (SDA) / 5 (SCL)
+      addr: 0x29
+      hz: 15
+      n: 8
+      hfov: 60.0
+      vfov: 60.0
+      max_m: 3.5
+      flip_lr: false          # BENCH: tof_probe.py --orient, then set
+      flip_ud: false
+      transpose: false
+      range_kind: radial      # BENCH: radial | perpendicular
+      valid_status: [5, 9]
+    rear:
+      bearing: 180
+      bus: 1                  # TWI1 = /dev/i2c-1, header pins 38 (SDA?) / 40 (SCL?) - verify
+      addr: 0x29
+      hz: 15
+      n: 8
+      hfov: 60.0
+      vfov: 60.0
+      max_m: 3.5
+      flip_lr: false
+      flip_ud: false
+      transpose: false
+      range_kind: radial
+      valid_status: [5, 9]

@@ -115,7 +115,7 @@ class EcpsPilot(Pilot):
             self.retina.baro_m = getattr(self.drone, "baro_m", lambda: None)()
         if getattr(self.retina, "tof_on", False) and hasattr(self.drone, "ranges"):  # S5: horizontal ToF -> near grids
             rt = self.retina
-            rt.tof = self.drone.ranges(rt.tof_beams, rt.tof_fov, rt.tof_rate, rt.tof_noise)
+            rt.tof = self.drone.ranges(rt.tof_beams, rt.tof_fov, rt.tof_rate, rt.tof_noise, **getattr(rt, "tof_kw", {}))
         vision = self.retina.encode(frame)
         g = None
         if self.gestures is not None:

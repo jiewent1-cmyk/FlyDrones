@@ -18,6 +18,30 @@ by itself and the shield is only the backstop (same beam spec -> the same readin
   s5f       ToF -> near + the shfu shield (multi-zone front)
   s5f_g2    s5f with a more eager near cue (gain 2, d0 1.0 m)
   s5f_c065  s5f at cruise 0.65
+S6 sensor-layout screen (2026-10-14): cheaper / simpler hardware than five single-zone boards. Every layout feeds the
+brain (S5, beams within +-60 deg) and the shield with unstick; the "m" variants add the range memory and backing corridor
+(ecps_struct RangeShield._memory) to cover blind sectors:
+  s6_f1m    one front single-zone ToF (0 deg) + memory
+  s6_f2     front pair only (+-25 deg, two VL53L1X on two I2C buses)        s6_f2m  + memory
+  s6_f3b    front pair + rear (3 boards)
+  s6_mr4    front / right / rear / left single-zone (Bitcraze Multi-ranger-like single board)
+  s6_m1     one forward 8x8 multi-zone board (VL53L5CX, 45 deg, 15 Hz)        s6_m1m  + memory
+  s6_w1m    one forward wide 8x8 board (VL53L7CX-like, 60 deg horizontal) + memory
+  s6_m1b    forward 8x8 + one rear single-zone
+  s6_m2     forward + rear 8x8 (the ETH Crazyflie layout)
+  s6_cam    no new hardware: ground-contact-line ranging from the existing camera, 12 columns over +-60 deg, 15 Hz,
+            sigma 0.02 + 0.05 d^2, nothing beyond 1.5 m, 10 % of readings lost, each net wall seen with p 0.5 (per
+            episode)                                                         s6_camm + memory
+  s6_ld06   one 360-degree 2D lidar (LD06 class, 36 beams, 10 Hz, 2 cm)
+batch 2 (after the hardware survey: the Orange Pi Zero 3W has four I2C buses, so up to four sensors need no XSHUT):
+  s6_w2     wide 8x8 front + wide 8x8 rear (2 x VL53L7CX, 60 deg each, straight mounts)   s6_w2m  + memory
+  s6_w1rbl  wide 8x8 front + right / rear / left single-zone (VL53L7CX + 3 generic VL53L1X, four buses)
+  s6_mr4m   s6_mr4 (four single-zone, one per bus) + memory
+S7 (2026-10-14): the shield works off a local 3D occupancy map built from multi-zone boards (ecps_map; the brain still
+gets the front columns as in S6):
+  s7_w2map  front + rear VL53L7CX (60 x 60 deg, 8x8) -> map -> shield
+  s7_m2map  front + rear VL53L5CX (45 x 45 deg, 8x8) -> map -> shield
+  s7_w1map  front VL53L7CX only -> map -> shield, + the backing corridor (no rear sensor)
 python -m rl.shield_screen --seed-from rl/out/struct.jsonl --procs 8 --out rl/out/shield.jsonl
 python -m rl.shield_screen --report --out rl/out/shield.jsonl
 """
@@ -69,6 +93,60 @@ CONDS.update({
                               **shield(beams=BF, fov_deg=5.6, rate_hz=15.0, unstick_s=1.0)}),
     "s5f_c065": (V4, "intact", {**tof(beams=BF, fov_deg=5.6, rate_hz=15.0), **shield(beams=BF, fov_deg=5.6, rate_hz=15.0, unstick_s=1.0),
                                 **speed(0.65)}),
+})
+
+F1, F2, F3B, MR4 = [0.0], [-25.0, 25.0], [-25.0, 25.0, 180.0], [0.0, 90.0, 180.0, -90.0]
+WIDE8 = [-26.25, -18.75, -11.25, -3.75, 3.75, 11.25, 18.75, 26.25]
+REAR8 = [round((180.0 + b + 180.0) % 360.0 - 180.0, 2) for b in FRONT8]
+CAM12 = [-55.0 + 10.0 * i for i in range(12)]
+RING36 = [i * 10.0 for i in range(-17, 19)]
+CAM = dict(noise=0.02, noise_k=0.05, max_m=1.5, p_miss=0.1, p_net=0.5)
+
+
+def s6(beams, fov, rate=10.0, noise=0.01, mem=False, **model) -> dict:
+    sh = dict(beams=beams, fov_deg=fov, rate_hz=rate, noise_m=noise, unstick_s=1.0, **model)
+    if mem:
+        sh["memory"] = {"enabled": True}
+    return {**tof(beams=beams, fov_deg=fov, rate_hz=rate, noise_m=noise, **model), **shield(**sh)}
+
+
+CONDS.update({
+    "s6_f1m": (V4, "intact", s6(F1, 27.0, mem=True)),
+    "s6_f2": (V4, "intact", s6(F2, 27.0)),
+    "s6_f2m": (V4, "intact", s6(F2, 27.0, mem=True)),
+    "s6_f3b": (V4, "intact", s6(F3B, 27.0)),
+    "s6_mr4": (V4, "intact", s6(MR4, 27.0)),
+    "s6_m1": (V4, "intact", s6(FRONT8, 5.6, rate=15.0)),
+    "s6_m1m": (V4, "intact", s6(FRONT8, 5.6, rate=15.0, mem=True)),
+    "s6_w1m": (V4, "intact", s6(WIDE8, 7.5, rate=15.0, mem=True)),
+    "s6_m1b": (V4, "intact", s6(FRONT8 + [180.0], [5.6] * 8 + [27.0], rate=15.0)),
+    "s6_m2": (V4, "intact", s6(FRONT8 + REAR8, 5.6, rate=15.0)),
+    "s6_cam": (V4, "intact", s6(CAM12, 10.0, rate=15.0, **CAM)),
+    "s6_camm": (V4, "intact", s6(CAM12, 10.0, rate=15.0, mem=True, **CAM)),
+    "s6_ld06": (V4, "intact", s6(RING36, 0.0, rate=10.0, noise=0.02)),
+})
+REARW8 = [round((180.0 + b + 180.0) % 360.0 - 180.0, 2) for b in WIDE8]
+CONDS.update({
+    "s6_w2": (V4, "intact", s6(WIDE8 + REARW8, 7.5, rate=15.0)),
+    "s6_w2m": (V4, "intact", s6(WIDE8 + REARW8, 7.5, rate=15.0, mem=True)),
+    "s6_w1rbl": (V4, "intact", s6(WIDE8 + [90.0, 180.0, -90.0], [7.5] * 8 + [27.0] * 3, rate=15.0)),
+    "s6_mr4m": (V4, "intact", s6(MR4, 27.0, mem=True)),
+})
+L7 = dict(hfov=60.0, vfov=60.0, n=8, rate_hz=15.0, noise_m=0.01, max_m=3.5)
+L5 = dict(hfov=45.0, vfov=45.0, n=8, rate_hz=15.0, noise_m=0.01, max_m=4.0)
+
+
+def s7(sensors, brain, brain_fov, mem=None) -> dict:
+    sh = dict(beams=[], unstick_s=1.0, map={"enabled": True, "sensors": sensors})
+    if mem:
+        sh["memory"] = mem
+    return {**tof(beams=brain, fov_deg=brain_fov, rate_hz=15.0), **shield(**sh)}
+
+
+CONDS.update({
+    "s7_w2map": (V4, "intact", s7([{**L7, "bearing": 0.0}, {**L7, "bearing": 180.0}], WIDE8, 7.5)),
+    "s7_m2map": (V4, "intact", s7([{**L5, "bearing": 0.0}, {**L5, "bearing": 180.0}], FRONT8, 5.6)),
+    "s7_w1map": (V4, "intact", s7([{**L7, "bearing": 0.0}], WIDE8, 7.5, mem={"enabled": True, "points": False})),
 })
 
 

@@ -81,6 +81,21 @@ SH_EXTRA = [
     ("sh_alpha", "ecps_pilot.struct.shield.alpha", 1.0, 0.5, 2.0, True),
 ]
 SPEC_V4HW_SH = SPEC_V4HW + SH_EXTRA
+# N3 on the chosen hardware (2026-10-14: front + rear VL53L7CX 8x8 -> local 3D map -> range shield, rl.shield_screen
+# s7_w2map; Gazebo 0/58). The shield is a fixed, verified component: d_safe / alpha are NOT searched. Searched on top of
+# v4hw: cruise speed (= max_forward, capped at 0.8 m/s) and the S5 input strength of the front board's 8 columns into the
+# LCn `near` grid (proximity = clip(1 - d / d0, 0, 1) * gain).
+MAP_EXTRA = [
+    ("cruise", "decoder.cruise", 0.5, 0.35, 0.8, False),
+    ("tof_d0", "vision.ecps_tof.d0", 0.8, 0.5, 1.5, False),
+    ("tof_gain", "vision.ecps_tof.gain", 1.0, 0.5, 3.0, True),
+]
+SPEC_V4HW_MAP = SPEC_V4HW + MAP_EXTRA
+# N3 round 3 (2026-10-15, twin v2): with the Gazebo-like ventral ray cone a box edge arrives as a ramp (range rate ~4.2 x
+# ground speed), so the step test's rate threshold decides how early MDN backs off (Gazebo: 0.15 m from the edge, 20-25 %
+# of the back-offs still end over the box); below ~0.3 m/s the drone's own sink would trigger it
+MAP2_EXTRA = [("vent_rate", "vision.ecps_ventral.min_rate_mps", 0.6, 0.3, 1.0, False)]
+SPEC_V4HW_MAP2 = SPEC_V4HW_MAP + MAP2_EXTRA
 BASE_NAMES = list(NAMES)
 
 
@@ -88,7 +103,8 @@ def set_space(name: str) -> None:
     """'default' (es1, es2), 'wide' (es3, A1, B2), 'turncap' (wide with a 1.2-2.5 s saccade, B fitness v2) or 'v4hw'
     (H2: v4 base, hardware caps, + retreat / ventral parameters)."""
     global SPEC, Z0, NAMES, N
-    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP, "v4hw": SPEC_V4HW, "v4hw_eff": SPEC_V4HW_EFF, "v4hw_sh": SPEC_V4HW_SH}.get(name, SPEC_DEFAULT)
+    SPEC = {"wide": SPEC_WIDE, "turncap": SPEC_TURNCAP, "v4hw": SPEC_V4HW, "v4hw_eff": SPEC_V4HW_EFF, "v4hw_sh": SPEC_V4HW_SH,
+            "v4hw_map": SPEC_V4HW_MAP, "v4hw_map2": SPEC_V4HW_MAP2}.get(name, SPEC_DEFAULT)
     NAMES = [s[0] for s in SPEC]
     N = len(SPEC)
     Z0 = to_z(np.array([s[2] for s in SPEC]))
