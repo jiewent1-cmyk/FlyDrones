@@ -1,0 +1,234 @@
+{
+ "args": {
+  "mode": "bench",
+  "hw": "/opt/ecps295/config/companion.yaml",
+  "config": "",
+  "url": "",
+  "camera": "sim",
+  "tof": "sim",
+  "seconds": 120.0,
+  "cruise": 0.5,
+  "max_forward": 0.5,
+  "seed": 0,
+  "no_fence_turn": false,
+  "affinity": "6,7",
+  "log_dir": "/opt/ecps295/logs",
+  "tag": "P6_a76_bgload",
+  "quiet": true,
+  "set": []
+ },
+ "hw": {
+  "model": "s7_w2map.yaml",
+  "mavlink": {
+   "url": "udpin:127.0.0.1:14560",
+   "fc_sysid": 1,
+   "stream_hz": 20,
+   "ext_height": true
+  },
+  "camera": {
+   "source": "uvc",
+   "device": "/dev/video0",
+   "width": 640,
+   "height": 480,
+   "fourcc": "MJPG",
+   "fps": 30,
+   "out_w": 192,
+   "out_h": 144
+  },
+  "tof": {
+   "source": "real",
+   "sensors": {
+    "front": {
+     "bearing": 0,
+     "bus": 0,
+     "addr": 41,
+     "hz": 15,
+     "n": 8,
+     "hfov": 60.0,
+     "vfov": 60.0,
+     "max_m": 3.5,
+     "flip_lr": false,
+     "flip_ud": false,
+     "transpose": false,
+     "range_kind": "radial",
+     "valid_status": [
+      5,
+      9
+     ]
+    },
+    "rear": {
+     "bearing": 180,
+     "bus": 1,
+     "addr": 41,
+     "hz": 15,
+     "n": 8,
+     "hfov": 60.0,
+     "vfov": 60.0,
+     "max_m": 3.5,
+     "flip_lr": false,
+     "flip_ud": false,
+     "transpose": false,
+     "range_kind": "radial",
+     "valid_status": [
+      5,
+      9
+     ]
+    }
+   }
+  }
+ },
+ "summary": {
+  "mode": "bench",
+  "model": "/opt/ecps295/ecps295/minifly/s7_w2map.yaml",
+  "camera": "sim",
+  "tof": {
+   "front": {
+    "frames": 1801,
+    "errors": 0,
+    "status": "sim",
+    "read_ms": {
+     "p50": 0.081,
+     "p95": 0.199,
+     "p99": 2.615,
+     "p100": 6.526,
+     "mean": 0.138
+    },
+    "init_s": null
+   },
+   "rear": {
+    "frames": 1801,
+    "errors": 0,
+    "status": "sim",
+    "read_ms": {
+     "p50": 0.041,
+     "p95": 0.283,
+     "p99": 0.674,
+     "p100": 9.008,
+     "mean": 0.1
+    },
+    "init_s": null
+   }
+  },
+  "hz": 20.0,
+  "affinity": [
+   6,
+   7
+  ],
+  "ticks": 2390,
+  "wall_s": 120.04,
+  "deadline_miss": 0,
+  "compute_ms": {
+   "p50": 32.073,
+   "p95": 35.486,
+   "p99": 36.797,
+   "p100": 41.828,
+   "mean": 31.043
+  },
+  "period_ms": {
+   "p50": 50.0,
+   "p95": 50.083,
+   "p99": 50.338,
+   "p100": 52.675,
+   "mean": 50.0
+  },
+  "stage_ms": {
+   "frame": {
+    "p50": 0.01,
+    "p95": 0.012,
+    "p99": 0.013,
+    "p100": 0.016,
+    "mean": 0.01
+   },
+   "retina": {
+    "p50": 4.69,
+    "p95": 5.524,
+    "p99": 6.53,
+    "p100": 8.624,
+    "mean": 4.808
+   },
+   "telemetry": {
+    "p50": 0.005,
+    "p95": 0.006,
+    "p99": 0.006,
+    "p100": 0.302,
+    "mean": 0.005
+   },
+   "encoder": {
+    "p50": 0.353,
+    "p95": 0.409,
+    "p99": 0.523,
+    "p100": 1.733,
+    "mean": 0.355
+   },
+   "brain": {
+    "p50": 20.236,
+    "p95": 23.159,
+    "p99": 24.233,
+    "p100": 26.853,
+    "mean": 20.295
+   },
+   "decoder": {
+    "p50": 0.103,
+    "p95": 0.119,
+    "p99": 0.13,
+    "p100": 0.415,
+    "mean": 0.105
+   },
+   "governor": {
+    "p50": 0.031,
+    "p95": 0.037,
+    "p99": 0.043,
+    "p100": 0.395,
+    "mean": 0.032
+   },
+   "struct": {
+    "p50": 5.487,
+    "p95": 8.321,
+    "p99": 8.945,
+    "p100": 10.238,
+    "mean": 4.839
+   },
+   "map": {
+    "p50": 5.386,
+    "p95": 8.219,
+    "p99": 8.836,
+    "p100": 10.143,
+    "mean": 4.745
+   },
+   "send": {
+    "p50": 0.004,
+    "p95": 0.005,
+    "p99": 0.005,
+    "p100": 0.09,
+    "mean": 0.004
+   }
+  },
+  "camera_frames": 3602,
+  "camera_decode_ms": {
+   "p50": 5.186,
+   "p95": 7.334,
+   "p99": 9.924,
+   "p100": 13.926,
+   "mean": 5.36
+  },
+  "frames_new": 2405,
+  "frames_repeated": 17,
+  "cmd_sent": 0,
+  "cmd_blocked": 2391,
+  "land_sent": 0,
+  "control_s": 0.0,
+  "events": [],
+  "watchdog_events": [],
+  "safety_events": [],
+  "struct": {
+   "struct_vetoes": 0,
+   "struct_rear_vetoes": 0,
+   "struct_pushes": 0,
+   "shield_clamp_ticks": 26,
+   "shield_retreat_ticks": 0,
+   "shield_unstick_ticks": 0,
+   "shield_map_ticks": 52,
+   "shield_map_frames": 3586
+  }
+ }
+}

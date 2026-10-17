@@ -1,0 +1,115 @@
+{
+ "phases": {
+  "T1_disarmed": {
+   "control_ticks": 0,
+   "hb254_hz": 1.0,
+   "viso_hz": 15.6,
+   "pass": true
+  },
+  "T2_armed_on_ground": {
+   "armed": true,
+   "control_ticks": 0,
+   "pass": true
+  },
+  "T3_takeoff_handover": {
+   "takeover_after_takeoff_s": 1.83,
+   "alt_at_takeover_m": 0.31,
+   "setpoint_hz": 20.0,
+   "setpoint_gap_max_ms": 50.5,
+   "fc_target_echo_hz": 9.9,
+   "fc_target_v_nonzero": 98,
+   "alt_end_m": 0.0005763434455730021,
+   "pass": true
+  },
+  "T4_loiter_release": {
+   "fc_loiter_seen": true,
+   "release_latency_ms": 13.9,
+   "control_ticks_after_switch": 0,
+   "pass": true
+  },
+  "T5_guided_resume": {
+   "resume_latency_ms": 39.0,
+   "setpoint_hz": 19.0,
+   "pass": true
+  },
+  "T6_companion_killed": {
+   "modes_after": [
+    "LAND"
+   ],
+   "land_after_kill_s": 2.02,
+   "land_after_last_heartbeat_s": 2.02,
+   "pass": true
+  }
+ },
+ "fc_text": [
+  "Barometer 1 calibration complete",
+  "Barometer 2 calibration complete",
+  "ArduPilot Ready",
+  "AHRS: DCM active",
+  "RC7: SaveWaypoint LOW",
+  "EKF3 IMU0 initialised",
+  "EKF3 IMU1 initialised",
+  "AHRS: EKF3 active",
+  "EKF3 IMU0 tilt alignment complete",
+  "EKF3 IMU1 tilt alignment complete",
+  "EKF3 IMU0 MAG0 initial yaw alignment complete",
+  "EKF3 IMU1 MAG0 initial yaw alignment complete",
+  "GPS 1: probing for u-blox at 230400 baud",
+  "GPS 1: detected u-blox",
+  "EKF3 IMU0 origin set",
+  "Field Elevation Set: 20m",
+  "EKF3 IMU1 origin set",
+  "PreArm: VisOdom: not healthy",
+  "EKF3 IMU0 is using GPS",
+  "EKF3 IMU1 is using GPS",
+  "Arming motors",
+  "GCS Failsafe",
+  "SIM Hit ground at 0.503008 m/s"
+ ],
+ "ekf_ready_s": 41.6,
+ "flight_gcs_param": {
+  "id": "MAV_GCS_SYSID_HI",
+  "value": 254.0
+ },
+ "companion_log": "/opt/ecps295/logs/20261016_003847_guided_sitl_hil",
+ "route_b_height_m": {
+  "n": 732,
+  "min": 0.0,
+  "max": 1.14
+ },
+ "modes": [
+  [
+   0.0,
+   "STABILIZE",
+   false
+  ],
+  [
+   61.67,
+   "GUIDED",
+   false
+  ],
+  [
+   63.02,
+   "GUIDED",
+   true
+  ],
+  [
+   81.18,
+   "LOITER",
+   true
+  ],
+  [
+   86.2,
+   "GUIDED",
+   true
+  ],
+  [
+   95.22,
+   "LAND",
+   true
+  ]
+ ],
+ "gcs_alive_during_T6": true,
+ "flight_gcs_sysid_hi_254": true,
+ "pass": true
+}

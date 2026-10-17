@@ -1,0 +1,4 @@
+16 episodes
+flow_dr on this machine differs from the reference in 6/16 jobs (libm last-bit differences)
+identical 16/16
+wall_s per 120 s episode on the Pi (procs=2): median 125.2  max 130.9

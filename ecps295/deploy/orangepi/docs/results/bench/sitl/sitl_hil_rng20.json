@@ -1,0 +1,121 @@
+{
+ "phases": {
+  "T1_disarmed": {
+   "control_ticks": 0,
+   "hb254_hz": 1.0,
+   "viso_hz": 15.0,
+   "pass": true
+  },
+  "T2_armed_on_ground": {
+   "armed": true,
+   "control_ticks": 0,
+   "pass": true
+  },
+  "T3_takeoff_handover": {
+   "takeover_after_takeoff_s": 1.89,
+   "alt_at_takeover_m": 0.38,
+   "setpoint_hz": 20.0,
+   "setpoint_gap_max_ms": 50.5,
+   "fc_target_echo_hz": 10.0,
+   "fc_target_v_nonzero": 84,
+   "alt_end_m": -0.016524309292435646,
+   "pass": true
+  },
+  "T4_loiter_release": {
+   "fc_loiter_seen": true,
+   "release_latency_ms": 39.5,
+   "control_ticks_after_switch": 0,
+   "pass": true
+  },
+  "T5_guided_resume": {
+   "resume_latency_ms": 18.3,
+   "setpoint_hz": 17.9,
+   "pass": true
+  },
+  "T6_companion_killed": {
+   "modes_after": [
+    "LAND"
+   ],
+   "land_after_kill_s": 2.16,
+   "land_after_last_heartbeat_s": 2.3,
+   "pass": true
+  }
+ },
+ "fc_text": [
+  "Barometer 1 calibration complete",
+  "Barometer 2 calibration complete",
+  "ArduPilot Ready",
+  "AHRS: DCM active",
+  "RC7: SaveWaypoint LOW",
+  "EKF3 IMU0 initialised",
+  "EKF3 IMU1 initialised",
+  "AHRS: EKF3 active",
+  "EKF3 IMU0 tilt alignment complete",
+  "EKF3 IMU1 tilt alignment complete",
+  "EKF3 IMU0 MAG0 initial yaw alignment complete",
+  "EKF3 IMU1 MAG0 initial yaw alignment complete",
+  "GPS 1: probing for u-blox at 230400 baud",
+  "GPS 1: detected u-blox",
+  "EKF3 IMU0 origin set",
+  "Field Elevation Set: 20m",
+  "EKF3 IMU1 origin set",
+  "PreArm: VisOdom: not healthy",
+  "EKF3 IMU0 is using GPS",
+  "EKF3 IMU1 is using GPS",
+  "Arming motors",
+  "GCS Failsafe",
+  "SIM Hit ground at 0.502962 m/s"
+ ],
+ "ekf_ready_s": 41.8,
+ "rangefinder_hz_requested": 20,
+ "companion_log": "/opt/ecps295/logs/20261016_021247_guided_sitl_hil",
+ "route_b_height_m": {
+  "n": 705,
+  "min": 0.0,
+  "max": 1.09
+ },
+ "modes": [
+  [
+   0.0,
+   "STABILIZE",
+   false
+  ],
+  [
+   61.88,
+   "GUIDED",
+   false
+  ],
+  [
+   63.02,
+   "GUIDED",
+   true
+  ],
+  [
+   81.43,
+   "LOITER",
+   true
+  ],
+  [
+   86.4,
+   "GUIDED",
+   true
+  ],
+  [
+   94.55,
+   "LAND",
+   true
+  ]
+ ],
+ "gcs_alive_during_T6": false,
+ "flight_gcs_sysid_hi_254": false,
+ "pass": true,
+ "route_b_age": {
+  "rangefinder_hz": 20.0,
+  "age_since_rangefinder_ms": {
+   "mean": 24.4,
+   "p50": 25.4,
+   "p95": 46.5,
+   "max": 74.2
+  }
+ }
+}
