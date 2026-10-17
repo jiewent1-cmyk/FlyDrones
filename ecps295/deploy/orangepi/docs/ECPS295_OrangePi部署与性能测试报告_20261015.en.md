@@ -414,7 +414,15 @@ flowchart LR
 - Every flow is started from ROG (its firewall is on), over the home LAN, not NetBird.
 - The Pi takes control only while ROG sets go (patrol phase) and the last control datagram is < 0.5 s old; it exits when go drops. ROG's `run_g4.py` still takes off and lands, and scores on Gazebo truth exactly like the local runs.
 - Smoke test (lowbox_s0, 30 s): the Pi flew the whole patrol, tick p50 21.7 ms / p99 26.6 ms, 0 overruns; 0 contacts; network round trip p50 7 ms, p99 99 ms, max 411 ms.
-- 24 runs paired with the sim-paced Gazebo baseline g7_sc2_tf10 (lowbox_s0–19 + cage20 × 4) are running; results in §3.11 of the RL route optimisation report.
+- 24 runs paired with the sim-paced Gazebo baseline g7_sc2_tf10 (lowbox_s0–19 + cage20 × 4), two batches: pil2 (raw frames) and pil3 (JPEG frames, 10-16 18:50–20:08).
+  - **Runs with a healthy link** (the Pi in control ≥ 78 % of ticks, network round trip p99 < 200 ms): 11 in pil2 and 14 in pil3. All 25 had **0 contacts and 0 near misses**.
+  - Paired against the local Gazebo runs, coverage, path, minimum clearance and time over boxes show **no significant difference**. pil3 coverage was −0.034 (p = 0.51) and pil2 +0.066 (p = 0.04); the two batches point in opposite directions, so this is noise.
+  - Pi tick time: p50 24.4 / p99 27.5 ms (median over runs); the worst run had p99 28.3 ms and max 33.6 ms, **never above the 50 ms tick**.
+  - **Conclusion**: the same brain flown closed-loop on the Pi behaves like the local ROG runs, and the Pi has enough compute.
+  - JPEG frames average 5.7 kB, about 1/5 of a raw frame (27.6 kB).
+  - **Runs with a degraded link**: lowbox_s0–s6 and s9 in pil3 had round trips up to 6–15 s; in 4 of them the Pi lost control and the FC failsafe landed. These runs clustered in 18:50–19:15 and the link was mostly healthy after that. So the home WiFi congests intermittently, and lower traffic only mitigates it.
+  - These runs count only as failsafe tests and are **excluded from the behaviour comparison**.
+- Raw data: Mac scratchpad `res/pil2.jsonl` and `res/pil3.jsonl`; ROG `~/sim/runs/pil2__*` and `pil3__*`.
 - Usage: PIL section of the deployment README. Orchestration notes: retry the Pi start (its FC heartbeat wait can time out); align the Pi flight timer with ROG's sim-clock mode (`--set safety.max_flight_s=420`).
 
 ### 10.4 Issues found by PIL
@@ -423,4 +431,5 @@ flowchart LR
 |---|---|---|
 | Route B sent a stale range: when the stream requests never reached the FC, the Pi kept sending its last cached RANGEFINDER (a 0.005 m ground reading) as the height | the EKF believed the drone was on the floor; it climbed to 2.9 m and the FC landed. Same after an FC reboot on the real drone | ✅ fixed (`real_drone.py`): no height from a range / baro reading older than 0.5 s; streams re-requested every 5 s |
 | The flight timer lands in place | one PIL run landed on a box edge (scored as a contact) | real-drone risk: hover / check below before a timed landing |
+| Intermittent WiFi stalls: under PIL traffic the round trip reaches seconds (ping does not show it) | of 44 recorded pil2 + pil3 runs, 19 had a degraded link; 10 were failsafe-landed by the FC, all safely with 0 contacts | JPEG frames cut the traffic 5×, but the stalls remain. Use a wired link (USB Ethernet) or a dedicated 5 GHz AP for PIL. On the real drone the camera and ToF connect directly to the Pi, so this does not apply |
 | `ecps-companion.service` does not stop | without a camera SIGTERM timed out and it was SIGKILLed | to fix: `frame()` and `connect()` waits must check the stop flag |

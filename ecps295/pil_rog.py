@@ -3,7 +3,8 @@
 The brain, safety layer and MAVLink backend run on the Orange Pi (companion/ecps_companion.py --pil); Gazebo + SITL run
 here. This end streams what the Pi's sensors would see:
 
-  camera  the Gazebo camera frame from the cam_bridge shm (192x144 gray, as gazebo/cam_bridge.py), on every new frame
+  camera  the Gazebo camera frame from the cam_bridge shm (192x144 gray, as gazebo/cam_bridge.py), on every new frame,
+          JPEG-encoded (q 85, ~5 kB) unless ECPS_PIL_RAW=1
   ToF     the S7 multi-zone frames (front / rear 8x8) emulated from SIM_STATE truth by mavlink_twin.zones(), with the
           same sample-and-hold rate and noise as in the local Gazebo runs
   ctl     10 Hz: the 'go' flag (1 only during the patrol phase; the Pi takes control only while it is set)
@@ -25,23 +26,26 @@ import threading
 import time
 from types import SimpleNamespace
 
+import cv2
 import numpy as np
 
 from shm_frames import ShmFrame
 
 MAGIC = b"EPL1"
 HDR = struct.Struct("<4sBBHId")  # magic, type, go, aux, seq, sim time (s)
-CAM, TOF, CTL = 1, 2, 3
+CAM, TOF, CTL, CAM_JPG = 1, 2, 3, 4
+JPEG_Q = 85  # 2026-10-16: JPEG like the real MJPEG camera; raw 28 kB frames (~20 IP fragments) stalled the home WiFi for seconds
 
 
 class PilRog:
-    def __init__(self, target: str, drone, shm: str, sensors: list[dict], hz: float = 200.0):
+    def __init__(self, target: str, drone, shm: str, sensors: list[dict], hz: float = 200.0, jpeg: bool = True):
         host, port = target.rsplit(":", 1)
         self.addr = (host, int(port))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(("0.0.0.0", 0))
         self.sock.settimeout(0.05)
         self.drone, self.cam, self.sensors, self.dt = drone, ShmFrame(shm), list(sensors), 1.0 / hz
+        self.jpeg, self.bytes_cam = jpeg, 0
         self.go = 0
         self.sim_t = 0.0
         self.seq = 0
@@ -92,7 +96,13 @@ class PilRog:
             t0 = time.monotonic()
             if self.cam.read() and self.cam.img is not None:
                 img = self.cam.img if self.cam.img.ndim == 2 else self.cam.img[..., 0]
-                self._send(CAM, img.shape[1], np.ascontiguousarray(img, np.uint8).tobytes())
+                if self.jpeg:
+                    ok, buf = cv2.imencode(".jpg", np.ascontiguousarray(img, np.uint8), [cv2.IMWRITE_JPEG_QUALITY, JPEG_Q])
+                    self._send(CAM_JPG, img.shape[1], buf.tobytes())
+                    self.bytes_cam += len(buf)
+                else:
+                    self._send(CAM, img.shape[1], np.ascontiguousarray(img, np.uint8).tobytes())
+                    self.bytes_cam += img.size
                 self.sent["cam"] += 1
             for i, sc in enumerate(self.sensors):
                 r = self.drone.zones(**sc)
@@ -155,6 +165,8 @@ class PilRog:
         return {
             "pil_target": f"{self.addr[0]}:{self.addr[1]}",
             "pil_sent": self.sent,
+            "pil_cam_jpeg": self.jpeg,
+            "pil_cam_kB_per_frame": round(self.bytes_cam / max(1, self.sent["cam"]) / 1000, 1),
             "pil_status_n": self.status_n,
             "pil_in_control_ticks": self.in_control_n,
             "pil_rtt_ms_p50_p95_p99_max": pct(self.rtt_ms),

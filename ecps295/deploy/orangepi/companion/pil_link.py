@@ -9,7 +9,7 @@ unchanged. The companion takes control only while go is set (patrol phase) and t
 old; every tick it answers with a status datagram (commands, DN rates, compute time) to the sender's address.
 
 Datagram: <4sBBHId magic 'EPL1', type (1 cam, 2 tof, 3 ctl), go, aux (cam: width; tof: bearing deg), seq, sim time>
-+ payload (cam: uint8 gray; tof: float32 metres, NaN = no target).
++ payload (cam: uint8 gray; type 4 cam: JPEG of the gray frame; tof: float32 metres, NaN = no target).
 """
 
 from __future__ import annotations
@@ -20,11 +20,12 @@ import struct
 import threading
 import time
 
+import cv2
 import numpy as np
 
 MAGIC = b"EPL1"
 HDR = struct.Struct("<4sBBHId")
-CAM, TOF, CTL = 1, 2, 3
+CAM, TOF, CTL, CAM_JPG = 1, 2, 3, 4
 
 
 class PilCamera:
@@ -124,9 +125,19 @@ class PilLink:
                 if self._go and not go:
                     self.finished = True  # patrol over: the companion exits (no remote kill needed)
             self._go, self._ctl_t = go, now  # every datagram carries the flag
-            if kind == CAM and aux:
+            if kind in (CAM, CAM_JPG) and aux:
                 c = self.cam
-                c.img = np.frombuffer(body, np.uint8).reshape(-1, aux).copy()
+                t0 = time.perf_counter()
+                if kind == CAM_JPG:  # as the real MJPEG camera: the decode runs on the Pi
+                    img = cv2.imdecode(np.frombuffer(body, np.uint8), cv2.IMREAD_GRAYSCALE)
+                    if img is None:
+                        self.rx["bad"] += 1
+                        continue
+                    if len(c.decode_ms) < 50000:
+                        c.decode_ms.append((time.perf_counter() - t0) * 1000)
+                    c.img = img
+                else:
+                    c.img = np.frombuffer(body, np.uint8).reshape(-1, aux).copy()
                 c.stamp, c.status = now, "pil"
                 c.frames += 1
                 self.rx["cam"] += 1
