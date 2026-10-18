@@ -19,6 +19,7 @@
 | `tools/ecl_client.py` | ECL1 参考客户端（命令行看遥测、发指令、急停），也用于测试 |
 | `tools/sitl_rig.py`、`rig_start.sh`、`rig_stop.sh` | Pi 上的 SITL 测试台（无 GPS 光流导航 SITL + 第二个 mavlink-router + 机载程序 + 由 SITL 真值模拟的 ToF） |
 | `tools/console_e2e.py` | 端到端测试（扮演飞手 + 控制台，13 项检查） |
+| `tools/estop_confirm_test.py` | 机载端急停确认的离线回放测试（假飞控按时间线给出模式和 COMMAND_ACK，不需要 Pi） |
 | `tools/gen_mavmeta.py` | 由 pymavlink 生成 `MavMeta.swift`（报文布局与 CRC_EXTRA） |
 | 机载端（在 `deploy/orangepi/`） | `companion/console_link.py`（链路 + 指引层）、`companion/sitl_world.py`（仅 SITL 测试）、`ecps_companion.py --console`、`camera.py`（保留彩色帧）、`config/companion.yaml` 的 `console:` 段 |
 
@@ -90,6 +91,12 @@ ssh root@192.168.86.20 'sh /root/ecps_console_test/rig_stop.sh'
 
 `app_full` 的手动一项（A5）注入的摇杆会和应用网页按真实键盘状态发出的摇杆消息（没按键就是 0）交替到达，测出的速度偏低，
 详见报告第 6.4 节。
+
+改了 `console_link.py` 的急停部分后，先跑离线回放测试（本机即可，没装 flydrones 时自动替身）：
+
+```sh
+python tools/estop_confirm_test.py      # 7 种时序：飞控进 LAND 后飞手马上切模式、心跳滞后但 ACK 已到、ACK 被拒、停桨……
+```
 
 调试：`ECPS_WEB_ROOT=<mac/web 目录>` 让应用直接读网页源文件（改完 ⌘R 重载）；`ECPS_SNAPSHOT=<png>` 后
 `kill -USR1 <pid>` 保存界面截图；菜单「显示 → 在浏览器中打开界面」。飞行记录在 `~/Library/Logs/ECPS Console/<时间>/`

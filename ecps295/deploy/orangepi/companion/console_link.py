@@ -49,9 +49,10 @@ console's hand-over choice (default PATROL, i.e. as without a console; the conso
 Console link lost (no HELLO for link_timeout_s): GOTO / MANUAL -> HOLD; still lost after lost_land_s while the
 companion is in control and holding -> LAND (watchdog path). PATROL continues, as without a console.
 Emergency stop: ESTOP land latches; the companion releases control at once (in_control gate) and sends LAND to the FC
-itself, rate-limited, until the FC reports LAND (or disarmed) once; the console sends LAND straight through
-mavlink-router as well. ESTOP kill forces a disarm (MAV_CMD_COMPONENT_ARM_DISARM 0, 21196) until the FC reports
-disarmed once. After that confirmation nothing is re-sent: the pilot can still take over with the mode switch or re-arm
+itself, rate-limited, until the FC reports LAND (or disarmed) once or accepts our command (COMMAND_ACK); the console
+sends LAND straight through mavlink-router as well. ESTOP kill forces a disarm (MAV_CMD_COMPONENT_ARM_DISARM 0, 21196)
+until the FC reports disarmed or accepts it once. The confirmation is checked on every tick, not only at the resend
+cadence. After that confirmation nothing is re-sent: the pilot can still take over with the mode switch or re-arm
 (the RC transmitter keeps the last word), and a new press on the console (ESTOP "trig" changes) acts again.
 Heartbeat and route-B height keep going (LAND needs the height). The latch itself keeps the brain from taking control
 again until estop_reset (FC disarmed, or force from the console).
@@ -447,6 +448,7 @@ class ConsoleLink:
         self.estop_trig = None  # the console's press number: a new press acts again after a confirmed one
         self.estop_done = False  # the FC confirmed (LAND / disarmed): stop forcing, the pilot may override
         self._fc_sent = 0.0
+        self._fc_wall0 = None  # wall time of our first send for the current press (COMMAND_ACKs after it confirm)
         self.fc_actions = 0
         self.events = collections.deque(maxlen=300)
         self.ev_id = 0
@@ -675,6 +677,7 @@ class ConsoleLink:
                     self.estop_trig = trig
                     self.estop_done = False
                     self._fc_sent = 0.0
+                    self._fc_wall0 = None
                 if new:
                     self.estop_t = now
             if new:
@@ -754,20 +757,44 @@ class ConsoleLink:
         except Exception:
             return False
 
+    def _fc_acked(self, commands: tuple[int, ...]) -> bool:
+        """An accepted COMMAND_ACK from the FC for one of these commands since our first send for this press (pymavlink
+        keeps the last message of each type per system; the FC addresses the ACK to us)."""
+        try:  # any surprise here only drops this shortcut: the heartbeat check still confirms
+            m = getattr(self.drone, "m", None)
+            st = None if m is None or self._fc_wall0 is None else m.sysid_state.get(getattr(self.drone, "fc_sysid", 1))
+            ack = None if st is None else st.messages.get("COMMAND_ACK")
+            return ack is not None and ack._timestamp >= self._fc_wall0 and ack.command in commands and ack.result == 0
+        except Exception:
+            return False
+
     def _estop_action(self) -> None:
         if not self.estop or self.estop_done:
-            return
-        now = time.monotonic()
-        if now - self._fc_sent < (0.2 if self.estop == 2 else 0.25):
             return
         m = getattr(self.drone, "m", None)
         if m is None:
             return
-        mode = self.drone.fc_mode()
-        if not self._armed() or (self.estop == 1 and mode == "LAND"):
-            self.estop_done = True  # confirmed: from here on the pilot's mode switch / arming wins
-            self.event("console", f"emergency stop confirmed by the FC ({'disarmed' if not self._armed() else 'LAND'})")
+        # The confirmation is checked on every call, before the resend cadence below. Checked only at the cadence, the FC
+        # could enter LAND and the pilot flip the mode switch within one 0.25 s interval: the companion then saw ALT_HOLD,
+        # took it for "not in LAND yet" and forced LAND again over the pilot (LAN e2e 2026-10-18, P9b).
+        how = None
+        if not self._armed():
+            how = "disarmed"
+        elif self.estop == 1 and self.drone.fc_mode() == "LAND":
+            how = "LAND"
+        elif self._fc_acked((400,) if self.estop == 2 else (11, 176)):  # MAV_CMD_COMPONENT_ARM_DISARM / SET_MODE, DO_SET_MODE
+            how = "COMMAND_ACK"
+        if how:
+            with self.lock:
+                first, self.estop_done = not self.estop_done, True  # confirmed: from here on the pilot's mode switch / arming wins
+            if first:
+                self.event("console", f"emergency stop confirmed by the FC ({how})")
             return
+        now = time.monotonic()
+        if now - self._fc_sent < (0.2 if self.estop == 2 else 0.25):
+            return
+        if self._fc_wall0 is None:
+            self._fc_wall0 = time.time()  # pymavlink stamps received messages with time.time()
         try:
             if self.estop == 2:
                 m.mav.command_long_send(m.target_system, m.target_component, 400, 0, 0, 21196, 0, 0, 0, 0, 0)
