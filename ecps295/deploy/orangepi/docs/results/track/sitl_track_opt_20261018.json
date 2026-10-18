@@ -1,0 +1,96 @@
+{
+ "phases": {
+  "T0_position": {
+   "lpn_msgs": 6,
+   "pass": true
+  },
+  "T1_track": {
+   "alt_at_handover_m": 0.74,
+   "companion_control_lines": [
+    "[   31.9] IN CONTROL (GUIDED, armed)",
+    "[   57.1] control released"
+   ],
+   "statustext": [
+    "ECPS: target: search",
+    "ECPS: target: approach (marker 7 at -1.60, +0.77, ",
+    "ECPS: waypoint 0 reached",
+    "ECPS: waypoints: done -> hover",
+    "ECPS: target: arrived (range 1.19 m)"
+   ],
+   "arrived_after_s": 15.1,
+   "truth_end_ne": [
+    -0.67,
+    0.28
+   ],
+   "truth_dist_to_marker_m": 1.07,
+   "truth_facing_err_deg": 0.0,
+   "truth_r_max_m": 0.73,
+   "pass": true
+  }
+ },
+ "guided_after_s": 0.04,
+ "modes": [
+  [
+   -5.0,
+   "STABILIZE",
+   false
+  ],
+  [
+   10.0,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   18.9,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   32.8,
+   "GUIDED",
+   true
+  ],
+  [
+   58.0,
+   "LOITER",
+   true
+  ],
+  [
+   62.1,
+   "LAND",
+   true
+  ],
+  [
+   67.0,
+   "LAND",
+   false
+  ]
+ ],
+ "fc_text": [
+  "Barometer 1 calibration complete",
+  "Barometer 2 calibration complete",
+  "ArduPilot Ready",
+  "AHRS: DCM active",
+  "RC7: SaveWaypoint LOW",
+  "EKF3 IMU0 initialised",
+  "EKF3 IMU1 initialised",
+  "AHRS: EKF3 active",
+  "EKF3 IMU1 fusing optical flow",
+  "EKF3 IMU0 fusing optical flow",
+  "EKF3 IMU1 tilt alignment complete",
+  "EKF3 IMU1 started relative aiding",
+  "EKF3 IMU0 tilt alignment complete",
+  "EKF3 IMU0 started relative aiding",
+  "EKF3 IMU1 MAG0 initial yaw alignment complete",
+  "EKF3 IMU0 MAG0 initial yaw alignment complete",
+  "Arm: Gyros inconsistent",
+  "Arm: Gyros inconsistent",
+  "Arm: Gyros inconsistent",
+  "Arm: Gyros inconsistent",
+  "Arm: Gyros inconsistent",
+  "Arming motors",
+  "SIM Hit ground at 0.486638 m/s",
+  "Disarming motors"
+ ],
+ "pass": true
+}

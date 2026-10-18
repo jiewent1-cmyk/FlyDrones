@@ -65,3 +65,13 @@ console:                      # ground console link (companion/console_link.py, 
   lost_land_s: 20             # still lost while holding under our control: LAND (0 = never)
   goto_timeout_s: 90
   goto_fence_margin_m: 0.4    # go-to goals must stay this far inside the geofence radius
+
+marker:                       # ArUco target tracking (ecps295/ecps_target.py, 2026-10-18); the console's TRACK mode starts it
+  enabled: true               # detector thread on; nothing flies on it until TRACK (or --track)
+  dictionary: 4x4_50          # print with cv2.aruco.generateImageMarker, white border >= 1 cell
+  marker_id: 7                # null = any id
+  size_m: 0.15                # BENCH: printed black square side
+  hfov_deg: 70.0              # BENCH: calibrate (checkerboard), or set K / dist
+  pitch_deg: 12.0             # camera nose-down mount
+  hz: 10                      # ~26 ms per 640x480 frame on one A55 core (2026-10-18)
+  cpus: "0-5"                 # A55; the brain keeps the A76 cores

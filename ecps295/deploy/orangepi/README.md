@@ -89,3 +89,21 @@ operator layer (applied before the safety governor) and the emergency-stop seman
 there over the LAN against SITL with the production ports (`deploy/console/tools/sitl_rig.py --deployed`), not yet on
 the real drone. `ecps-companion.service` is unchanged (disabled, shadow): in shadow mode the console shows everything
 and its emergency stop works, but guidance needs `ECPS_MODE=guided`.
+
+## 目标识别与追踪 / ArUco target tracking (2026-10-18)
+
+`ecps295/ecps_target.py`：OpenCV ArUco/AprilTag 检测（`MarkerDetector`，solvePnP 得到距离 / 方位 / 朝向）、
+检测线程（`MarkerThread`，在 A55 小核上跑，640×480 每帧约 26 ms）和追踪状态机（`TargetTrack`：
+SEARCH → APPROACH → ARRIVED，丢失时 LOST → 回到 SEARCH，超时 FAILED 悬停）。`EcpsPilot` 在航点层之前调用它：
+标记位置由历史位姿换算到 LOCAL_POSITION_NED，目标点 = 标记前方 `standoff_m`（默认 1 m），围栏内裁剪，
+由航点层飞过去，到达后悬停并对准标记。`pilot.track_start()` / `track_stop()` 启停（控制台 TRACK 模式或测试参数
+`--track`）；事件 `target: <state> (...)` 推给飞手。配置在 `config/companion.yaml` 的 `marker:`
+（默认 4x4_50、ID 7、边长 15 cm；视场角 70° 和下倾 12° 是假设值，真机前要标定）。
+
+The detector thread runs whenever `marker.enabled` is true; nothing flies on it until tracking is started.
+`companion/sitl_marker.py` (`--camera sitl_marker:<n>,<e>,<up>,<yaw>[,<id>]`) renders the marker from SIM_STATE truth
+for SITL. Tests: `ecps295/scripts/target_detect_test.py` (range ≤ 2 % within 3.5 m, bearing < 0.1°) and
+`target_track_test.py` (6 offline closed-loop cases), run from the repo root; `scripts/sitl_track_test.py` on the Pi
+(own SITL instance -I2, ports 5780 / 14562 / 14552). **Deployed to `/opt/ecps295` on 2026-10-18** (backups `*.pre_trk`);
+SITL closed loop there: arrived 15 s after hand-over, 1.07 m from the marker (target 1.0 m), facing error 0°,
+`docs/results/track/sitl_track_opt_20261018.json`. Not yet flown on the real drone or tested in Gazebo.

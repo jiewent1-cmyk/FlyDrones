@@ -22,6 +22,9 @@ waypoints  (optional, 2026-10-17) goal bias for waypoint flight: points are loca
         the bias stays off for post_escape_s so the drone first leaves the obstacle. A point is reached within
         radius_m (EKF), skipped when the distance has not shrunk by stuck_progress_m for stuck_s (e.g. a stack on
         it). When all points are done the cruise stops (hover; the pilot or the test harness takes over).
+target  (2026-10-18) ArUco target tracking (ecps_target.TargetTrack): off until track_start() (ground console TRACK);
+        it searches on the spot, sets the waypoint goal standoff_m short of the marker and keeps moving it with the
+        marker, then hovers facing it. It runs before the waypoint layer, so everything after it still applies.
 
 Same sequence as flydrones.runtime.Pilot.tick otherwise (upstream left untouched).
 """
@@ -49,6 +52,7 @@ class EcpsPilot(Pilot):
         height_source: dict | None = None,
         struct: dict | None = None,
         waypoints: dict | None = None,
+        target: dict | None = None,
         **kw,
     ):
         super().__init__(*args, **kw)
@@ -91,9 +95,14 @@ class EcpsPilot(Pilot):
         self.stale_s = stale_s
         self.land_after_s = land_after_s
         self._last_tick_end: float | None = None
+        self._t = 0.0  # time of the last tick (track_start / track_stop called between ticks)
         self._last_yaw_dps = 0.0
         self._last_fwd = 0.0
         self.watchdog_events: list[tuple[float, str]] = []
+        from ecps_target import TargetTrack
+
+        self.target = TargetTrack(target)  # OFF until track_start(); the companion attaches its MarkerThread as source
+        self.target.on_event = self._event
         sg = StructGuard(struct)  # 2026-10-13 blind-side fixes (ecps_struct.py), off unless configured
         self.struct = sg if sg.enabled else None
 
@@ -135,6 +144,15 @@ class EcpsPilot(Pilot):
         self.wp_on = True
         self.wp_idx, self.wp_done_t = 0, None
         self._wp_best, self._wp_escape_t = float("inf"), -1e9
+
+    def track_start(self, t: float | None = None) -> None:
+        """Start target tracking (search -> approach -> hover facing the marker); replaces any waypoint mission."""
+        self.wp_on = False
+        self.target.start(self._t if t is None else t)
+
+    def track_stop(self, t: float | None = None) -> None:
+        self.target.stop(self._t if t is None else t, self)
+        self.wp_on = False
 
     def _waypoint(self, cmd: FlightCommand, tel, t: float) -> FlightCommand:
         if not self.wp_active:
@@ -226,6 +244,9 @@ class EcpsPilot(Pilot):
                 cmd = FlightCommand(throttle=thr, yaw=cmd.yaw, forward=cmd.forward, escape=cmd.escape, note="height guard: low")
                 self.hg_ticks += 1
                 self._event(t, "height guard: too low")
+        self._t = t
+        if self.target.active and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
+            cmd = self.target.update(self, cmd, tel, t)
         if self.wp_on and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
             cmd = self._waypoint(cmd, tel, t)
         if self.fence_turn and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:

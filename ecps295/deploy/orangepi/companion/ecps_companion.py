@@ -18,6 +18,10 @@ temperatures, CPU clocks, load, RSS), run.json (config, summary, timing percenti
 Ground console (2026-10-17, optional): --console PORT (default: hw config console.port, 0 = off) streams the brain,
 camera, local 3D map and flight state to the Mac console (deploy/console) and takes guidance and the emergency stop
 back; see console_link.py. Without a console connected the control path is unchanged.
+
+Target tracking (2026-10-18, optional): hw config `marker.enabled` starts an ArUco detector thread on the A55 cores
+(ecps295/ecps_target.py) on the full camera frame; the console's TRACK mode (or --track, tests) starts the pilot's
+target layer: search, fly to standoff_m in front of the marker, hover facing it.
 """
 
 from __future__ import annotations
@@ -47,7 +51,7 @@ ap.add_argument("--mode", choices=["bench", "shadow", "guided"], default="bench"
 ap.add_argument("--hw", default=str(ROOT / "config" / "companion.yaml"), help="hardware config (camera, ToF, MAVLink)")
 ap.add_argument("--config", default="", help="MiniFly variant YAML (default: hw config 'model')")
 ap.add_argument("--url", default="", help="MAVLink URL (default: hw config mavlink.url)")
-ap.add_argument("--camera", default="", help="uvc | sim | replay:<dir> | off (default: hw config)")
+ap.add_argument("--camera", default="", help="uvc | sim | replay:<dir> | off | sitl_marker:<n,e,up,yaw[,id]> (SITL tests; default: hw config)")
 ap.add_argument("--tof", default="", help="real | sim | off | sitl:<layout.json> (SITL tests; default: hw config)")
 ap.add_argument("--seconds", type=float, default=0, help="stop after this long; 0 = until SIGINT / SIGTERM")
 ap.add_argument("--cruise", type=float, default=0.5)
@@ -62,6 +66,7 @@ ap.add_argument("--pil", type=int, default=0, metavar="PORT",
                 help="processor-in-the-loop: camera + ToF from Gazebo over UDP on this port (pil_link.py); control only while"
                      " the simulation PC sets go")
 ap.add_argument("--set", action="append", default=[], metavar="KEY.PATH=VALUE", help="config override (YAML value)")
+ap.add_argument("--track", action="store_true", help="tests: start target tracking at every hand-over (needs hw marker.enabled)")
 ap.add_argument("--console", type=int, default=-1, metavar="PORT",
                 help="ground console link on this UDP port (console_link.py); 0 = off (default: hw config console.port)")
 a = ap.parse_args()
@@ -128,7 +133,15 @@ if a.pil:  # Gazebo on the simulation PC instead of the camera and the ToF senso
 
     link = PilLink(a.pil).start()
     cam_src = tof_src = f"pil:{a.pil}"
-cam = link.cam if link else camera_mod.make(cam_src, hw.get("camera", {}))
+mk_cfg = dict(hw.get("marker") or {})
+if link:
+    cam = link.cam
+elif cam_src.startswith("sitl_marker:"):  # SITL tests: the camera rendered from SIM_STATE + one marker (sitl_marker.py)
+    import sitl_marker
+
+    cam = sitl_marker.make(cam_src, hw.get("camera", {}), mk_cfg)
+else:
+    cam = camera_mod.make(cam_src, hw.get("camera", {}))
 tofs = {}
 for name, tc in (hw.get("tof", {}).get("sensors", {}) or {}).items():
     tc = dict(tc)
@@ -160,8 +173,8 @@ else:
                       rangefinder_hz=float(mv.get("rangefinder_hz", 20)), guard=hw.get("guard", {}),
                       max_flight_s=max_flight_s, stop_check=lambda: stop["flag"],
                       ekf_origin=tuple(mv.get("ekf_origin", (33.6430, -117.8420, 20.0))), **dyn)
-for s in tofs.values():  # sitl_world sensors read SIM_STATE through the drone's MAVLink connection
-    if hasattr(s, "bind"):
+for s in [*tofs.values(), cam]:  # sitl_world / sitl_marker sources read SIM_STATE through the drone's MAVLink connection
+    if s is not None and hasattr(s, "bind"):
         s.bind(drone)
 if link is not None and a.mode != "bench":  # PIL: take control only during the simulation PC's patrol phase
     _gate = drone.in_control
@@ -170,6 +183,14 @@ pilot = EcpsPilot(brain, drone, cfg, fence_turn=not a.no_fence_turn, **(cfg.get(
 pilot.retina = EcpsRetina.from_config(cfg)
 pilot.decoder = EcpsDecoder(cfg)
 pilot.wp_active = False  # waypoint mission (if configured) starts when we take control
+marker = None
+if mk_cfg.get("enabled") and cam is not None and hasattr(pilot, "target"):
+    from ecps_target import MarkerDetector, MarkerThread
+
+    # full-resolution frame (camera.py keeps it as last_bgr); the detector thread moves itself to the A55 cores
+    marker = MarkerThread(lambda: (cam.last_bgr, cam.stamp), MarkerDetector(**mk_cfg), hz=float(mk_cfg.get("hz", 10)),
+                          cpus=str(mk_cfg.get("cpus", "0-5"))).start()
+    pilot.target.source = marker
 HZ = float(cfg["control"]["hz"])
 DT = 1.0 / HZ
 # Brain dt bound (2026-10-16): the brain simulates the wall time since the last tick, so one overrun makes the next tick
@@ -267,7 +288,8 @@ period: list[float] = []
 stage_hist: dict[str, list[float]] = {k: [] for k in STAGES}
 control_s = 0.0
 was_in = False
-wp_seen: list = [0]  # watchdog events already scanned for waypoint progress
+wp_seen: list = [0]  # watchdog events already scanned for waypoint / target progress
+was_track = False
 events: list = []
 t_flight = 0.0
 nxt = time.monotonic()
@@ -293,15 +315,18 @@ try:
             events.append((round(now - T0, 2), "companion in control" if inc else "control released"))
             print(f"[{now - T0:7.1f}] {'IN CONTROL (GUIDED, armed)' if inc else 'control released'}", flush=True)
             was_in = inc
+        if a.track and marker is not None and inc and not was_track:
+            pilot.track_start()  # tests: track from every hand-over (the console's TRACK does this otherwise)
+        was_track = inc
         if not inc:  # not flying under our control: watchdog land / flight timer start only when we take over
             pilot.safety.land_requested = False
             pilot.safety._start = None
         else:
             control_s += dt
         pilot.wp_active = inc  # waypoints only advance under our control; the pilot's flying pauses the mission
-        if getattr(pilot, "wp_on", False):
+        if getattr(pilot, "wp_on", False) or (marker is not None and pilot.target.active):
             for ev in pilot.watchdog_events[wp_seen[0]:]:
-                if ev[1].startswith("waypoint"):  # tell the pilot (Mission Planner / OSD)
+                if ev[1].startswith(("waypoint", "target")):  # tell the pilot (Mission Planner / OSD)
                     print(f"[{now - T0:7.1f}] {ev[1]}", flush=True)
                     if hasattr(drone, "_text"):
                         drone._text(f"ECPS: {ev[1]}", 0.0)
@@ -343,6 +368,11 @@ try:
             "escape": int(cmd.escape),
             "note": cmd.note,
             "guard": getattr(drone, "guard_note", ""),
+            **({"trk_state": pilot.target.state,
+                "trk_range": round(pilot.target.last_det.range_m, 3) if pilot.target.last_det is not None else "",
+                "trk_bearing": round(pilot.target.last_det.bearing_deg, 1) if pilot.target.last_det is not None else "",
+                "trk_n": round(pilot.target.est[0], 3) if pilot.target.est is not None else "",
+                "trk_e": round(pilot.target.est[1], 3) if pilot.target.est is not None else ""} if marker is not None else {}),
             **{k: round(v, 1) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
         }
         if w is None:
@@ -384,7 +414,7 @@ finally:
             drone.send(FlightCommand.hover("companion stop"))
     except Exception:
         pass
-    sensors = [x for x in [cam, *tofs.values()] if x is not None]
+    sensors = [x for x in [marker, cam, *tofs.values()] if x is not None]
     for s in sensors:  # signal every thread first so their join timeouts overlap (systemd TimeoutStopSec)
         ev = getattr(s, "_stop", None)
         if ev is not None:
@@ -441,6 +471,9 @@ summary = {
     "struct": pilot.struct.summary() if pilot.struct is not None else {},
     "pil": {"rx": link.rx, "go_changes": link.go_changes[:50]} if link is not None else None,
     "console": console.summary() if console is not None else None,
+    "marker": {"frames": marker.frames, "hits": marker.hits, "errors": marker.errors, "status": marker.status,
+               "det_ms": pct(marker.det_ms), "fixes": pilot.target.fixes, "state": pilot.target.state,
+               "est": pilot.target.est, "log": pilot.target.log[-100:]} if marker is not None else None,
 }
 json.dump({"args": vars(a), "hw": hw, "summary": summary}, open(out / "run.json", "w"), indent=1, default=str)
 print(json.dumps({k: summary[k] for k in ("ticks", "deadline_miss", "compute_ms", "period_ms")}), flush=True)
