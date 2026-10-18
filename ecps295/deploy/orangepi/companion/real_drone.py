@@ -24,6 +24,7 @@ import time
 
 import numpy as np
 
+from flydrones.motor.command import FlightCommand
 from flydrones.safety import Telemetry
 from mavlink_twin import Ecps295MavlinkDrone
 
@@ -43,14 +44,15 @@ class _Sensors:
         self.tof_hfov, self.tof_n = hfov, n
 
     def frame(self):
+        """Latest frame, never blocking (2026-10-16): the old 5 s wait for a first frame ran inside the control loop and
+        the brain warm-up, so without a camera the watchdogs stalled and SIGTERM took minutes. Before the first frame
+        this returns None (the retina encodes a blank view) and frame_age_s() is inf: the camera watchdog hovers and
+        the hand-over gate refuses control."""
         if self.cam is None:
             return None
         img, st = self.cam.latest()
         if img is None:
-            t0 = time.monotonic()
-            while img is None and time.monotonic() - t0 < 5.0:
-                time.sleep(0.02)
-                img, st = self.cam.latest()
+            return None
         if st != self._last_stamp:
             self.frames_new += 1
             self._last_stamp = st
@@ -98,9 +100,13 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
     GUIDED = "GUIDED"
 
     def __init__(self, url: str, cam, tofs: dict, *, allow_cmd: bool = False, ext_height: bool = True,
-                 handover_alt_m: float = 0.3, rangefinder_hz: float = 20.0, **kw):
+                 handover_alt_m: float = 0.3, rangefinder_hz: float = 20.0, guard: dict | None = None,
+                 max_flight_s: float = 120.0, stop_check=lambda: False,
+                 ekf_origin: tuple[float, float, float] = (33.6430, -117.8420, 20.0), **kw):
         self.rangefinder_hz = rangefinder_hz  # set before the base __init__, which connects and requests the streams
-        Ecps295MavlinkDrone.__init__(self, url, nav="flow", ext_height=ext_height, **kw)
+        Ecps295MavlinkDrone.__init__(self, url, nav="flow", ext_height=ext_height, origin=tuple(ekf_origin), **kw)
+        self._origin_t = 0.0
+        self.origin_sent = 0
         self._init_sensors(cam, tofs)
         self.allow_cmd = allow_cmd  # --mode guided
         self.handover_alt_m = handover_alt_m
@@ -111,6 +117,19 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         self.cmd_blocked = 0
         self.land_sent = 0
         self.link_msgs = 0
+        g = guard or {}
+        self.tof_stale_s = float(g.get("tof_stale_s", 0.3))  # 15 Hz sensors: ~4 missed frames
+        self.tof_land_s = float(g.get("tof_land_s", 2.0))
+        self.cam_ready_s = float(g.get("camera_ready_s", 0.3))
+        self.max_flight_s = float(max_flight_s)
+        self.stop_check = stop_check
+        self._bad_since: float | None = None
+        self._latch_t: float | None = None
+        self._hold = False
+        self._last_text = 0.0
+        self.guard_note = ""
+        self.guard_events: list[tuple[float, str]] = []
+        self.guard_ticks = {"tof_hover": 0, "tof_land": 0, "time_hold": 0, "handover_refused": 0}
 
     def _request_streams(self) -> None:
         """As the twin, but RANGEFINDER at rangefinder_hz (2026-10-16): the route-B height is the FC's last RANGEFINDER,
@@ -142,6 +161,108 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
     def baro_m(self) -> float | None:
         return Ecps295MavlinkDrone.baro_m(self) if self._fresh("SCALED_PRESSURE") is not None else None
 
+    def connect(self) -> None:
+        """As the twin's connect, but waits for the FC heartbeat indefinitely (the companion may boot before the FC is
+        powered) and gives up only when the process is asked to stop (SIGTERM / SIGINT)."""
+        mu = self.mavutil
+        if "," in self.conn_str:
+            dev, baud = self.conn_str.split(",", 1)
+            self.m = mu.mavlink_connection(dev, baud=int(baud), source_system=self.source_system)
+        else:
+            self.m = mu.mavlink_connection(self.conn_str, source_system=self.source_system)
+        t0 = time.time()
+        while True:
+            if self.stop_check():
+                print("stopped while waiting for the flight controller", flush=True)
+                raise SystemExit(0)  # a requested stop, not a failure (systemd Restart=on-failure)
+            hb = self.m.recv_match(type="HEARTBEAT", blocking=True, timeout=0.5)
+            if hb and hb.get_srcSystem() == self.fc_sysid and hb.autopilot != mu.mavlink.MAV_AUTOPILOT_INVALID:
+                self.m.target_system, self.m.target_component = hb.get_srcSystem(), hb.get_srcComponent()
+                break
+            if time.time() - t0 > 10:
+                print(f"waiting for the autopilot heartbeat (sysid {self.fc_sysid}) on {self.conn_str} ...", flush=True)
+                t0 = time.time()
+        print(f"MAVLink heartbeat from system {self.m.target_system}", flush=True)
+        self._request_streams()
+
+    # ---------------------------------------------------------------- sensor guard + time hold (2026-10-16)
+    # EcpsPilot watches the camera and the route-B height, but nothing watched the two VL53L7CX: a sensor that never
+    # initialised gave ranges() = 2.0 m (no echo = clear) and no map input, and a hung I2C bus kept the last frame
+    # forever, so the brain and RangeShield flew on a frozen view. Now (companion only, the simulation code unchanged):
+    #   hand-over  control is only taken while the camera and every configured ToF delivered within the last
+    #              camera_ready_s / tof_stale_s
+    #   in flight  a ToF older than tof_stale_s -> hover; still bad after tof_land_s -> LAND
+    #   time limit after max_flight_s under our control: hover in place and tell the pilot (STATUSTEXT) instead of the
+    #              governor's descend-in-place LAND (PIL: once landed on a box edge); the pilot takes over with the
+    #              mode switch. Battery-low and the other watchdog LANDs are unchanged.
+    def tof_stale(self) -> str:
+        for s in self.tofs.values():
+            if s.age_s() > self.tof_stale_s:
+                return f"ToF {s.name} stale ({s.status})"
+        return ""
+
+    def sensors_ready(self) -> str:
+        """'' when the camera and all ToF sensors are fresh and the FC streams its EKF position, otherwise the reason."""
+        if self.cam is not None and self.frame_age_s() > self.cam_ready_s:
+            return f"camera stale ({getattr(self.cam, 'status', '?')})"
+        if self._fresh("LOCAL_POSITION_NED") is None:  # map, fence turn and waypoints all work in the EKF frame
+            return "no EKF position"
+        return self.tof_stale()
+
+    # ---------------------------------------------------------------- EKF origin (2026-10-17)
+    # Without GPS the FC streams no LOCAL_POSITION_NED until an EKF origin is set (mavlink_twin._takeoff_flow does it in
+    # the simulation; the companion never took off, so on the real drone nobody did). Without it there is no height for
+    # the hand-over gate, no pose for the 3D map, the fence turn or the waypoints. Set it while disarmed, every 2 s until
+    # the position stream starts; the origin is fixed, the waypoints are metres from the point where the EKF starts.
+    def _keep_origin(self) -> None:
+        now = time.monotonic()
+        if (self.m is None or self.mute or self.armed() or self._fresh("LOCAL_POSITION_NED") is not None
+                or now - self._origin_t < 2.0):
+            return
+        self._origin_t = now
+        lat, lon, alt = self.origin
+        self.m.mav.set_gps_global_origin_send(self.m.target_system, int(lat * 1e7), int(lon * 1e7), int(alt * 1000))
+        self.origin_sent += 1
+
+    def _gevent(self, what: str) -> None:
+        if not self.guard_events or self.guard_events[-1][1] != what:
+            self.guard_events.append((round(time.monotonic(), 2), what))
+            print(f"[guard] {what}", flush=True)
+
+    def _text(self, msg: str, every_s: float = 5.0) -> None:
+        now = time.monotonic()
+        if self.m is not None and not self.mute and now - self._last_text >= every_s:
+            self._last_text = now
+            self.m.mav.statustext_send(4, msg[:50].encode())  # MAV_SEVERITY_WARNING, shown in Mission Planner / OSD
+
+    def _guard(self, cmd):
+        """Applied to every command while in control; returns the command to send, or None for LAND."""
+        now = time.monotonic()
+        bad = self.tof_stale()
+        if bad:
+            if self._bad_since is None:
+                self._bad_since = now
+            if now - self._bad_since > self.tof_land_s:
+                self.guard_ticks["tof_land"] += 1
+                self._gevent(f"{bad} -> land")
+                self._text(f"ECPS: {bad[:30]} LAND", 1.0)
+                return None
+            self.guard_ticks["tof_hover"] += 1
+            self._gevent(f"{bad} -> hover")
+            self.guard_note = f"guard: {bad}"
+            return FlightCommand.hover(self.guard_note)
+        self._bad_since = None
+        if self._latch_t is not None and now - self._latch_t > self.max_flight_s:
+            if not self._hold:
+                self._hold = True
+                self._gevent(f"flight time {self.max_flight_s:.0f} s -> hover, pilot takes over")
+            self.guard_ticks["time_hold"] += 1
+            self._text("ECPS: time limit, hovering - take over")
+            self.guard_note = "guard: time limit hold"
+            return FlightCommand.hover(self.guard_note)
+        self.guard_note = ""
+        return cmd
+
     # ---------------------------------------------------------------- gate
     def _fc_state(self):
         """pymavlink's per-sysid state of the flight controller only (never another node's heartbeat)."""
@@ -168,15 +289,28 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         ok = (self.allow_cmd and not self.mute and self.fc_hb_age_s() < 2.0 and self.fc_mode() == self.GUIDED
               and self.armed())
         if not ok:
+            if self._latched:
+                self._latch_t, self._hold, self._bad_since = None, False, None
             self._latched = False
         elif not self._latched and (self._tel.alt_m or 0.0) >= self.handover_alt_m:
-            self._latched = True
+            why = self.sensors_ready()
+            if why:  # never hand the motors to a brain that cannot see (guard, 2026-10-16)
+                self.guard_ticks["handover_refused"] += 1
+                self._gevent(f"hand-over refused: {why}")
+                self._text(f"ECPS: not taking control: {why[:22]}")
+            else:
+                self._latched = True
+                self._latch_t = time.monotonic()
         return ok and self._latched
 
     def send(self, cmd) -> None:
         if self.in_control():
+            cmd = self._guard(cmd)
+            if cmd is None:
+                return self.land()
             self.cmd_sent += 1
             return Ecps295MavlinkDrone.send(self, cmd)
+        self.guard_note = ""
         self.cmd_blocked += 1
         if not self.mute:
             self._heartbeat()
@@ -202,6 +336,7 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         if not self.mute:
             self._heartbeat()
             self.send_ext_height()
+        self._keep_origin()
         t.flying = self.armed()
         return t
 

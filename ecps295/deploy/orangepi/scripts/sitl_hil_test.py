@@ -84,7 +84,7 @@ g.target_system, g.target_component = 1, 1
 for mid, hz in ((32, 10), (30, 10), (193, 2), (85, 10)):  # LOCAL_POSITION_NED, ATTITUDE, EKF_STATUS, POSITION_TARGET_LOCAL_NED
     g.mav.command_long_send(1, 1, 511, 0, mid, 1e6 / hz, 0, 0, 0, 0, 0)
 
-obs = {"viso": [], "hb254": [], "modes": [], "ptgt": [], "alt": [], "rng": [], "viso_age": []}
+obs = {"viso": [], "hb254": [], "modes": [], "ptgt": [], "alt": [], "rng": [], "viso_age": [], "text254": []}
 rc = {"thr": None, "last": 0.0, "hb": 0.0, "silent": False}  # pilot's throttle stick (RC override from the GCS, sysid 255)
 
 
@@ -110,6 +110,8 @@ def pump(sec: float) -> None:
                     obs["viso_age"].append(now - obs["rng"][-1])
             elif k == "HEARTBEAT":
                 obs["hb254"].append(now)
+            elif k == "STATUSTEXT":
+                obs["text254"].append((now, m.text))
         elif src == 1:
             if k == "HEARTBEAT":
                 mode = mavutil.mode_string_v10(m)
@@ -152,11 +154,20 @@ if os.environ.get("RNG_HZ"):
 hw_yaml = W / "companion_hw.yaml"
 hw_yaml.write_text(yaml.safe_dump(hw_cfg))
 rep["rangefinder_hz_requested"] = hw_cfg["mavlink"].get("rangefinder_hz")
+# SCENARIO (companion guard, 2026-10-16):
+#   tof_boot    the front ToF is frozen from the start: the companion must refuse the hand-over (no control at all)
+#   tof_flight  the front ToF freezes in flight (after T5): hover, then LAND ~2.3 s later (tof_stale_s + tof_land_s)
+#   time_hold   max_flight_s = 5: after 5 s in control hover in place + STATUSTEXT, no LAND; T4/T5 unchanged
+SCENARIO = os.environ.get("SCENARIO", "")
+rep["scenario"] = SCENARIO or "normal"
+extra = ["--set", "safety.max_flight_s=5"] if SCENARIO == "time_hold" else []
 comp = start([str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--url",
               "udpin:127.0.0.1:14561", "--camera", "sim", "--tof", "sim", "--affinity", "6,7", "--tag", "sitl_hil",
-              "--no-fence-turn", "--hw", str(hw_yaml)], "companion.log")
+              "--no-fence-turn", "--hw", str(hw_yaml), *extra], "companion.log")
 pump(15.0)  # connect + brain warm-up
 mark = {}
+if SCENARIO == "tof_boot":
+    os.kill(comp.pid, signal.SIGUSR1)
 
 mark["T1"] = time.monotonic()
 pump(5.0)
@@ -190,6 +201,10 @@ if flight_gcs:
     rep["flight_gcs_param"] = {"id": pv.param_id, "value": pv.param_value} if pv else None
 rc["silent"] = os.environ.get("GCS_ALIVE") != "1" and not flight_gcs
 mark["T6"] = time.monotonic()
+if SCENARIO == "tof_flight":
+    os.kill(comp.pid, signal.SIGUSR1)
+    pump(10.0)
+    mark["T6k"] = time.monotonic()
 os.killpg(comp.pid, signal.SIGKILL)
 pump(10.0)
 mark["end"] = time.monotonic()
@@ -203,6 +218,7 @@ for p in procs:
 d = sorted(glob.glob(str(R / "logs/*_guided_sitl_hil")))[-1]
 T = [r for r in csv.DictReader(open(Path(d) / "ticks.csv"))]
 tick = [(float(r["mono"]), int(r["in_control"]), r["alt"], r["ext_h"]) for r in T]
+guard = [(float(r["mono"]), r.get("guard", "")) for r in T if r.get("guard")]
 
 
 def ctl_ticks(t0, t1):
@@ -265,7 +281,35 @@ rep["fc_text"] = rep.get("fc_text", [])[-40:]
 rep["modes"] = [(round(t - t0, 2), m, ar) for t, m, ar in obs["modes"]]
 rep["gcs_alive_during_T6"] = not rc["silent"]
 rep["flight_gcs_sysid_hi_254"] = flight_gcs
-rep["pass"] = all(p["pass"] for p in rep["phases"].values())
+if SCENARIO == "tof_boot":  # no hand-over at all: T3-T5 cannot pass by design; T6 (FS_GCS LAND) still applies
+    cA = ctl_ticks(mark["T1"], mark["end"])
+    refused = [x for x in obs["text254"] if "not taking control" in x[1]]
+    rep["scenario_result"] = {"control_ticks": len(cA), "refusal_texts": len(refused),
+                              "first_text": refused[0][1] if refused else None,
+                              "pass": len(cA) == 0 and len(refused) > 0}
+    for k in ("T3_takeoff_handover", "T4_loiter_release", "T5_guided_resume"):
+        rep["phases"][k]["pass"] = True
+        rep["phases"][k]["n/a"] = "tof_boot: no hand-over expected"
+elif SCENARIO == "tof_flight":
+    land_f = mode_time(mark["T6"], "LAND")
+    hov = [t for t, gnote in guard if t >= mark["T6"] and "ToF" in gnote]
+    rep["scenario_result"] = {"land_after_fault_s": round(land_f - mark["T6"], 2) if land_f else None,
+                              "first_hover_after_fault_s": round(hov[0] - mark["T6"], 2) if hov else None,
+                              "hover_ticks": len(hov),
+                              "pass": bool(land_f) and 1.8 < land_f - mark["T6"] < 3.5 and bool(hov) and hov[0] - mark["T6"] < 0.6}
+    rep["phases"]["T6_companion_killed"]["pass"] = True  # already landed by the guard before the kill
+    rep["phases"]["T6_companion_killed"]["n/a"] = "tof_flight: landed by the ToF guard first"
+elif SCENARIO == "time_hold":
+    hold = [t for t, gnote in guard if "time limit" in gnote and mark["T3"] <= t < mark["T4"]]
+    c3_0 = c3[0] if c3 else None
+    land_early = [m for t, m, _ in obs["modes"] if mark["T3"] <= t < mark["T4"] and m == "LAND"]
+    txt = [x for x in obs["text254"] if "time limit" in x[1]]
+    rep["scenario_result"] = {"hold_after_takeover_s": round(hold[0] - c3_0, 2) if hold and c3_0 else None,
+                              "hold_ticks_T3": len(hold), "land_before_T4": bool(land_early), "texts": len(txt),
+                              "pass": bool(hold) and bool(c3_0) and 4.5 < hold[0] - c3_0 < 6.0 and not land_early and bool(txt)}
+if "scenario_result" in rep:
+    print("scenario:", SCENARIO, rep["scenario_result"])
+rep["pass"] = all(p["pass"] for p in rep["phases"].values()) and rep.get("scenario_result", {}).get("pass", True)
 print(json.dumps(rep["phases"], indent=1))
 print("route-B height:", rep["route_b_height_m"])
 ra = sorted(obs["viso_age"])

@@ -15,6 +15,13 @@ height  (optional, height_guard) without GPS a box under the drone pulls the flo
         ArduPilot's own altitude hold carried the drone through the 1.3 m hard fence (v4 smoke test). The ventral
         cue's height above the floor (baro minus the floor baseline, frozen over obstacles) does not depend on the
         EKF; above ceiling_m this layer commands a descent, below floor_m a climb. Logged as a watchdog event.
+waypoints  (optional, 2026-10-17) goal bias for waypoint flight: points are local NED (m) from the take-off point, the
+        frame of the EKF position. Outside escapes the layer adds a yaw toward the current point to the brain's yaw
+        and scales the brain's forward command down with the heading error and near the point; the brain's brakes,
+        saccades and retreats are kept, and the fence turn and the range shield still act after it. After a saccade
+        the bias stays off for post_escape_s so the drone first leaves the obstacle. A point is reached within
+        radius_m (EKF), skipped when the distance has not shrunk by stuck_progress_m for stuck_s (e.g. a stack on
+        it). When all points are done the cruise stops (hover; the pilot or the test harness takes over).
 
 Same sequence as flydrones.runtime.Pilot.tick otherwise (upstream left untouched).
 """
@@ -41,9 +48,29 @@ class EcpsPilot(Pilot):
         height_guard: dict | None = None,
         height_source: dict | None = None,
         struct: dict | None = None,
+        waypoints: dict | None = None,
         **kw,
     ):
         super().__init__(*args, **kw)
+        wp = waypoints or {}
+        self.wp_on = bool(wp.get("enabled", False))
+        self.wp_points = [(float(p[0]), float(p[1])) for p in wp.get("points", [])]
+        self.wp_radius = float(wp.get("radius_m", 0.35))
+        self.wp_gain = float(wp.get("gain", 1.0))  # yaw command per 60 deg of heading error
+        self.wp_brain_w = float(wp.get("brain_yaw_w", 1.0))  # weight of the brain's own yaw
+        self.wp_slow_r = float(wp.get("slow_r_m", 0.8))
+        self.wp_min_fwd = float(wp.get("min_forward_frac", 0.3))
+        self.wp_post_escape = float(wp.get("post_escape_s", 2.0))
+        self.wp_stuck_s = float(wp.get("stuck_s", 20.0))
+        self.wp_stuck_dm = float(wp.get("stuck_progress_m", 0.25))
+        self.wp_idx = 0
+        self.wp_active = True  # the companion clears it while the pilot flies: the mission pauses, then resumes
+        self.wp_log: list[tuple[float, int, str, float]] = []  # (time, index, reached/skipped, EKF distance)
+        self.wp_done_t: float | None = None
+        self.wp_ticks = 0
+        self._wp_best = float("inf")
+        self._wp_best_t = 0.0
+        self._wp_escape_t = -1e9
         hg = height_guard or {}
         self.hg_on = bool(hg.get("enabled", False))
         self.hg_ceiling = float(hg.get("ceiling_m", 1.0))
@@ -85,10 +112,11 @@ class EcpsPilot(Pilot):
         if self._turning_back:
             if outward < -0.5 or r < self.safety.fence - 2 * self.fence_margin:
                 self._turning_back = False
-            elif cmd.escape:
+            elif cmd.escape or cmd.forward <= 0.0:
                 # the brain is in a saccade: do not fight its yaw (patrol v3/v3.1: both yawing next to the box stack
-                # that sits at the fence edge ended in contact); only keep it from moving outward
-                cmd = FlightCommand(throttle=cmd.throttle, yaw=cmd.yaw, forward=min(cmd.forward, 0.0), escape=True, note=cmd.note)
+                # that sits at the fence edge ended in contact); only keep it from moving outward. Same when nothing
+                # moves the drone forward (console HOLD, waypoints done, brakes): no pointless spin on the spot
+                cmd = FlightCommand(throttle=cmd.throttle, yaw=cmd.yaw, forward=min(cmd.forward, 0.0), escape=cmd.escape, note=cmd.note)
             else:
                 err = math.atan2(math.sin(out_bearing + math.pi - heading), math.cos(out_bearing + math.pi - heading))
                 cmd = FlightCommand(
@@ -100,6 +128,48 @@ class EcpsPilot(Pilot):
                 )
                 self.fence_turn_ticks += 1
         return cmd
+
+    def set_waypoints(self, points) -> None:
+        """Replace the mission (e.g. a go-to point from the ground console) and start it from its first point."""
+        self.wp_points = [(float(p[0]), float(p[1])) for p in points]
+        self.wp_on = True
+        self.wp_idx, self.wp_done_t = 0, None
+        self._wp_best, self._wp_escape_t = float("inf"), -1e9
+
+    def _waypoint(self, cmd: FlightCommand, tel, t: float) -> FlightCommand:
+        if not self.wp_active:
+            self._wp_best = float("inf")  # restart the stuck timer on resume
+            return cmd
+        if self.wp_done_t is None and self.wp_idx >= len(self.wp_points):
+            self.wp_done_t = t
+            self._event(t, "waypoints: done -> hover")
+        if self.wp_done_t is not None:
+            return FlightCommand(throttle=cmd.throttle, yaw=cmd.yaw, forward=min(cmd.forward, 0.0), escape=cmd.escape, note="waypoints done")
+        n, e = self.wp_points[self.wp_idx]
+        d = math.hypot(n - tel.x_m, e - tel.y_m)
+        if d < self._wp_best - self.wp_stuck_dm:
+            self._wp_best, self._wp_best_t = d, t
+        if d < self.wp_radius or t - self._wp_best_t > self.wp_stuck_s:
+            what = "reached" if d < self.wp_radius else "skipped"
+            self.wp_log.append((round(t, 2), self.wp_idx, what, round(d, 3)))
+            self._event(t, f"waypoint {self.wp_idx} {what}")
+            self.wp_idx += 1
+            self._wp_best, self._wp_best_t = float("inf"), t
+            return self._waypoint(cmd, tel, t)
+        if cmd.escape:
+            self._wp_escape_t = t
+            return cmd
+        if t - self._wp_escape_t < self.wp_post_escape:  # let the drone leave the obstacle before steering back
+            return cmd
+        heading = math.radians(tel.yaw_deg)
+        b = math.atan2(e - tel.y_m, n - tel.x_m)
+        err = math.atan2(math.sin(b - heading), math.cos(b - heading))
+        yaw = max(-1.0, min(1.0, self.wp_brain_w * cmd.yaw + self.wp_gain * err / math.radians(60)))
+        fwd = cmd.forward
+        if fwd > 0:  # keep brakes and retreats; slow down to turn and to stop on the point
+            fwd *= max(0.0, math.cos(err)) * max(self.wp_min_fwd, min(1.0, d / self.wp_slow_r))
+        self.wp_ticks += 1
+        return FlightCommand(throttle=cmd.throttle, yaw=yaw, forward=fwd, escape=cmd.escape, note=f"waypoint {self.wp_idx}")
 
     def tick(self, t: float, dt: float) -> TickInfo:
         now = time.monotonic()
@@ -156,6 +226,8 @@ class EcpsPilot(Pilot):
                 cmd = FlightCommand(throttle=thr, yaw=cmd.yaw, forward=cmd.forward, escape=cmd.escape, note="height guard: low")
                 self.hg_ticks += 1
                 self._event(t, "height guard: too low")
+        if self.wp_on and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
+            cmd = self._waypoint(cmd, tel, t)
         if self.fence_turn and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
             cmd = self._fence_turn(cmd, tel, t)
         if self.struct is not None:

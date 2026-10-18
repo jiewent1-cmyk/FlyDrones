@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECPS 控制台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%2339ff88'/%3E%3C/svg%3E">
+<script>
+  // English (?lang=en from the app): keep the page hidden until js/i18n.js has replaced the Chinese source text (1.5 s at most)
+  if (/[?&]lang=en(&|$)/.test(location.search)) {
+    document.documentElement.lang = "en";
+    document.documentElement.classList.add("i18n-wait");
+    setTimeout(function () { document.documentElement.classList.remove("i18n-wait"); }, 1500);
+  }
+</script>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/controls/OrbitControls.js": "./vendor/OrbitControls.js" } }
+</script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">ECPS</span><span class="live" id="live" data-en="OFFLINE">离线</span><span class="sub" data-en="MiniFly v4 · Ground console">MiniFly v4 · 地面控制台</span></div>
+  <div class="chips" id="chips"></div>
+  <div class="auth">
+    <div class="authMain" id="authMain">—</div>
+    <div class="authSub" id="authSub" data-en="Waiting for connection">等待连接</div>
+  </div>
+  <div class="bat" id="bat"><div class="v">— V</div><div class="k" data-en="Battery">电池</div></div>
+  <div class="ftime"><div class="v" id="ftime">00:00</div><div class="k" data-en="Armed time">解锁时长</div></div>
+  <span class="seg langSeg" id="langSeg" title="界面语言" data-en-title="Interface language"><button data-lang="zh">中</button><button data-lang="en">EN</button></span>
+  <button class="icon" id="bRec" title="记录飞行数据（tlog + 机载遥测）" data-en-title="Record flight data (tlog + companion telemetry)" data-en="● Record">● 记录</button>
+  <button class="icon" id="bSettings" title="连接设置" data-en-title="Connection settings" data-en="⚙ Settings">⚙ 设置</button>
+  <div class="estop">
+    <button class="eland" id="bEland" title="紧急降落：飞控立即进入 LAND（双通道，直到飞控确认）。快捷键 Esc" data-en-title="Emergency land: the FC switches to LAND at once (both paths, until the FC confirms). Shortcut Esc"><span data-en="EMERGENCY&#10;LAND">紧急降落</span><kbd>Esc</kbd></button>
+    <button class="ekill" id="bKill" title="按住 1.5 秒：强制上锁，电机立即停转（无人机会掉落）" data-en-title="Hold for 1.5 s: force disarm, the motors stop at once (the drone falls)"><span class="ring" id="killRing"></span><span data-en="KILL">停桨</span><small data-en="hold 1.5 s">按住 1.5 s</small></button>
+  </div>
+</header>
+<div class="estopBar" id="estopBar"></div>
+
+<main class="grid">
+  <section class="col left">
+    <div class="panel eyesP">
+      <div class="ph"><span><b data-en="Camera">相机</b> · <span id="camLabel" data-en="Brain view">大脑视角</span></span>
+        <span class="seg" id="camSeg"><button data-cam="brain" class="on" data-en="Brain view">大脑视角</button><button data-cam="color" data-en="Color">彩色</button><button data-cam="off" data-en="Off">关</button></span></div>
+      <div class="eyewrap"><canvas class="hud" id="eyes" width="640" height="480"></canvas>
+        <div class="camInfo" id="camInfo" data-en="No picture">无画面</div></div>
+    </div>
+    <div class="panel flightP">
+      <div class="ph"><span><b data-en="Flight data">飞行参数</b></span><span id="fcLinkTxt">MAVLink —</span></div>
+      <div class="fgrid">
+        <canvas id="adi" width="300" height="300" title="姿态（横滚 / 俯仰 / 航向）" data-en-title="Attitude (roll / pitch / heading)"></canvas>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <div class="charts">
+        <div class="chart" id="chAlt"></div>
+        <div class="chart small" id="chTick"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col center">
+    <div class="panel mapP">
+      <div class="ph"><span><b data-en="3D map">3D 建图</b> · <span data-en="local occupancy grid">局部占据栅格</span> <span id="mapInfo"></span></span>
+        <span class="seg" id="viewSeg"><button data-view="orbit" class="on" data-en="Orbit">自由</button><button data-view="top" data-en="Top">俯视</button><button data-view="chase" data-en="Chase">跟随</button></span></div>
+      <div class="mapwrap" id="mapwrap">
+        <canvas id="map3d"></canvas>
+        <div class="maplegend" id="mapLegend"></div>
+        <div class="pickHint" id="pickHint"><span data-en="Click the ground to pick a goal ·">点击地面选择目标点 ·</span> <kbd>Esc</kbd> <span data-en="= emergency land; press “Pick goal” again to cancel">为紧急降落，取消选点请再按「选点前往」</span></div>
+        <div class="goalChip" id="goalChip"></div>
+      </div>
+      <div class="dock" id="dock">
+        <div class="dockRow">
+          <div class="modeNow"><div class="k" data-en="Guidance mode">指引模式</div><div class="v" id="modeNow">—</div><div class="n" id="modeNote"></div></div>
+          <button class="g" data-op="hold" title="原地悬停（安全盾仍会让开障碍）" data-en-title="Hover in place (the shield still keeps clear of obstacles)"><span data-en="Hold">悬停</span><kbd>H</kbd></button>
+          <button class="g" data-op="patrol" title="大脑自主巡逻（无控制台时的默认行为）" data-en-title="The brain patrols on its own (the default without a console)"><span data-en="Brain patrol">大脑巡逻</span><kbd>P</kbd></button>
+          <button class="g" id="bPick" title="在 3D 地图上点选目标点：大脑带着避障和扫视飞过去（航点层）" data-en-title="Pick a goal on the 3D map: the brain flies there with its own avoidance and saccades (waypoint layer)"><span data-en="Pick goal">选点前往</span><kbd>G</kbd></button>
+          <button class="g" id="bHome" title="飞回起点（EKF 原点）" data-en-title="Fly back to the start point (EKF origin)"><span data-en="Home">返回起点</span><kbd>B</kbd></button>
+          <button class="g" id="bManual" title="键盘手动：W/S 前后 A/D 偏航 Q/E 平移 R/F 升降（仍经过安全盾）" data-en-title="Keyboard manual: W/S forward/back, A/D yaw, Q/E sideways, R/F up/down (still through the shield)"><span data-en="Manual">手动</span><kbd>M</kbd></button>
+          <button class="g land" id="bLand" title="降落：飞控进入 LAND" data-en-title="Land: the FC switches to LAND"><span data-en="Land">降落</span><kbd>L</kbd></button>
+        </div>
+        <div class="dockRow small">
+          <span class="lbl" data-en="After hand-over">交接后</span>
+          <span class="seg" id="hoSeg"><button data-ho="hold" data-en="Hold">悬停</button><button data-ho="patrol" data-en="Patrol">巡逻</button></span>
+          <span class="hint" id="manualHint"></span>
+          <span class="spacer"></span>
+          <span class="lbl" id="ackTxt"></span>
+        </div>
+        <div class="health" id="health" title="起飞前与飞行中检查（图标 + 文字，不只靠颜色）" data-en-title="Pre-flight and in-flight checks (icon + text, not color alone)"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col right">
+    <div class="panel brainP">
+      <div class="ph"><span><b data-en="Brain">大脑</b> · <span id="brainName">MiniFly</span></span><span id="brainStat">—</span></div>
+      <canvas class="hud" id="brain" width="560" height="400"></canvas>
+      <div class="ph mini"><span><b data-en="Spikes">脉冲</b></span><span data-en="descending · inter · input">下行 · 中间 · 输入</span></div>
+      <canvas class="hud" id="raster" width="560" height="110"></canvas>
+    </div>
+    <div class="panel motorP">
+      <div class="ph"><span><b data-en="What it sees → what it does">看到什么 → 做了什么</b></span><span id="tclock">t —</span></div>
+      <div class="gname" id="gname"><span data-en="Waiting for the companion">等待机载程序</span><small id="gsub"></small></div>
+      <div class="chain" id="chain">—</div>
+      <canvas class="hud" id="motor" width="1060" height="230"></canvas>
+      <div class="illu">
+        <span class="lbl" title="FlyDrones 的手势错觉：给大脑看假的光流，由它自己的反射去转向、升降、逃逸（只在大脑巡逻时有效）" data-en-title="FlyDrones' gesture illusions: fake optic flow for the brain, whose own reflexes then turn, climb, sink or escape (brain patrol only)" data-en="Illusions · experimental">错觉刺激 · 实验</span>
+        <button data-g="palm" title="张开手掌：画面上漂（像在下沉）→ 升力反射 → 爬升" data-en-title="Open palm: the image drifts up (as if sinking) → lift reflex → climb" data-en="Palm ↑">手掌↑</button>
+        <button data-g="drop" title="手放下：画面下漂（像在上升）→ 下降" data-en-title="Hand down: the image drifts down (as if rising) → descend" data-en="Drop ↓">放下↓</button>
+        <button data-g="left" title="手在左：画面向左转 → 视动反射左转" data-en-title="Hand on the left: the image turns left → optomotor reflex, turn left" data-en="Left">左转</button>
+        <button data-g="right" title="手在右：画面向右转 → 右转" data-en-title="Hand on the right: the image turns right → turn right" data-en="Right">右转</button>
+        <button data-g="rush" title="手冲向镜头：逼近 → LPLC2 → 逃逸扫视" data-en-title="Hand rushes at the lens: looming → LPLC2 → escape saccade" data-en="Loom">逼近</button>
+      </div>
+    </div>
+    <div class="panel logP">
+      <div class="ph"><span><b data-en="Events">事件</b></span><span><button class="link" id="bLogClear" data-en="Clear">清空</button></span></div>
+      <div class="log" id="log"></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="settings">
+  <div class="panel box">
+    <div class="ph"><span><b data-en="Connection settings">连接设置</b></span><button class="link" id="bSetClose" data-en="Close">关闭</button></div>
+    <label><span data-en="Orange Pi address">Orange Pi 地址</span><input id="sHost" placeholder="192.168.86.20" spellcheck="false"></label>
+    <div class="row2">
+      <label><span data-en="Companion telemetry port (ECPS)">机载遥测端口（ECPS）</span><input id="sEcl" type="number" min="1" max="65535"></label>
+      <label><span data-en="MAVLink port (mavlink-router GCS)">MAVLink 端口（mavlink-router GCS）</span><input id="sMav" type="number" min="1" max="65535"></label>
+    </div>
+    <label class="chk"><input type="checkbox" id="sStreams"> <span data-en="Ask the FC for extra display-only data (optical flow, vibration, HUD, battery; the streams the companion relies on are left alone)">向飞控请求额外显示用数据（光流、振动、HUD、电池；不影响机载程序依赖的数据流）</span></label>
+    <label class="chk"><input type="checkbox" id="sRecAuto"> <span data-en="Record automatically while the FC is armed, stop 10 s after it disarms">飞控解锁时自动记录，上锁 10 秒后停止</span></label>
+    <div class="row2">
+      <label><span data-en="Camera frame rate (capped by the bandwidth level)">相机帧率（受带宽档位限制）</span><select id="sCamHz"><option value="2">2 fps</option><option value="5">5 fps</option><option value="10">10 fps</option><option value="15">15 fps</option></select></label>
+      <label><span data-en="Color picture width">彩色画面宽度</span><select id="sColorW"><option value="320">320 px</option><option value="480" selected>480 px</option><option value="640">640 px</option></select></label>
+    </div>
+    <label><span data-en="Telemetry bandwidth (the Pi's Wi-Fi uplink stalls for seconds above about 40 kB/s)">遥测带宽（Pi 的 Wi-Fi 上行超过约 40 kB/s 会卡顿数秒）</span><select id="sBw">
+      <option value="-1" data-en="Automatic (follows the round-trip time, recommended)">自动（按往返延迟升降，推荐）</option><option value="0" data-en="Very low: status only (≈5 kB/s)">极低：只有状态（≈5 kB/s）</option>
+      <option value="1" data-en="Low (≈12 kB/s)">低（≈12 kB/s）</option><option value="2" data-en="Medium (≈25 kB/s)">中（≈25 kB/s）</option><option value="3" data-en="High (≈60–100 kB/s, good links only)">高（≈60–100 kB/s，仅限好的链路）</option></select></label>
+    <div class="actions"><button class="g" id="bConnect" data-en="Connect">连接</button></div>
+    <div class="note" data-en="Real drone: the Pi's LAN IP (or NetBird 100.112.163.133, slower), ports 14700 / 14550. SITL test instances use their own ports. Esc is the emergency land at any time. The RC transmitter always comes first: the pilot takes control back with the mode switch.">真机：地址填 Pi 的局域网 IP（或 NetBird 100.112.163.133，延迟较大），端口 14700 / 14550。SITL 测试实例用各自的端口。
+      Esc 在任何时候都是紧急降落。遥控器永远是最高优先级：飞手拨模式开关即可收回控制。</div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+<div id="jsErr" style="position:fixed;left:8px;bottom:8px;max-width:60vw;z-index:50;display:none;background:#3a0d0f;color:#ffd5d6;border:1px solid #8f2a2c;border-radius:8px;padding:6px 10px;font:12px ui-monospace,Menlo,monospace;white-space:pre-wrap"></div>
+<script>
+  //界面脚本出错时直接显示在页面上（链路、急停逻辑在原生侧，不受影响）
+  function __en() { return document.documentElement.lang === "en"; }
+  function __showErr(msg) { var d = document.getElementById("jsErr"); d.style.display = "block"; d.textContent = ((__en() ? "UI error: " : "界面错误：") + msg + "\n" + d.textContent).slice(0, 2000); }
+  window.addEventListener("error", function (e) { __showErr((e.message || "error") + " @ " + String(e.filename || "").split("/").pop() + ":" + e.lineno + ":" + e.colno); });
+  window.addEventListener("unhandledrejection", function (e) { var r = e.reason; __showErr("promise: " + (r && (r.stack || r.message) || r)); });
+</script>
+<script type="module" src="js/app.js" onerror="__showErr(__en() ? 'cannot load js/app.js' : '无法载入 js/app.js')"></script>
+</body>
+</html>

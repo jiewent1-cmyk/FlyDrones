@@ -73,3 +73,19 @@ Pi 只在 ROG 置位 go（巡逻阶段）时接管，go 归零后自行退出 / 
 ```sh
 deploy/orangepi/scripts/deploy_to_pi.sh <rog_tree_with_src_and_ecps295> <twin_tree_with_src_and_ecps295> root@192.168.86.20
 ```
+
+## 地面控制台 / ground console (2026-10-17)
+
+`companion/console_link.py`：把大脑、相机、局部 3D 地图、飞行状态推给 Mac 控制台（`deploy/console`，`ECPS Console.app`），
+接收指引（悬停 / 巡逻 / 前往目标 / 手动 / 降落）和急停。`config/companion.yaml` 的 `console.port: 14700` 打开它，
+`--console 0` 关闭；没有控制台连接时控制路径不变。协议、指引层和急停语义见模块文件头和
+`项目文档/08_地面控制台/ECPS295_地面控制台设计与测试报告_20261017.md`（仓库里在 `deploy/console/docs/`）。
+`companion/sitl_world.py` 只用于 SITL 测试（`--tof sitl:<layout.json>`：两块 ToF 由 SIM_STATE 真值 + 场地布局模拟）。
+`camera.py` 现在保留最后一帧彩色图（`last_bgr`，控制台的彩色画面用）。
+
+The console link is off unless configured; see the module docstring for the protocol (ECL1 over UDP 14700), the
+operator layer (applied before the safety governor) and the emergency-stop semantics. **Deployed to `/opt/ecps295` on
+2026-10-17 03:16** (backup of the replaced files: `/root/ecps295_backups/20261017_pre_console/` on the Pi); tested
+there over the LAN against SITL with the production ports (`deploy/console/tools/sitl_rig.py --deployed`), not yet on
+the real drone. `ecps-companion.service` is unchanged (disabled, shadow): in shadow mode the console shows everything
+and its emergency stop works, but guidance needs `ECPS_MODE=guided`.

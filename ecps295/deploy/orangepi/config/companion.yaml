@@ -7,8 +7,14 @@ mavlink:
   stream_hz: 20
   rangefinder_hz: 20          # FC RANGEFINDER stream = route-B height source (twin: 10 Hz); VISO_DELAY_MS 40 on the FC
   handover_alt_m: 0.3         # control is only taken once the FC reports >= this height (pilot took off), never on the ground
+  ekf_origin: [33.6430, -117.8420, 20.0]  # no GPS: set while disarmed so the FC streams LOCAL_POSITION_NED (fixed, as in the sim)
   ext_height: true            # route B: VISION_POSITION_ESTIMATE z = -height above floor, 20 Hz
                               # needs EK3_SRC1_POSZ 6, VISO_TYPE 1 on the FC (sitl/variants/G_extnav_height.parm)
+
+guard:                        # companion-only safety layer (real_drone.py, 2026-10-16); max flight time = model safety.max_flight_s
+  tof_stale_s: 0.3            # a ToF frame older than this: hover (and no hand-over)
+  tof_land_s: 2.0             # still stale after this: LAND
+  camera_ready_s: 0.3         # hand-over only with a camera frame younger than this
 
 camera:
   source: uvc                 # uvc | sim | replay:<dir> | off
@@ -51,3 +57,11 @@ tof:
       transpose: false
       range_kind: radial
       valid_status: [5, 9]
+
+console:                      # ground console link (companion/console_link.py, deploy/console = the Mac app); port 0 = off
+  port: 14700                 # UDP on the Pi; the console connects to <pi>:14700 (telemetry) and <pi>:14550 (mavlink-router)
+  handover: patrol            # mode at hand-over until a console chooses (patrol = as without a console; the app sends hold)
+  link_timeout_s: 1.5         # no console heartbeat for this long: GOTO / MANUAL -> HOLD
+  lost_land_s: 20             # still lost while holding under our control: LAND (0 = never)
+  goto_timeout_s: 90
+  goto_fence_margin_m: 0.4    # go-to goals must stay this far inside the geofence radius

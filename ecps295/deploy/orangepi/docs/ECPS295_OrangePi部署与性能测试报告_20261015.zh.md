@@ -29,7 +29,7 @@
    - 心跳 / 高度原来挂在发送指令的路径上。看门狗要求降落时，这条路径不再被调用，结果心跳和高度都断了。
    - 原来地面解锁就会把电机交给大脑。现已改为“到达 0.3 m 才接管”的锁存。
 6. **测试中发现两个需要改参数 / 流程的问题**：
-   - 只要有 sysid 255 的地面站在线（Mission Planner），**机载程序失联的失控保护就不会触发**。
+   - 只要有 sysid 255 的地面站在线（Mission Planner），**机载程序失联的失控保护就不会触发**（10-16 已定 `MAV_GCS_SYSID_HI 254`）。
    - 路线 B 高度延迟（10-16 修正）：原估 80 ms 有重复计算，实测 10 Hz 约 53 ms；已改为 20 Hz 请求，约 30 ms，`VISO_DELAY_MS` 建议 40，见 7.2。
 
 详见第 6、7 节；第 8 节是上真机前的台架清单。
@@ -281,14 +281,24 @@ SITL 补测 T6″（`FLIGHT_GCS=1`）：Mission Planner 式的 sysid 255 心跳�
 的时间差复核再调。如果真机测距模块本身更新率低于 20 Hz，20 Hz 请求不会再降延迟，届时按实测值设定。原来的 50 ms
 在 10 Hz 下其实基本对得上（约 53 ms + 传感器延迟），Gazebo 验收用的就是这个组合。
 
-### 7.3 代码改进（不影响已验收的行为）
+### 7.3 上机前修复（10-16 完成，全部在机载层，仿真代码未改）
 
-- **限制每拍的大脑模拟时长**：例如 `dt ≤ 2 × DT`，防止 4.3 节的正反馈。默认关闭，先在快仿真验证不改变结果。
-- **降低大脑开销**的方向（都需要重新验证行为）：把 100 个子步合成向量化批处理，或用 numba 编译 `lif.step`。
-  A76 + performance 下已有 2 倍余量，**上飞前不需要做**。
-- **I²C 速率**：总线当前 400 kHz，每块 VL53L7CX 上电要上传约 84 kB 固件，理论约 2 s；8×8 每帧读取约 1.4 kB，约 35 ms
-  的总线时间，在单独的线程里，不阻塞主循环。若要缩短，可在设备树里把 TWI0 / TWI1 设为 1 MHz（VL53L7CX 支持）。
-  上台架实测后再决定。
+| 问题 | 修法 | 验证（Pi 上 SITL / 实测） |
+|---|---|---|
+| **ToF 失效没有看门狗**：传感器没初始化时 `ranges()` 返回 2.0 m（= 畅通）、地图没输入；I²C 卡死时一直用最后一帧 | `real_drone.py` 守护层：①接管前要求相机和每块 ToF 都在 0.3 s 内有新数据，否则拒绝接管并发 STATUSTEXT；②飞行中任一 ToF 超过 0.3 s 没更新 → 悬停，持续 2 s → LAND。阈值在 `companion.yaml` 的 `guard:` | `SCENARIO=tof_boot`：前 ToF 一开始就卡死，全程 0 拍接管，Mission Planner 收到 “ECPS: not taking control: ToF front stale”；`SCENARIO=tof_flight`：空中冻结前 ToF，0.32 s 后悬停，**2.41 s 后 LAND** |
+| **服务停不下来**：无相机时 `frame()` 每次等 5 s，预热要调用几十次；`connect()` 等心跳不看停止标志 | `frame()` 不再等待（没有画面时返回空，相机看门狗负责悬停 / 拒绝接管）；`connect()` 无限等飞控但每 0.5 s 检查停止标志，按请求停止时退出码 0；关闭时先通知所有传感器线程再统一等待；`TimeoutStopSec=10` | 无飞控、无相机、无 ToF：SIGTERM 0.38 s 退出；台架循环中 0.23 s；`systemctl stop` **0.34 s，Result=success**，调频恢复 schedutil |
+| **限时到点原地降落**（PIL 中一次降在箱子边上） | 飞行限时改由守护层处理：在控制中满 `max_flight_s` 后**原地悬停**，每 5 s 发 “ECPS: time limit, hovering - take over”，由飞手拨回 LOITER 降落；电量低等其他 LAND 不变。计时从每次接管开始 | `SCENARIO=time_hold`（限时 5 s）：接管后 **5.0 s** 进入悬停，T3 期间 0 次 LAND，收到 3 条提示；之后 LOITER 交还 39 ms、切回 GUIDED 恢复 15 ms |
+| **大脑 dt 正反馈**（4.3 节） | 每拍模拟时长上限从 0.25 s 改为 2 × DT = 0.1 s；`run.json` 记录被截断的拍数 | ROG 上 116 局 s7_w2map Gazebo 验收的每拍间隔最大 55.5 ms，从未超过 100 ms，所以这个上限不改变已验收的任何一局；快仿真是固定 dt，不受影响 |
+
+正常场景回归（`FLIGHT_GCS=1`）：0.41 m 接管、20.0 Hz、LOITER 交还 17.7 ms、恢复 31.3 ms、被杀 1.71 s 后 LAND，全部通过。
+台架冒烟（模拟相机 + 模拟 ToF，20 s）：0 超时，p50 31.7 ms（schedutil）。
+
+仍未做、上飞前也不需要：降低大脑开销（向量化子步 / numba，A76 + performance 已有 2 倍余量）；I²C 1 MHz（台架实测后再定）。
+
+**飞控串口带宽**：机载程序请求的数据流约 2.9 kB/s（飞控 → Pi），发出的速度指令、路线 B 高度和心跳约 2.2 kB/s（Pi → 飞控），
+115200 波特约 11.5 kB/s，单向占用约 25%。风险在于 Mission Planner 经 Pi 的 14550 端口连接时会再请求一批数据流，
+挤的是同一根串口。飞行时 Mission Planner 请走 ESP32 那一路；台架第 8 步看一下 `SR2_*` 与 mavlink-router 统计，
+如占用超过 60%，再把 `SERIAL2_BAUD` 和 `/etc/mavlink-router/main.conf` 一起改为 921600。
 
 ### 7.4 推荐的飞行配置
 
@@ -311,7 +321,7 @@ SITL 补测 T6″（`FLIGHT_GCS=1`）：Mission Planner 式的 sysid 255 心跳�
 | 6 | 相机 | `cam_probe.py`：格式、帧率、解码时间；锁曝光；12° 下俯安装；LED + 高速视频测相机延迟 | ≥ 30 fps；记录端到端延迟 |
 | 7 | 台架全流程 | `ecps_companion.py --mode bench --affinity 6,7`（真实相机 + ToF） | 0 超时；手在前方时 `tof_f_min` 变化、`cmd_forward` 被限制 |
 | 8 | 接飞控（**卸桨**） | 飞控 `SERIAL2_PROTOCOL 2`、`SERIAL2_BAUD 115`；`systemctl start ecps-companion`（shadow） | 日志 `fc_mode` 正确；Mission Planner 中 `VISION_POSITION_ESTIMATE` 约 20 Hz；EKF 用 ExtNav 高度 |
-| 9 | 失控保护地面测试（**卸桨**） | 按 7.1 改参数；已解锁 GUIDED 后 `kill -9` 机载进程 | 2 s 后 LAND |
+| 9 | 失控保护地面测试（**卸桨**） | 按 7.1 改参数；已解锁 GUIDED 后 `kill -9` 机载进程；再拔掉一块 ToF 的线 | `kill -9`：2 s 后 LAND；拔 ToF：日志 `[guard]` 先悬停、2 s 后 LAND；未接 ToF 时离地后也不接管 |
 | 10 | 改为 guided、上笼测试 | `systemctl edit ecps-companion` → `ECPS_MODE=guided`；按 FLIGHT_TEST_PLAN R0–R6 | 飞手在 LOITER 起飞、到 0.3 m 以上切 GUIDED；随时拨回 LOITER 收回控制 |
 
 ## 9. 复现
@@ -322,13 +332,13 @@ R=/opt/ecps295; PY=$R/venv/bin/python
 bash $R/scripts/profile_matrix.sh                                   # P1–P8（约 35 min）
 taskset -c 6 $PY $R/scripts/brain_bench.py --profile               # 大脑微基准
 cd $R/twin/ecps295 && PYTHONPATH=../src:. taskset -c 6,7 $PY sil_equiv.py ../ref_s7w2map.jsonl /tmp/sil.jsonl --procs 2
-$PY $R/scripts/sitl_hil_test.py                                     # SITL 链路（约 2.5 min）；GCS_ALIVE=1 复现 T6′；FLIGHT_GCS=1 验证 T6″；RNG_HZ=10 为延迟对照
+$PY $R/scripts/sitl_hil_test.py                                     # SITL 链路（约 2.5 min）；GCS_ALIVE=1 复现 T6′；FLIGHT_GCS=1 验证 T6″；RNG_HZ=10 为延迟对照；SCENARIO=tof_boot / tof_flight / time_hold 验证守护层
 # Mac 上：表格与图
 python3 deploy/orangepi/scripts/analyze_profile.py 项目文档/07_机载部署/data 项目文档/07_机载部署/figures
 ```
 
 数据：`data/*_bench_P*`（每次运行的 `ticks.csv` / `system.csv` / `run.json`）、`data/sitl/`（`sitl_hil_pass.json`、
-`sitl_hil_gcs_alive.json`、`sitl_hil_flight_gcs.json`、`sitl_hil_rng10.json`、`sitl_hil_rng20.json`、三次 SITL 运行的机载日志、`sil_equiv.jsonl`）。
+`sitl_hil_gcs_alive.json`、`sitl_hil_flight_gcs.json`、`sitl_hil_rng10.json`、`sitl_hil_rng20.json`、`sitl_guard_*.json`、三次 SITL 运行的机载日志、`sil_equiv.jsonl`）。
 
 ## 10. Pi 上运行的程序与职责（2026-10-16 更新）
 
@@ -337,7 +347,7 @@ python3 deploy/orangepi/scripts/analyze_profile.py 项目文档/07_机载部署/
 | 程序 / 服务 | 开机启动 | 职责 | 资源 / 端口 |
 |---|---|---|---|
 | `mavlink-router.service`（`/usr/bin/mavlink-routerd`） | ✅ | MAVLink 交换机：飞控串口 `/dev/ttyS0`（115200，排针 8/10）↔ UDP 14560（给机载程序）、UDP 14550 和 TCP 5760（给地面站 Mission Planner）。未接飞控时空转 | CPU ≈ 0，RSS 3.5 MB |
-| `ecps-companion.service` | ❌（已安装，未设开机启动） | 上飞时的主程序（`companion/ecps_companion.py`），默认 shadow 模式，固定 cpu6-7，运行期间大核 performance。**目前处于 failed**（10-15 21:58 无相机时 SIGTERM 停不下来、被 SIGKILL，上真机前要修） | — |
+| `ecps-companion.service` | ❌（已安装，未设开机启动） | 上飞时的主程序（`companion/ecps_companion.py`），默认 shadow 模式，固定 cpu6-7，运行期间大核 performance。10-16 修复后启停正常（`systemctl stop` 0.34 s，Result=success） | — |
 | `netbird.service` | ✅ | NetBird 远程访问（10-16 加入），地址 100.112.163.133。只用于 ssh 管理；实时数据走局域网 | RSS 65 MB，UDP 51820 |
 | `ssh.service` | ✅ | 远程登录（Mac 密钥，root / ming） | TCP 22 |
 | `systemd-networkd` + `wpa_supplicant` | ✅ | WiFi 5317（netplan），局域网地址 192.168.86.20 | — |
@@ -404,6 +414,6 @@ flowchart LR
 | 问题 | 影响 | 处理 |
 |---|---|---|
 | 路线 B 用过期测距：数据流请求没送达飞控时，Pi 一直把缓存里最后一条 RANGEFINDER（地面读数 0.005 m）当作高度发出 | EKF 以为飞机在地面，实际爬升到 2.9 m，飞控自行降落。真机飞控重启后同样会发生 | ✅ 已修（`real_drone.py`）：测距 / 气压超过 0.5 s 未更新就不发高度；每 5 s 重发数据流请求 |
-| 飞行限时到点后原地直接下降 | PIL 中一次在箱子边缘降落，被记为接触 | 记录为真机风险：限时降落前应先悬停，或检查下方是否有障碍 |
+| 飞行限时到点后原地直接下降 | PIL 中一次在箱子边缘降落，被记为接触 | ✅ 10-16 改为原地悬停并提示飞手接管，见 7.3 |
 | WiFi 间歇性卡顿：PIL 流量下网络往返会到数秒（ping 测不出来） | pil2 + pil3 共 44 局有效记录，其中 19 局链路异常；10 局飞控按失联保护降落，全部安全、0 接触 | 改为 JPEG 画面，流量降到五分之一，但没有根治。PIL 改用有线连接（USB 网卡）或 5 GHz 专用热点；真机上相机和 ToF 直接接在 Pi 上，不受影响 |
-| `ecps-companion.service` 停不下来 | 无相机时 SIGTERM 超时，被 SIGKILL | 待修：`frame()` 等待帧、`connect()` 等心跳时要检查停止标志 |
+| `ecps-companion.service` 停不下来 | 无相机时 SIGTERM 超时，被 SIGKILL | ✅ 10-16 已修，`systemctl stop` 0.34 s，见 7.3 |

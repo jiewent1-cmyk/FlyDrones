@@ -27,6 +27,7 @@ class _Cam:
         self.out = (out_w, out_h)
         self.fps = fps
         self.img: np.ndarray | None = None
+        self.last_bgr: np.ndarray | None = None  # the full decoded frame (ground console colour view)
         self.stamp = 0.0
         self.frames = 0
         self.errors = 0
@@ -49,6 +50,7 @@ class _Cam:
             self._th.join(timeout=2)
 
     def _publish_gray(self, bgr_or_gray: np.ndarray, t0: float) -> None:
+        self.last_bgr = bgr_or_gray  # a reference, no copy: each decode makes a new array
         g = bgr_or_gray if bgr_or_gray.ndim == 2 else cv2.cvtColor(bgr_or_gray, cv2.COLOR_BGR2GRAY)
         g = cv2.resize(g, self.out, interpolation=cv2.INTER_AREA)
         if len(self.decode_ms) < 50000:

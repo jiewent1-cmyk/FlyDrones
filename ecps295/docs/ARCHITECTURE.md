@@ -537,6 +537,7 @@ Companion system id **254**, `MAV_TYPE_ONBOARD_CONTROLLER` (from [`mavlink_twin.
 | FC → Pi | `RANGEFINDER` | 10 Hz | downward ToF for VentralCue |
 | FC → Pi | `SYS_STATUS`, `EKF_STATUS_REPORT`, `RC_CHANNELS` | 2 Hz | battery, EKF health, pilot switches |
 | (sim only) | `SIM_STATE` | 20 Hz | ground truth for scoring and for ray-casting simulated ToF |
+| Mac console → FC (Wi-Fi, mavlink-router 14550) | `HEARTBEAT` (sysid 250); `COMMAND_LONG` `DO_SET_MODE` LAND / force disarm | 1 Hz; on an emergency stop | the console's direct emergency-stop path (§8.4); sysid 250 is outside the FS_GCS range, so it never masks a lost companion |
 
 Bandwidth: about 2.3 kB/s up and 2.5 kB/s down, roughly a fifth of 115200 baud (≈ 11.5 kB/s per direction).
 
@@ -550,6 +551,23 @@ Bandwidth: about 2.3 kB/s up and 2.5 kB/s down, roughly a fifth of 115200 baud (
 | ArduPilot | SITL Copter-4.7.0 + `sitl/ardupilot_sitl.patch`, lock-step with Gazebo | F405-WMO, same version, same parameters |
 | MAVLink link | UDP to SITL | UART3 via mavlink-router |
 | Compute | ROG / desktop / server / Mac mini / Jetson | Orange Pi A733, A76 cores: p50 22 ms per 50 ms tick ✅ |
+
+### 8.4 Ground console (Mac)
+
+🟡 **SITL-tested on the Pi over the LAN, not flown** (2026-10-17/18, [`deploy/console/`](../deploy/console/), report in
+[`deploy/console/docs/`](../deploy/console/docs/), Chinese). `ECPS Console.app` (Swift shell + web UI, Chinese / English)
+shows the brain (lobes, raster, descending neurons), the local 3D map with live ToF rays and shield clamps, the camera,
+and the flight state. It talks to the companion over ECL1 (UDP 14700, `companion/console_link.py`; off unless
+`console.port` is set) and to the FC through mavlink-router (sysid 250, §8.2).
+
+- **Authority**: the pilot takes off on the RC; after the hand-over the console guides the brain: hold, patrol, go to a
+  map point (through the waypoint layer of `ecps_pilot.py`), home, keyboard manual, land. Guidance replaces the brain's
+  raw command *before* the safety governor, so the governor, watchdogs, fence turn and range shield still apply. The
+  console never arms or takes off.
+- **Emergency stop**, two levels: *land* (big button / Esc) sends LAND on both paths (FC directly and the companion);
+  *kill* (hold 1.5 s) forces a disarm. Each path resends only until the FC confirms once (heartbeat or COMMAND_ACK),
+  so the RC mode switch still wins afterwards; the companion latch keeps the brain out of control until reset.
+- **Link loss**: no console heartbeat for 1.5 s → go-to / manual → hold; still lost after 20 s while holding → land.
 
 ---
 
@@ -642,7 +660,7 @@ flowchart LR
 | Gazebo | [`gazebo/`](../gazebo/) (airframe, worlds, `cam_bridge.py`, `ood_world.py`), [`run_g4.py`](../run_g4.py), [`scripts/`](../scripts/) |
 | Fast twin / RL | [`rl/twin.py`](../rl/twin.py), [`rl/cmaes_run.py`](../rl/cmaes_run.py), [`rl/params.py`](../rl/params.py), [`rl/arms.py`](../rl/arms.py), [`rl/shield_screen.py`](../rl/shield_screen.py), [`rl/gates.py`](../rl/gates.py) |
 | Plasticity (negative) | [`mb.py`](../mb.py), [`rl/mb_life.py`](../rl/mb_life.py) |
-| Deployment | [`deploy/desktop/`](../deploy/desktop/) (Gazebo node); [`deploy/orangepi/`](../deploy/orangepi/) (companion runtime, PIL link); [`pil_rog.py`](../pil_rog.py) (Gazebo side of PIL) |
+| Deployment | [`deploy/desktop/`](../deploy/desktop/) (Gazebo node); [`deploy/orangepi/`](../deploy/orangepi/) (companion runtime, PIL link, console link); [`pil_rog.py`](../pil_rog.py) (Gazebo side of PIL); [`deploy/console/`](../deploy/console/) (Mac ground console, its SITL rig and end-to-end test) |
 
 ---
 
@@ -650,6 +668,9 @@ flowchart LR
 
 - **Companion runtime on the Orange Pi** (🟡 deployed 10-15): bench with the real camera and the two VL53L7CX still to
   do; `ecps-companion.service` must stop cleanly on SIGTERM when no camera / FC is present.
+- **Ground console** (🟡 SITL on the Pi only): bench it with the real FC, props off (stream rates, emergency-stop
+  latency over the cage Wi-Fi; the Pi's AIC8800 Wi-Fi stalls above ≈ 40 kB/s up, so the console lowers its bandwidth
+  automatically).
 - **Route-B latency**: `VISO_DELAY_MS` to confirm on the real FC (SITL on the Pi: ≈ 24 ms + UART at 20 Hz RANGEFINDER).
 - **Timed landing**: the flight timer lands in place; check what is below first (a PIL run landed on a box edge).
 - **ToF bench**: net and black-box detection, readings when a box top is 1–15 cm below the sensor, edge zones that

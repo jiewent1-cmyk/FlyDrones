@@ -1,0 +1,877 @@
+{
+ "phases": {
+  "A1_handover_hold": {
+   "pass": true,
+   "armed": true,
+   "climb_s": 9.5,
+   "alt_handover": 0.63,
+   "ctl_after_s": 0.2024550000060117,
+   "op_at_handover": "HOLD",
+   "max_cmd": 0.0,
+   "drift_m": 0.07,
+   "link": {
+    "ecl_level": 2,
+    "ecl_auto": true,
+    "ecl_rtt_max": 137,
+    "ecl_lost": 0,
+    "fc_loss_pct": 2,
+    "fc_hb_age": 0.72,
+    "app_lag_ms": 2
+   }
+  },
+  "A2_patrol": {
+   "pass": true,
+   "ack": {
+    "ok": true,
+    "msg": "",
+    "after_s": 27.41
+   },
+   "path_m": 0.8,
+   "map_vox": [
+    740,
+    1982
+   ],
+   "msgs_15s": {
+    "tof": 88,
+    "brain": 201,
+    "cam": 54
+   },
+   "link": {
+    "ecl_level": 2,
+    "ecl_auto": true,
+    "ecl_rtt_max": 180,
+    "ecl_lost": 0,
+    "fc_loss_pct": 2,
+    "fc_hb_age": 0.82,
+    "app_lag_ms": 1.9
+   }
+  },
+  "A3_goto": {
+   "pass": true,
+   "ack": {
+    "ok": true,
+    "msg": "",
+    "after_s": 42.98
+   },
+   "to_hold_s": 41.37624741699983,
+   "min_dist_m": 0.34
+  },
+  "A4_home": {
+   "pass": true,
+   "ack": {
+    "ok": true,
+    "msg": "",
+    "after_s": 85.03
+   },
+   "to_hold_s": 23.37625429200125,
+   "min_dist_m": 0.34
+  },
+  "A5_manual": {
+   "pass": false,
+   "ack": {
+    "ok": true,
+    "msg": "",
+    "after_s": 108.46
+   },
+   "vx_before": 0.0,
+   "vx_max": 0.042,
+   "stopped_after_s": 0.00031562500225845724
+  },
+  "A6_app_frozen": {
+   "pass": true,
+   "ack": {
+    "ok": true,
+    "msg": "",
+    "after_s": 112.33
+   },
+   "opm": "HOLD",
+   "fc_mode_while_frozen": "GUIDED",
+   "drift_after_timeout_m": 0.08,
+   "events": [
+    "link lost",
+    "mode HOLD (console link lost)",
+    "escape: DNp03, saccade left",
+    "ECPS Console (Mac) connected from 192.168.86.245",
+    "link restored"
+   ],
+   "link_after": {
+    "ecl_level": 3,
+    "ecl_auto": true,
+    "ecl_rtt_max": 166,
+    "ecl_lost": 0,
+    "fc_loss_pct": 2,
+    "fc_hb_age": 0.16,
+    "app_lag_ms": 4000.6
+   }
+  },
+  "A7_app_emergency_land": {
+   "pass": true,
+   "fc_land_seen_by_pilot_s": 0.06811412499519065,
+   "app_confirmed_after_s": 0.05,
+   "companion_latched_s": 0.22156220800388837,
+   "disarmed_after_s": 2.8499477910008864,
+   "app_events": [
+    "\u7d27\u6025\u964d\u843d\uff08\u754c\u9762\uff09\uff1a\u5411\u98de\u63a7\u548c\u673a\u8f7d\u7a0b\u5e8f\u540c\u65f6\u53d1\u9001 LAND",
+    "\u98de\u63a7\u5df2\u63a5\u53d7 LAND\uff08\u7d27\u6025\u964d\u843d\u540e 0.05 s\uff0cCOMMAND_ACK\uff09"
+   ]
+  },
+  "A7b_pilot_override": {
+   "pass": true,
+   "override_accepted": true,
+   "alt_hold_kept_3s": true,
+   "companion_still_latched": true
+  },
+  "A8_reset": {
+   "pass": true,
+   "after_s": 0.3091883750021225,
+   "es": 0
+  },
+  "A9_app_land": {
+   "pass": true,
+   "handover": {
+    "armed": true,
+    "climb_s": 9.7,
+    "alt_handover": 0.63,
+    "ctl_after_s": 0.10025641699758125,
+    "op_at_handover": "HOLD"
+   },
+   "fc_land_seen_s": 0.0660040420043515,
+   "disarmed_after_s": 4.275913375000528,
+   "app_events": [
+    "\u964d\u843d\uff08\u754c\u9762\uff09",
+    "\u673a\u8f7d\u7a0b\u5e8f land\uff1a\u5df2\u786e\u8ba4 companion LAND",
+    "\u98de\u63a7\u5df2\u63a5\u53d7 LAND"
+   ]
+  },
+  "A10_app_kill": {
+   "pass": true,
+   "handover": {
+    "armed": true,
+    "climb_s": 9.9,
+    "alt_handover": 0.64,
+    "ctl_after_s": 0.10180883299472043,
+    "op_at_handover": "HOLD"
+   },
+   "alt_at_kill": 0.65,
+   "disarmed_seen_by_pilot_s": 0.1775646250025602,
+   "app_confirmed_after_s": 0.04,
+   "companion_es": 2,
+   "app_events": [
+    "\u505c\u6868\uff08\u754c\u9762\uff09\uff1a\u5f3a\u5236\u4e0a\u9501\uff0c\u7535\u673a\u7acb\u5373\u505c\u8f6c",
+    "\u98de\u63a7\u5df2\u63a5\u53d7\u5f3a\u5236\u4e0a\u9501\uff08\u505c\u6868\u540e 0.04 s\uff0cCOMMAND_ACK\uff09"
+   ]
+  }
+ },
+ "scenario": "app_full",
+ "modes": [
+  [
+   1.08,
+   "GUIDED",
+   false
+  ],
+  [
+   9.52,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   11.04,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   22.65,
+   "GUIDED",
+   true
+  ],
+  [
+   122.43,
+   "LAND",
+   true
+  ],
+  [
+   123.22,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   126.36,
+   "LAND",
+   true
+  ],
+  [
+   129.13,
+   "LAND",
+   false
+  ],
+  [
+   131.62,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   133.12,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   144.84,
+   "GUIDED",
+   true
+  ],
+  [
+   147.02,
+   "LAND",
+   true
+  ],
+  [
+   151.14,
+   "LAND",
+   false
+  ],
+  [
+   154.33,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   156.14,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   167.86,
+   "GUIDED",
+   true
+  ],
+  [
+   170.15,
+   "GUIDED",
+   false
+  ]
+ ],
+ "fc_texts": [
+  [
+   4.44,
+   1,
+   "PreArm: Need Position Estimate"
+  ],
+  [
+   10.59,
+   1,
+   "Arming motors"
+  ],
+  [
+   123.67,
+   1,
+   "SIM Hit ground at 0.334155 m/s"
+  ],
+  [
+   128.32,
+   1,
+   "Disarming motors"
+  ],
+  [
+   132.68,
+   1,
+   "Arming motors"
+  ],
+  [
+   148.65,
+   1,
+   "SIM Hit ground at 0.558244 m/s"
+  ],
+  [
+   150.69,
+   1,
+   "Disarming motors"
+  ],
+  [
+   155.42,
+   1,
+   "Arming motors"
+  ],
+  [
+   170.03,
+   1,
+   "Disarming motors"
+  ],
+  [
+   170.36,
+   1,
+   "SIM Hit ground at 3.521189 m/s"
+  ]
+ ],
+ "companion_texts": [
+  [
+   84.47,
+   254,
+   "ECPS: waypoint 0 reached"
+  ],
+  [
+   84.47,
+   254,
+   "ECPS: waypoints: done -> hover"
+  ],
+  [
+   108.4,
+   254,
+   "ECPS: waypoint 0 reached"
+  ],
+  [
+   108.4,
+   254,
+   "ECPS: waypoints: done -> hover"
+  ],
+  [
+   122.42,
+   254,
+   "ECPS: E-STOP LAND from console"
+  ],
+  [
+   170.03,
+   254,
+   "ECPS: E-STOP KILL from console"
+  ]
+ ],
+ "events": [
+  [
+   1.19,
+   "console",
+   "EMERGENCY STOP: LAND (ECPS Console (Mac))"
+  ],
+  [
+   1.19,
+   "console",
+   "emergency stop confirmed by the FC (LAND)"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   1.19,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   1.19,
+   "console",
+   "emergency stop reset (ECPS Console (Mac))"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "operator",
+   "mode LAND (ECPS Console (Mac))"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: retreat, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "operator",
+   "mode HOLD (hand-over)"
+  ],
+  [
+   1.19,
+   "operator",
+   "mode LAND (emergency stop)"
+  ],
+  [
+   1.19,
+   "console",
+   "EMERGENCY STOP: KILL MOTORS (ECPS Console (Mac))"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   1.19,
+   "console",
+   "emergency stop confirmed by the FC (disarmed)"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   1.19,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   1.19,
+   "console",
+   "emergency stop reset (ECPS Console (Mac))"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   1.19,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   5.21,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   13.31,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   21.41,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   27.61,
+   "operator",
+   "mode PATROL (ECPS Console (Mac))"
+  ],
+  [
+   29.38,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   36.82,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   43.56,
+   "operator",
+   "mode GOTO (goal +1.00, +0.60 via the waypoint layer)"
+  ],
+  [
+   45.76,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   52.76,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   61.03,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   69.05,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   77.03,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   84.53,
+   "operator",
+   "mode HOLD (goal reached (EKF distance 0.35 m))"
+  ],
+  [
+   84.53,
+   "watchdog",
+   "waypoint 0 reached"
+  ],
+  [
+   84.53,
+   "watchdog",
+   "waypoints: done -> hover"
+  ],
+  [
+   85.02,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   85.58,
+   "operator",
+   "mode GOTO (goal +0.00, +0.00 via the waypoint layer)"
+  ],
+  [
+   93.09,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   101.01,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   108.55,
+   "operator",
+   "mode HOLD (goal reached (EKF distance 0.35 m))"
+  ],
+  [
+   108.55,
+   "watchdog",
+   "waypoint 0 reached"
+  ],
+  [
+   108.55,
+   "watchdog",
+   "waypoints: done -> hover"
+  ],
+  [
+   108.55,
+   "operator",
+   "mode MANUAL (ECPS Console (Mac))"
+  ],
+  [
+   109.01,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   112.27,
+   "operator",
+   "mode HOLD (ECPS Console (Mac))"
+  ],
+  [
+   112.76,
+   "operator",
+   "mode GOTO (goal -1.00, -0.50 via the waypoint layer)"
+  ],
+  [
+   118.41,
+   "console",
+   "link lost"
+  ],
+  [
+   118.41,
+   "operator",
+   "mode HOLD (console link lost)"
+  ],
+  [
+   118.41,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   118.46,
+   "console",
+   "ECPS Console (Mac) connected from 192.168.86.245"
+  ],
+  [
+   118.46,
+   "console",
+   "link restored"
+  ],
+  [
+   124.21,
+   "operator",
+   "mode LAND (emergency stop)"
+  ],
+  [
+   124.21,
+   "console",
+   "EMERGENCY STOP: LAND (ECPS Console (Mac))"
+  ],
+  [
+   124.21,
+   "console",
+   "emergency stop confirmed by the FC (LAND)"
+  ],
+  [
+   124.21,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   126.25,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   132.38,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   132.38,
+   "console",
+   "emergency stop reset (ECPS Console (Mac))"
+  ],
+  [
+   134.32,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   142.36,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   148.47,
+   "operator",
+   "mode LAND (ECPS Console (Mac))"
+  ],
+  [
+   148.47,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   150.92,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   157.16,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   165.15,
+   "brain",
+   "escape: DNp03, saccade right"
+  ],
+  [
+   168.32,
+   "operator",
+   "mode HOLD (hand-over)"
+  ],
+  [
+   171.91,
+   "operator",
+   "mode LAND (emergency stop)"
+  ],
+  [
+   171.91,
+   "console",
+   "EMERGENCY STOP: KILL MOTORS (ECPS Console (Mac))"
+  ],
+  [
+   171.91,
+   "console",
+   "emergency stop confirmed by the FC (disarmed)"
+  ],
+  [
+   171.91,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   173.95,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   173.95,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   173.95,
+   "console",
+   "emergency stop reset (ECPS Console (Mac))"
+  ]
+ ],
+ "ticks": 2203,
+ "tick_hz": 12.5,
+ "companion_msgs": {
+  "brain": 1736,
+  "tof": 737,
+  "cam": 472,
+  "map": 168
+ },
+ "app_events": [
+  [
+   122.39,
+   "critical",
+   "\u7d27\u6025\u964d\u843d\uff08\u754c\u9762\uff09\uff1a\u5411\u98de\u63a7\u548c\u673a\u8f7d\u7a0b\u5e8f\u540c\u65f6\u53d1\u9001 LAND"
+  ],
+  [
+   122.43,
+   "info",
+   "\u98de\u63a7\u5df2\u63a5\u53d7 LAND\uff08\u7d27\u6025\u964d\u843d\u540e 0.05 s\uff0cCOMMAND_ACK\uff09"
+  ],
+  [
+   131.26,
+   "info",
+   "\u673a\u8f7d\u7a0b\u5e8f\u6025\u505c\u9501\u5df2\u89e3\u9664"
+  ],
+  [
+   146.98,
+   "warning",
+   "\u964d\u843d\uff08\u754c\u9762\uff09"
+  ],
+  [
+   147.02,
+   "info",
+   "\u673a\u8f7d\u7a0b\u5e8f land\uff1a\u5df2\u786e\u8ba4 companion LAND"
+  ],
+  [
+   147.02,
+   "info",
+   "\u98de\u63a7\u5df2\u63a5\u53d7 LAND"
+  ],
+  [
+   169.99,
+   "critical",
+   "\u505c\u6868\uff08\u754c\u9762\uff09\uff1a\u5f3a\u5236\u4e0a\u9501\uff0c\u7535\u673a\u7acb\u5373\u505c\u8f6c"
+  ],
+  [
+   170.03,
+   "info",
+   "\u98de\u63a7\u5df2\u63a5\u53d7\u5f3a\u5236\u4e0a\u9501\uff08\u505c\u6868\u540e 0.04 s\uff0cCOMMAND_ACK\uff09"
+  ],
+  [
+   172.69,
+   "info",
+   "\u673a\u8f7d\u7a0b\u5e8f\u6025\u505c\u9501\u5df2\u89e3\u9664"
+  ]
+ ],
+ "app_errors": [],
+ "app_link_end": {
+  "ecl_level": 0,
+  "ecl_auto": true,
+  "ecl_rtt_max": 38,
+  "ecl_lost": 0,
+  "fc_loss_pct": 2,
+  "fc_hb_age": 0.53,
+  "app_lag_ms": 2
+ },
+ "snaps": [
+  "1_hold",
+  "2_patrol",
+  "3_goto",
+  "4_estop_land",
+  "5_kill"
+ ],
+ "pass": false
+}

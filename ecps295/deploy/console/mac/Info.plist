@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key><string>ECPS Console</string>
+	<key>CFBundleDisplayName</key><string>ECPS 控制台</string>
+	<key>CFBundleIdentifier</key><string>edu.uci.ecps295.console</string>
+	<key>CFBundleVersion</key><string>1</string>
+	<key>CFBundleShortVersionString</key><string>0.1.0</string>
+	<key>CFBundleExecutable</key><string>ECPSConsole</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleIconFile</key><string>AppIcon</string>
+	<key>CFBundleDevelopmentRegion</key><string>zh_CN</string>
+	<key>LSMinimumSystemVersion</key><string>13.0</string>
+	<key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
+	<key>NSHighResolutionCapable</key><true/>
+	<key>NSPrincipalClass</key><string>NSApplication</string>
+	<key>NSLocalNetworkUsageDescription</key><string>ECPS 控制台需要连接局域网中的 Orange Pi 机载电脑（遥测、相机画面、3D 地图和飞行指令）。</string>
+	<key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
+</dict>
+</plist>

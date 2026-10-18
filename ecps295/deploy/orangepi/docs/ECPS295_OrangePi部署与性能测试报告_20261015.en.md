@@ -34,7 +34,7 @@
      called, so both stopped.
    - Arming on the ground handed the motors to the brain. Control is now latched only from 0.3 m up.
 6. **Two issues that need a parameter or procedure change:**
-   - Any live GCS with sysid 255 (Mission Planner) **masks the companion-loss failsafe**.
+   - Any live GCS with sysid 255 (Mission Planner) **masks the companion-loss failsafe** (decided 10-16: `MAV_GCS_SYSID_HI 254`).
    - Route-B height latency (corrected 10-16): the 80 ms estimate double-counted; measured ≈ 53 ms at 10 Hz. RANGEFINDER is now requested at 20 Hz, ≈ 30 ms; `VISO_DELAY_MS` 40 recommended (§7.2).
 
 Details are in §6–7; §8 is the bench checklist before the real drone.
@@ -305,15 +305,26 @@ the `VISP` vs `RFND` timing in the FC log after the bench or first flight. If th
 20 Hz, the 20 Hz request cannot lower the delay further; set the measured value. The old 50 ms actually matched 10 Hz
 fairly well (≈ 53 ms + sensor delay), which is the combination Gazebo accepted.
 
-### 7.3 Code improvements (none changes accepted behaviour)
+### 7.3 Pre-flight fixes (done 10-16, all in the companion layer; simulation code unchanged)
 
-- **Bound the neural time per tick**, e.g. `dt ≤ 2 × DT`, to stop the feedback loop in §4.3. Default off; check in
-  the twin first that results do not change.
-- **Lower brain cost** (needs behaviour re-validation): batch the 100 sub-steps or compile `lif.step` with numba.
-  With 2× headroom on the A76 cores at performance, this is **not needed before flight**.
-- **I²C speed.** The buses run at 400 kHz. Each VL53L7CX uploads about 84 kB of firmware at power-up, about 2 s in
-  theory. One 8×8 frame is about 1.4 kB, about 35 ms of bus time; it is read on its own thread and does not block the
-  loop. TWI0 / TWI1 can go to 1 MHz in the device tree (the VL53L7CX supports it); decide after the bench measurement.
+| Problem | Fix | Verification (Pi SITL / measured) |
+|---|---|---|
+| **No ToF watchdog**: an uninitialised sensor gave `ranges()` = 2.0 m (= clear) and no map input; a hung I²C bus kept the last frame forever | Guard in `real_drone.py`: (1) control is taken only while the camera and every ToF delivered within 0.3 s, otherwise the hand-over is refused and a STATUSTEXT sent; (2) in flight, any ToF older than 0.3 s → hover; still bad after 2 s → LAND. Thresholds under `guard:` in `companion.yaml` | `SCENARIO=tof_boot`: front ToF frozen from the start, 0 control ticks, Mission Planner shows "ECPS: not taking control: ToF front stale"; `SCENARIO=tof_flight`: front ToF frozen in the air, hover after 0.32 s, **LAND after 2.41 s** |
+| **Service would not stop**: without a camera `frame()` waited 5 s per call and the warm-up calls it dozens of times; `connect()` ignored the stop flag | `frame()` no longer waits (None before the first frame; the camera watchdog hovers / refuses the hand-over); `connect()` waits for the FC indefinitely but checks the stop flag every 0.5 s and exits 0 on a requested stop; shutdown signals all sensor threads before joining; `TimeoutStopSec=10` | No FC, camera or ToF: SIGTERM exits in 0.38 s; in the bench loop 0.23 s; `systemctl stop` **0.34 s, Result=success**, governor back to schedutil |
+| **Time limit landed in place** (once on a box edge in PIL) | The flight timer moved to the guard: after `max_flight_s` under our control, **hover in place** and send "ECPS: time limit, hovering - take over" every 5 s; the pilot lands from LOITER. Battery-low and the other LANDs are unchanged. The timer restarts at each hand-over | `SCENARIO=time_hold` (5 s limit): hover **5.0 s** after the take-over, no LAND during T3, 3 messages received; then LOITER release 39 ms, GUIDED resume 15 ms |
+| **Brain dt positive feedback** (§4.3) | Simulated time per tick capped at 2 × DT = 0.1 s instead of 0.25 s; `run.json` counts clamped ticks | The 116 s7_w2map Gazebo acceptance runs on ROG had a maximum tick gap of 55.5 ms, never above 100 ms, so the cap changes none of them; the fast twin uses a fixed dt |
+
+Normal-scenario regression (`FLIGHT_GCS=1`): take-over at 0.41 m, 20.0 Hz, LOITER release 17.7 ms, resume 31.3 ms, LAND
+1.71 s after the kill; all pass. Bench smoke test (sim camera + sim ToF, 20 s): 0 overruns, p50 31.7 ms (schedutil).
+
+Not done and not needed before flight: cheaper brain steps (vectorised sub-steps / numba; A76 + performance already has
+2× headroom); I²C at 1 MHz (decide after the bench).
+
+**FC UART bandwidth**: the streams the companion requests are ≈ 2.9 kB/s (FC → Pi); setpoints, route-B height and
+heartbeat ≈ 2.2 kB/s (Pi → FC). 115200 baud is ≈ 11.5 kB/s, so about 25 % per direction. The risk is Mission Planner
+connecting through the Pi's port 14550: it requests its own set of streams on the same UART. In flight, connect
+Mission Planner through the ESP32 instead; at bench step 8 check `SR2_*` and the mavlink-router statistics, and if
+usage exceeds 60 %, change `SERIAL2_BAUD` and `/etc/mavlink-router/main.conf` to 921600 together.
 
 ### 7.4 Recommended flight configuration
 
@@ -337,7 +348,7 @@ fairly well (≈ 53 ms + sensor delay), which is the combination Gazebo accepted
 | 6 | Camera | `cam_probe.py`: formats, fps, decode time; lock exposure; 12° nose-down mount; LED + high-speed video for camera latency | ≥ 30 fps; record end-to-end latency |
 | 7 | Full bench pipeline | `ecps_companion.py --mode bench --affinity 6,7` (real camera + ToF) | 0 overruns; `tof_f_min` follows a hand in front and `cmd_forward` is limited |
 | 8 | Connect the FC (**props off**) | FC `SERIAL2_PROTOCOL 2`, `SERIAL2_BAUD 115`; `systemctl start ecps-companion` (shadow) | correct `fc_mode` in the log; `VISION_POSITION_ESTIMATE` at about 20 Hz in Mission Planner; EKF uses ExtNav height |
-| 9 | Failsafe ground test (**props off**) | parameters as in §7.1; armed in GUIDED, `kill -9` the companion | LAND after 2 s |
+| 9 | Failsafe ground test (**props off**) | parameters as in §7.1; armed in GUIDED, `kill -9` the companion; then unplug one ToF | `kill -9`: LAND after 2 s; ToF unplugged: `[guard]` hover, LAND after 2 s; with a ToF missing, no take-over even above 0.3 m |
 | 10 | Switch to guided, cage flights | `systemctl edit ecps-companion` → `ECPS_MODE=guided`; FLIGHT_TEST_PLAN R0–R6 | pilot takes off in LOITER and switches to GUIDED above 0.3 m; switching back to LOITER takes control back at any time |
 
 ## 9. Reproduction
@@ -348,13 +359,13 @@ R=/opt/ecps295; PY=$R/venv/bin/python
 bash $R/scripts/profile_matrix.sh                                   # P1–P8 (about 35 min)
 taskset -c 6 $PY $R/scripts/brain_bench.py --profile               # brain micro-benchmark
 cd $R/twin/ecps295 && PYTHONPATH=../src:. taskset -c 6,7 $PY sil_equiv.py ../ref_s7w2map.jsonl /tmp/sil.jsonl --procs 2
-$PY $R/scripts/sitl_hil_test.py                                     # SITL link (about 2.5 min); GCS_ALIVE=1 reproduces T6′; FLIGHT_GCS=1 checks T6″; RNG_HZ=10 = latency baseline
+$PY $R/scripts/sitl_hil_test.py                                     # SITL link (about 2.5 min); GCS_ALIVE=1 reproduces T6′; FLIGHT_GCS=1 checks T6″; RNG_HZ=10 = latency baseline; SCENARIO=tof_boot / tof_flight / time_hold check the guard
 # on the Mac: tables and figures
 python3 deploy/orangepi/scripts/analyze_profile.py 项目文档/07_机载部署/data 项目文档/07_机载部署/figures
 ```
 
 Data: `data/*_bench_P*` (`ticks.csv` / `system.csv` / `run.json` per run) and `data/sitl/` (`sitl_hil_pass.json`,
-`sitl_hil_gcs_alive.json`, `sitl_hil_flight_gcs.json`, `sitl_hil_rng10.json`, `sitl_hil_rng20.json`, companion logs of the three SITL runs, `sil_equiv.jsonl`).
+`sitl_hil_gcs_alive.json`, `sitl_hil_flight_gcs.json`, `sitl_hil_rng10.json`, `sitl_hil_rng20.json`, `sitl_guard_*.json`, companion logs of the three SITL runs, `sil_equiv.jsonl`).
 
 ## 10. Programs running on the Pi and what they do (updated 2026-10-16)
 
@@ -363,7 +374,7 @@ Data: `data/*_bench_P*` (`ticks.csv` / `system.csv` / `run.json` per run) and `d
 | Program / service | At boot | Role | Resources / ports |
 |---|---|---|---|
 | `mavlink-router.service` (`/usr/bin/mavlink-routerd`) | ✅ | MAVLink switch: FC UART `/dev/ttyS0` (115200, pins 8/10) ↔ UDP 14560 (companion), UDP 14550 and TCP 5760 (Mission Planner). Idle while no FC is wired | CPU ≈ 0, RSS 3.5 MB |
-| `ecps-companion.service` | ❌ (installed, not enabled) | the flight program (`companion/ecps_companion.py`), shadow mode by default, pinned to cpu6-7, A76 performance governor while running. **Currently failed** (10-15 21:58: with no camera it ignored SIGTERM and was SIGKILLed; fix before the real drone) | — |
+| `ecps-companion.service` | ❌ (installed, not enabled) | the flight program (`companion/ecps_companion.py`), shadow mode by default, pinned to cpu6-7, A76 performance governor while running. Starts and stops cleanly since the 10-16 fix (`systemctl stop` 0.34 s, Result=success) | — |
 | `netbird.service` | ✅ | NetBird remote access (added 10-16), 100.112.163.133; ssh management only, realtime data stays on the LAN | RSS 65 MB, UDP 51820 |
 | `ssh.service` | ✅ | remote login (Mac key, root / ming) | TCP 22 |
 | `systemd-networkd` + `wpa_supplicant` | ✅ | WiFi 5317 (netplan), LAN address 192.168.86.20 | — |
@@ -430,6 +441,6 @@ flowchart LR
 | Issue | Effect | Status |
 |---|---|---|
 | Route B sent a stale range: when the stream requests never reached the FC, the Pi kept sending its last cached RANGEFINDER (a 0.005 m ground reading) as the height | the EKF believed the drone was on the floor; it climbed to 2.9 m and the FC landed. Same after an FC reboot on the real drone | ✅ fixed (`real_drone.py`): no height from a range / baro reading older than 0.5 s; streams re-requested every 5 s |
-| The flight timer lands in place | one PIL run landed on a box edge (scored as a contact) | real-drone risk: hover / check below before a timed landing |
+| The flight timer lands in place | one PIL run landed on a box edge (scored as a contact) | ✅ changed 10-16: hover in place and ask the pilot to take over (§7.3) |
 | Intermittent WiFi stalls: under PIL traffic the round trip reaches seconds (ping does not show it) | of 44 recorded pil2 + pil3 runs, 19 had a degraded link; 10 were failsafe-landed by the FC, all safely with 0 contacts | JPEG frames cut the traffic 5×, but the stalls remain. Use a wired link (USB Ethernet) or a dedicated 5 GHz AP for PIL. On the real drone the camera and ToF connect directly to the Pi, so this does not apply |
-| `ecps-companion.service` does not stop | without a camera SIGTERM timed out and it was SIGKILLed | to fix: `frame()` and `connect()` waits must check the stop flag |
+| `ecps-companion.service` does not stop | without a camera SIGTERM timed out and it was SIGKILLed | ✅ fixed 10-16, `systemctl stop` 0.34 s (§7.3) |

@@ -136,7 +136,7 @@ if PIL:
     from pil_rog import PilRog
 
     _sh = getattr(getattr(pilot, "struct", None), "shield", None)
-    pil = PilRog(PIL, drone, a.shm, list(getattr(_sh, "map_sensors", None) or []))
+    pil = PilRog(PIL, drone, a.shm, list(getattr(_sh, "map_sensors", None) or []), jpeg=os.environ.get("ECPS_PIL_RAW") != "1")
 
 PROP_TIP_R = 0.13  # body centre to prop tip: 0.08 m arm diagonal + 0.0508 m prop radius
 
@@ -313,6 +313,7 @@ def tick(t: float, dt: float, phase: str):
             "cmd_lateral": getattr(info.cmd, "lateral", 0.0),
             **_shield_dbg(pilot),
             "escape": int(info.cmd.escape),
+            "wp_idx": getattr(pilot, "wp_idx", -1) if getattr(pilot, "wp_on", False) else -1,
             "frame_age_ms": round(drone.frame_age_s() * 1000, 1),
             "brain_rtf": info.rtf,
             "clearance": round(clearance(tn, te, ta), 3),
@@ -382,8 +383,16 @@ def _run_phase_sim(phase: str, secs: float, s0: float) -> bool:
         if pilot.safety.land_requested:
             pace["sim_s"] += now - s0; pace["wall_s"] += time.monotonic() - w0
             return False
+        if _wp_finished():
+            break
     pace["sim_s"] += last - s0; pace["wall_s"] += time.monotonic() - w0
     return True
+
+
+def _wp_finished(hold_s: float = 3.0) -> bool:
+    """2026-10-17 waypoint flight: end the run hold_s after the last point (the drone hovers meanwhile)."""
+    done = getattr(pilot, "wp_done_t", None)
+    return done is not None and clock["t"] - done > hold_s
 
 
 def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0):
@@ -405,6 +414,8 @@ def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0):
         clock["t"] += dt
         if pilot.safety.land_requested:
             return False
+        if _wp_finished():
+            break
         sl = DT - (time.monotonic() - now)
         if sl > 0:
             time.sleep(sl)
@@ -591,6 +602,37 @@ summary["simclock"] = SIMCLOCK  # 2026-10-15: brain paced by simulated time
 summary["sim_s"], summary["wall_s"] = round(pace["sim_s"], 1), round(pace["wall_s"], 1)
 summary["tof_cone3d"] = os.environ.get("ECPS_TOF_CONE3D") == "1"  # N1b: Gazebo ToF emulation = full cone (else planar fan)
 summary["tof_retina"] = bool(getattr(getattr(pilot, "retina", None), "tof_on", False))  # N1c: S5 active
+if getattr(pilot, "wp_on", False):  # 2026-10-17 waypoint flight, scored on truth (the pilot only sees the EKF)
+    _pts, _r = pilot.wp_points, pilot.wp_radius
+    _fly_alt = float(np.median([r["alt"] for r in rows]))
+    _wp = []
+    for i, (n, e) in enumerate(_pts):
+        act = [r for r in rows if r["wp_idx"] == i]
+        ev = next((x for x in pilot.wp_log if x[1] == i), None)
+        at = None
+        if ev is not None:  # truth distance at the tick the pilot declared the point
+            r_ev = min(rows, key=lambda r: abs(r["t"] - ev[0]))
+            at = round(math.hypot(r_ev["north"] - n, r_ev["east"] - e), 3)
+        _wp.append(
+            {
+                "point": [n, e],
+                "result": ev[2] if ev else "pending",
+                "t": ev[0] if ev else None,
+                "true_err_at_m": at,
+                "true_min_dist_m": round(min(math.hypot(r["north"] - n, r["east"] - e) for r in act), 3) if act else None,
+                "blocked": bool(clearance(n, e, _fly_alt) < 0.0),  # a box taller than the flight height covers the point
+            }
+        )
+    summary["waypoints"] = _wp
+    summary["wp_total"] = len(_pts)
+    summary["wp_reached"] = sum(w["result"] == "reached" for w in _wp)
+    summary["wp_skipped"] = sum(w["result"] == "skipped" for w in _wp)
+    summary["wp_blocked"] = sum(w["blocked"] for w in _wp)
+    summary["wp_done_t"] = pilot.wp_done_t
+    summary["wp_true_err_med_m"] = (
+        round(float(np.median([w["true_err_at_m"] for w in _wp if w["result"] == "reached"])), 3) if summary["wp_reached"] else None
+    )
+    summary["wp_bias_s"] = round(pilot.wp_ticks / HZ, 1)
 json.dump(summary, open(f"{a.out}.json", "w"), indent=1)
 print(json.dumps(summary, indent=1))
 
