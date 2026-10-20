@@ -50,9 +50,9 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 ## 机载端部署（2026-10-17 03:16 已部署到 Pi 的 /opt/ecps295）
 
 2026-10-18 02:26 部署了急停确认的修复（`console_link.py` 71b39a80 → 80c2aaa3，旧文件在 Pi 的
-`/root/ecps295_backups/20261018_pre_estopfix/`），部署后的复测见报告第 6.6 节。带跟踪模式（TRACK）的版本（报告第 9 节）
-目前只在课程文件夹和 Pi 的测试目录里，**还没部署**；跟踪本身（`ecps_target.py`、`ecps_pilot.py`、`ecps_companion.py` 的标记检测）
-已由另一会话在 10-18 约 02:24 部署。
+`/root/ecps295_backups/20261018_pre_estopfix/`），部署后的复测见报告第 6.6 节。2026-10-19 18:18 部署了带跟踪模式（TRACK）的版本
+（`console_link.py` 80c2aaa3 → 0af521e4，旧文件在 Pi 的 `/root/ecps295_backups/20261019_pre_track/`），部署后的复测见报告第 9.5 节；
+跟踪本身（`ecps_target.py`、`ecps_pilot.py`、`ecps_companion.py` 的标记检测）已由另一会话在 10-18 约 02:24 部署。
 
 已装入 `companion/console_link.py`、`companion/sitl_world.py`（只用于 SITL）、`companion/ecps_companion.py`、`companion/camera.py`、
 `config/companion.yaml`（`console: port 14700`）。md5 和回滚方法见报告第 6.1 节，被替换的文件备份在 Pi 的
@@ -78,7 +78,7 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 **遥控器是第一道急停**。控制台急停走 Wi-Fi：家里的 Wi-Fi 下实测按下到飞控确认 0.04–0.8 s。控制台按往返延迟自动调节
 遥测带宽（顶栏「带宽自动·高/中/低/极低」）。之前 Pi Zero 3W 的 Wi-Fi（AIC8800）在应用升到最高档后会卡顿数秒，10-18 查明是驱动的
 802.11ax 模式和家里的路由器配合不好，已在 Pi 上改回 11ac（`/etc/modprobe.d/aic8800-ecps.conf`：`he_on=0 ps_on=0`，重刷系统后要重新放），
-详见报告第 5.4 节。修复后控制台还没重测。
+详见报告第 5.4 节。修复后的控制台测试里，应用升到最高档后没有再自动降档（报告第 9.5 节）。
 
 ## 测试
 
@@ -117,6 +117,8 @@ ssh root@192.168.86.20 'sh /root/ecps_console_test/rig_start.sh 2400 --marker -1
 python tools/console_e2e.py --pi 192.168.86.20 --scenario track --marker=-1.6,0.8,0.7,-27,7 --out track.json
 ssh root@192.168.86.20 'sh /root/ecps_console_test/rig_stop.sh'
 ```
+
+测已部署的运行时：测试台加 `--deployed`（正式端口，运行期间停掉 mavlink-router），测试脚本加 `--ecl 14700`。每跑一轮跟踪都要重启测试台，否则飞机从上次降落的地方起飞，离标记太近，T3 不算数。
 
 调试：`ECPS_WEB_ROOT=<mac/web 目录>` 让应用直接读网页源文件（改完 ⌘R 重载）；`ECPS_SNAPSHOT=<png>` 后
 `kill -USR1 <pid>` 保存界面截图；菜单「显示 → 在浏览器中打开界面」。飞行记录在 `~/Library/Logs/ECPS Console/<时间>/`

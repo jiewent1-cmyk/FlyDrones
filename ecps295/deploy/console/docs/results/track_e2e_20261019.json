@@ -1,0 +1,659 @@
+{
+ "phases": {
+  "T1_handover_track": {
+   "pass": true,
+   "ack": {
+    "id": 1,
+    "op": "handover",
+    "ok": true,
+    "msg": ""
+   },
+   "ho": "TRACK",
+   "marker": {
+    "detector": "running",
+    "frames": 155,
+    "hits": 0,
+    "errors": 0,
+    "id": 7,
+    "size_m": 0.15,
+    "standoff_m": 1.0,
+    "search_s": 30.0
+   }
+  },
+  "T2_handover_starts_search": {
+   "pass": true,
+   "armed": true,
+   "climb_s": 9.6,
+   "alt_handover": 0.65,
+   "ctl_after_s": 1.754099503159523e-05,
+   "op_at_handover": "TRACK",
+   "start": {
+    "ne": [
+     0.16,
+     -0.22
+    ],
+    "yaw": 0,
+    "to_marker_m": 2.03
+   },
+   "trk": {
+    "st": "SEARCH",
+    "est": null,
+    "goal": null,
+    "fx": 0,
+    "ts": 0.1
+   }
+  },
+  "T3_track_arrived": {
+   "pass": true,
+   "arrived_after_s": 13.9,
+   "dist_m": 1.08,
+   "facing_err_deg": 0.0,
+   "truth_ne": [
+    -0.63,
+    0.32
+   ],
+   "est_err_m": 0.02,
+   "mk": [
+    7,
+    1.08,
+    -0.0,
+    0.16,
+    -0.05
+   ],
+   "in_place": true,
+   "r_max_m": 0.71,
+   "started_far": true,
+   "states": [
+    [
+     28.5,
+     "SEARCH"
+    ],
+    [
+     35.9,
+     "APPROACH"
+    ],
+    [
+     42.3,
+     "ARRIVED"
+    ]
+   ],
+   "events": [
+    "target: search",
+    "target: approach (marker 7 at -1.63, +0.76, 2.08 m)",
+    "target: arrived (range 1.15 m)"
+   ]
+  },
+  "T4_hold_stops_tracking": {
+   "pass": true,
+   "ack": {
+    "id": 2,
+    "op": "hold",
+    "ok": true,
+    "msg": ""
+   },
+   "after_s": 0.15783570799976587,
+   "drift_m": 0.04
+  },
+  "T5_track_again": {
+   "pass": true,
+   "ack": {
+    "id": 3,
+    "op": "track",
+    "ok": true,
+    "msg": ""
+   },
+   "arrived_after_s": 0.0,
+   "dist_m": 1.08,
+   "facing_err_deg": 0.4,
+   "truth_ne": [
+    -0.63,
+    0.31
+   ],
+   "est_err_m": 0.01,
+   "mk": [
+    7,
+    1.08,
+    -0.4,
+    0.19,
+    0.03
+   ],
+   "in_place": true,
+   "events": [
+    "target: approach (marker 7 at -1.61, +0.79, 1.08 m)",
+    "target: arrived (range 1.08 m)",
+    "target: search"
+   ]
+  },
+  "T6_goto_while_tracking": {
+   "pass": true,
+   "ack": {
+    "id": 4,
+    "op": "goto",
+    "ok": true,
+    "msg": ""
+   },
+   "tracker_off_after_s": 1.287501072511077e-05,
+   "to_hold_s": 5.619831625022925,
+   "min_dist_m": 0.34
+  },
+  "T7_link_lost_while_tracking": {
+   "pass": true,
+   "opm": "HOLD",
+   "trk": {},
+   "events": [
+    "link lost",
+    "mode HOLD (console link lost)",
+    "target: off",
+    "console_e2e connected from 192.168.86.245",
+    "link restored"
+   ]
+  },
+  "T8_pilot_takeover_and_back": {
+   "pass": true,
+   "loiter": true,
+   "released_s": 1.5083001926541328e-05,
+   "back_s": 0.14132795901969075,
+   "opm": "TRACK",
+   "events": [
+    "target: off",
+    "target: search"
+   ]
+  },
+  "T9_estop_while_tracking": {
+   "pass": true,
+   "fc_land_s": 0.2103995840298012,
+   "companion_latched_s": 0.21041658404283226,
+   "tracker_off_s": 5.749985575675964e-06,
+   "opm": "LAND",
+   "disarmed_after_s": 3.9856604170054197
+  }
+ },
+ "scenario": "track",
+ "modes": [
+  [
+   0.46,
+   "STABILIZE",
+   false
+  ],
+  [
+   10.32,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   16.52,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   28.4,
+   "GUIDED",
+   true
+  ],
+  [
+   73.81,
+   "LOITER",
+   true
+  ],
+  [
+   77.0,
+   "GUIDED",
+   true
+  ],
+  [
+   80.51,
+   "LAND",
+   true
+  ],
+  [
+   84.51,
+   "LAND",
+   false
+  ]
+ ],
+ "fc_texts": [
+  [
+   11.52,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   13.11,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   14.6,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   16.2,
+   1,
+   "Arming motors"
+  ],
+  [
+   82.11,
+   1,
+   "SIM Hit ground at 0.561626 m/s"
+  ],
+  [
+   84.2,
+   1,
+   "Disarming motors"
+  ]
+ ],
+ "companion_texts": [
+  [
+   28.51,
+   254,
+   "ECPS: target: search"
+  ],
+  [
+   35.81,
+   254,
+   "ECPS: target: approach (marker 7 at -1.63, +0.76, "
+  ],
+  [
+   42.31,
+   254,
+   "ECPS: waypoint 0 reached"
+  ],
+  [
+   42.31,
+   254,
+   "ECPS: waypoints: done -> hover"
+  ],
+  [
+   42.41,
+   254,
+   "ECPS: target: arrived (range 1.15 m)"
+  ],
+  [
+   51.0,
+   254,
+   "ECPS: target: off"
+  ],
+  [
+   51.0,
+   254,
+   "ECPS: target: search"
+  ],
+  [
+   51.0,
+   254,
+   "ECPS: target: approach (marker 7 at -1.61, +0.79, "
+  ],
+  [
+   51.0,
+   254,
+   "ECPS: target: arrived (range 1.08 m)"
+  ],
+  [
+   54.2,
+   254,
+   "ECPS: target: off"
+  ],
+  [
+   59.67,
+   254,
+   "ECPS: waypoint 0 reached"
+  ],
+  [
+   59.67,
+   254,
+   "ECPS: waypoints: done -> hover"
+  ],
+  [
+   59.82,
+   254,
+   "ECPS: target: search"
+  ],
+  [
+   69.71,
+   254,
+   "ECPS: target: off"
+  ],
+  [
+   69.71,
+   254,
+   "ECPS: target: search"
+  ],
+  [
+   77.11,
+   254,
+   "ECPS: target: off"
+  ],
+  [
+   77.11,
+   254,
+   "ECPS: target: search"
+  ],
+  [
+   77.86,
+   254,
+   "ECPS: target: approach (marker 7 at -1.57, +0.80, "
+  ],
+  [
+   80.51,
+   254,
+   "ECPS: E-STOP LAND from console"
+  ]
+ ],
+ "events": [
+  [
+   0.09,
+   "console",
+   "console_e2e connected from 192.168.86.245"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "height source stale -> land"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> hover"
+  ],
+  [
+   0.09,
+   "watchdog",
+   "camera stale -> land"
+  ],
+  [
+   9.4,
+   "operator",
+   "hand-over mode TRACK"
+  ],
+  [
+   29.01,
+   "operator",
+   "mode TRACK (hand-over)"
+  ],
+  [
+   29.01,
+   "target",
+   "target: search"
+  ],
+  [
+   36.16,
+   "target",
+   "target: approach (marker 7 at -1.63, +0.76, 2.08 m)"
+  ],
+  [
+   42.35,
+   "watchdog",
+   "waypoint 0 reached"
+  ],
+  [
+   42.35,
+   "watchdog",
+   "waypoints: done -> hover"
+  ],
+  [
+   42.35,
+   "target",
+   "target: arrived (range 1.15 m)"
+  ],
+  [
+   48.55,
+   "operator",
+   "mode HOLD (console_e2e)"
+  ],
+  [
+   48.55,
+   "target",
+   "target: off"
+  ],
+  [
+   51.67,
+   "operator",
+   "mode TRACK (console_e2e)"
+  ],
+  [
+   51.67,
+   "target",
+   "target: search"
+  ],
+  [
+   51.67,
+   "target",
+   "target: approach (marker 7 at -1.61, +0.79, 1.08 m)"
+  ],
+  [
+   51.67,
+   "target",
+   "target: arrived (range 1.08 m)"
+  ],
+  [
+   54.66,
+   "operator",
+   "mode GOTO (goal +0.00, +0.00 via the waypoint layer)"
+  ],
+  [
+   54.66,
+   "target",
+   "target: off"
+  ],
+  [
+   59.76,
+   "operator",
+   "mode HOLD (goal reached (EKF distance 0.34 m))"
+  ],
+  [
+   59.76,
+   "watchdog",
+   "waypoint 0 reached"
+  ],
+  [
+   59.76,
+   "watchdog",
+   "waypoints: done -> hover"
+  ],
+  [
+   59.76,
+   "operator",
+   "mode TRACK (console_e2e)"
+  ],
+  [
+   59.76,
+   "target",
+   "target: search"
+  ],
+  [
+   66.94,
+   "console",
+   "link lost"
+  ],
+  [
+   66.94,
+   "operator",
+   "mode HOLD (console link lost)"
+  ],
+  [
+   66.94,
+   "target",
+   "target: off"
+  ],
+  [
+   66.97,
+   "console",
+   "console_e2e connected from 192.168.86.245"
+  ],
+  [
+   66.97,
+   "console",
+   "link restored"
+  ],
+  [
+   70.02,
+   "operator",
+   "mode TRACK (console_e2e)"
+  ],
+  [
+   70.02,
+   "target",
+   "target: search"
+  ],
+  [
+   77.21,
+   "operator",
+   "mode TRACK (hand-over)"
+  ],
+  [
+   77.21,
+   "target",
+   "target: off"
+  ],
+  [
+   77.21,
+   "target",
+   "target: search"
+  ],
+  [
+   78.21,
+   "target",
+   "target: approach (marker 7 at -1.57, +0.80, 1.52 m)"
+  ],
+  [
+   81.26,
+   "operator",
+   "mode LAND (emergency stop)"
+  ],
+  [
+   81.26,
+   "console",
+   "EMERGENCY STOP: LAND (console_e2e)"
+  ],
+  [
+   81.26,
+   "target",
+   "target: off"
+  ],
+  [
+   81.26,
+   "console",
+   "emergency stop confirmed by the FC (LAND)"
+  ],
+  [
+   82.26,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   84.36,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   87.41,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   87.41,
+   "console",
+   "emergency stop reset (console_e2e)"
+  ],
+  [
+   87.41,
+   "operator",
+   "hand-over mode HOLD"
+  ]
+ ],
+ "ticks": 868,
+ "tick_hz": 9.9,
+ "companion_msgs": {
+  "brain": 435,
+  "tof": 314,
+  "cam": 0,
+  "map": 44
+ },
+ "pass": true
+}

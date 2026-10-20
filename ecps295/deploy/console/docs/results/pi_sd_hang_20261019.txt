@@ -1,0 +1,42 @@
+# Orange Pi Zero 3W SD card hang, 2026-10-19 (excerpt; full dmesg not published)
+# Root fs on mmcblk1 (SD card "SD16G", 233 GiB) behind 4020000.sdmmc in UHS-SDR104 at 150 MHz.
+# The host re-tunes about every 63 min. At 10:11 only the [0-14] window passed (best 7, usually 42 from [21-63]);
+# afterwards 2 writes stayed in flight and processes piled up in D state. Force reboot (sysrq b) at 18:15.
+
+## dmesg: 4020000.sdmmc, 10-19 08:00-10:12
+[Mon Oct 19 08:05:06 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: start tuning, tuning clk = 150000000  opcode=19
+[Mon Oct 19 08:05:06 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: ----speed mode = 6
+[Mon Oct 19 08:05:06 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[ERR]: wait dma hold bit clear timeout
+[Mon Oct 19 08:05:06 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[ERR]: wait dma hold bit clear timeout
+[Mon Oct 19 08:05:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: tuning section: 
+[Mon Oct 19 08:05:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: [0-14|15] 
+[Mon Oct 19 08:05:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: [21-63|43] 
+[Mon Oct 19 08:05:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: 
+[Mon Oct 19 08:05:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: tuning result: 21 - 63,  best: 42
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: start tuning, tuning clk = 150000000  opcode=19
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: ----speed mode = 6
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[ERR]: wait dma hold bit clear timeout
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: tuning section: 
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: [0-14|15] 
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: [21-63|43] 
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: 
+[Mon Oct 19 09:08:07 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: tuning result: 21 - 63,  best: 42
+[Mon Oct 19 10:11:05 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: start tuning, tuning clk = 150000000  opcode=19
+[Mon Oct 19 10:11:05 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: ----speed mode = 6
+[Mon Oct 19 10:11:11 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: tuning section: 
+[Mon Oct 19 10:11:11 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: [0-14|15] 
+[Mon Oct 19 10:11:11 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: 
+[Mon Oct 19 10:11:11 2026] sunxi:sunxi_mmc_host-4020000.sdmmc:[INFO]: tuning result: 0 - 14,  best: 7
+
+## 18:14 (just before the reboot): /sys/block/mmcblk1/inflight, stat; D-state tasks
+Mon Oct 19 06:14:32 PM PDT 2026
+ 18:14:32 up 1 day, 14:07,  2 users,  load average: 69.39, 68.46, 66.79
+       0        2
+    4519     2214   430594    15404     2628     2180    44024    26953        2   327108    74120     1789      121 460927904    31761        0        0
+D-state tasks: 69
+  64 vfs_utimes /usr/lib/systemd/systemd-timesyncd
+   1 wait_on_buffer [jbd2/mmcblk1p1-8]
+   1 synchronize_srcu.part.0 [kworker/5:1H+kblockd]
+   1 mmc_blk_rw_wait /bin/sh
+   1 folio_wait_bit_common md5sum
+   1 do_get_write_access /usr/lib/systemd/systemd-timesyncd
