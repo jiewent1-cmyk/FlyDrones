@@ -4,7 +4,7 @@
 # NAV=flow / EXTRA_PARM=... in the environment are passed on to gz_g4.sh
 H=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  # 2026-10-19: run from the git worktree (ecps295/scripts/trk), not a hand-copied ~/sim/rl_trk
 M=$(cd "$H/../.." && pwd)/minifly
-quiet() { local m=$((10#$(TZ=America/Los_Angeles date +%H) * 60 + 10#$(TZ=America/Los_Angeles date +%M))); [ $m -ge 55 ] && [ $m -lt 420 ]; }  # user rule: no runs 01:00-07:00 PT (no start after 00:55)
+quiet() { [ "$ECPS_QUIET_OFF" = 1 ] && return 1; local m=$((10#$(TZ=America/Los_Angeles date +%H) * 60 + 10#$(TZ=America/Los_Angeles date +%M))); [ $m -ge 55 ] && [ $m -lt 420 ]; }  # user rule: no runs 01:00-07:00 PT (no start after 00:55)
 while read -r tag world variant seed args; do
   [ -z "$tag" ] || [ "${tag:0:1}" = "#" ] && continue
   while quiet; do sleep 120; done
