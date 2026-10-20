@@ -8,7 +8,7 @@ runners in `scripts/trk/` resolve every path from their own location; untracked 
 
     cd ~/sim/wt/trk/ecps295 && cp ~/sim/FlyDrones/ecps295/minifly/minifly_v[34].npz minifly/ && mkdir -p gazebo/models/aruco
     python gazebo/gen_marker_worlds.py gazebo/worlds gazebo/models/aruco/marker7.png cage20 cage10 lowbox_s0 ...
-    ECPS_TOF_CONE3D=1 ECPS_SIMCLOCK=1 NAV=flow EXTRA_PARM=G_extnav_height,companion_fs,H_terrain_fast \
+    ECPS_TOF_CONE3D=1 ECPS_SIMCLOCK=1 NAV=flow EXTRA_PARM=$PWD/sitl/variants/G_extnav_height.parm,$PWD/sitl/variants/companion_fs.parm,$PWD/sitl/variants/H_terrain_fast.parm \
       bash scripts/trk/run_matrix_par_trk.sh gazebo/trk_results/trk2_matrix.txt ~/sim/runs/matrix_trk2.log 3
 
 `@E@` in a matrix line stands for the worktree's `ecps295/`. Worlds: `gazebo/gen_marker_worlds.py` writes
