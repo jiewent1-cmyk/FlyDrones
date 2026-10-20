@@ -1,4 +1,4 @@
-# 2026-10-18 target tracking copy of gz_g4_mine.sh: tree ~/sim/rl_trk, extra 640x480 colour stream for the marker detector
+# 2026-10-18 target tracking copy of gz_g4_mine.sh: tree = this worktree's ecps295/, extra 640x480 colour stream for the marker detector
 # usage: gz_g4.sh <world.sdf> <tag> "<run_g4.py args>" [--gui]   (add --live to the args to open monitor.py)
 #   NAV=gps (default)  GPS + baro EKF (course_base.parm)
 #   NAV=flow           Matek 3901-L0X as on the real drone: optical flow + ToF height, no GPS (sitl/fhb_delta.parm)
@@ -7,7 +7,8 @@
 #                      shm names and cleanup by PID only (run_matrix_par.sh). Unset: the single-instance behaviour.
 # Gazebo (headless, or GUI on the ROG desktop with --gui) + camera bridge + ArduPilot SITL + run_g4.py
 WORLD=$1; TAG=$2; ARGS=$3; GUI=$4
-E=~/sim/rl_trk/ecps295
+H=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  # 2026-10-19: run from the git worktree (ecps295/scripts/trk), not a hand-copied ~/sim/rl_trk
+E=$(cd "$H/../.." && pwd)
 G=$E/gazebo
 # watching (--live): use the *_monitor world (adds the chase camera for monitor.py, RTF ~0.96);
 # plain worlds have no view cameras so experiment runs keep RTF 1.0

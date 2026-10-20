@@ -3,11 +3,12 @@
 # one after another; NAV / EXTRA_PARM come from the environment (one batch per parameter set). Each worker logs to
 # <log>.partK while running; the parts are merged into <log> with a final "DONE" when all workers have finished.
 M=$1; LOG=$2; N=${3:-3}
+H=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  # 2026-10-19: run from the git worktree (ecps295/scripts/trk), not a hand-copied ~/sim/rl_trk
 Q=$(mktemp -d)
 grep -v '^\s*#' "$M" | grep -v '^\s*$' | awk -v n=$N -v q=$Q '{print > (q "/" (NR - 1) % n)}'
 for k in $(seq 0 $((N - 1))); do
   [ -f $Q/$k ] || continue
-  ( sleep $((k * 20)); INST=$k bash ~/sim/rl_trk/run_matrix_trk.sh $Q/$k $LOG.part$k ) &
+  ( sleep $((k * 20)); INST=$k bash $H/run_matrix_trk.sh $Q/$k $LOG.part$k ) &
 done
 wait
 cat $LOG.part* >> $LOG 2>/dev/null; rm -f $LOG.part*
