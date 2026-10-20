@@ -103,19 +103,27 @@ function chip(level, label, value) {
   return `<div class="chip"><span class="st ${level}">${icon}</span>${label} <b>${value}</b></div>`;
 }
 
+// values with a fixed width: the chips wrap in the header, so a value growing by one character could add a row and
+// shift the whole page down (2026-10-19: RTT 6 <-> 19 ms and loss 2 <-> 1.9 % made the page jump up and down)
+function fixw(text, width, left) {
+  return `<span class="fixw${left ? " left" : ""}" style="min-width:${width}">${text}</span>`;
+}
+
 function chips(fc, ecl) {
   const out = [];
   const LV = L("极低,低,中,高", "very low,low,mid,high").split(",");
-  const lvTxt = ecl.level != null ? L(` · 带宽${ecl.auto ? "自动" : ""}${LV[ecl.level]}${ecl.forced ? "（急停）" : ""}`,
-    ` · BW ${ecl.auto ? "auto " : ""}${LV[ecl.level]}${ecl.forced ? " (E-stop)" : ""}`) : "";
+  const lv = ecl.level != null ? fixw(LV[ecl.level], L("2em", "8ch"), true) : "";
+  const lvTxt = ecl.level != null ? L(` · 带宽${ecl.auto ? "自动" : ""}${lv}${ecl.forced ? "（急停）" : ""}`,
+    ` · BW ${ecl.auto ? "auto " : ""}${lv}${ecl.forced ? " (E-stop)" : ""}`) : "";
   const slow = ecl.rtt_max != null && ecl.rtt_max > 400;
   out.push(chip(ecl.connected ? (slow ? "warn" : "good") : ecl.age != null ? "critical" : "off", L("机载遥测", "Telemetry"),
-    ecl.connected ? `${ecl.rtt != null ? ecl.rtt.toFixed(0) : "?"} ms${lvTxt}` : ecl.age != null ? L(`${ecl.age.toFixed(0)} s 无数据`, `no data for ${ecl.age.toFixed(0)} s`) : L("未连接", "not connected")));
+    ecl.connected ? `${fixw(ecl.rtt != null ? ecl.rtt.toFixed(0) : "?", "3ch")} ms${lvTxt}` : ecl.age != null ? L(`${ecl.age.toFixed(0)} s 无数据`, `no data for ${ecl.age.toFixed(0)} s`) : L("未连接", "not connected")));
   const hb = fc.hb_age;
-  out.push(chip(hb == null ? "off" : hb < 1.5 ? "good" : hb < 3 ? "warn" : "critical", L("飞控", "FC"), hb == null ? L("无心跳", "no heartbeat") : `${fc.mode}${fc.armed ? L(" · 解锁", " · armed") : L(" · 上锁", " · disarmed")}`));
+  out.push(chip(hb == null ? "off" : hb < 1.5 ? "good" : hb < 3 ? "warn" : "critical", L("飞控", "FC"), hb == null ? L("无心跳", "no heartbeat")
+    : `${fixw(fc.mode, "9ch", true)} · ${fixw(fc.armed ? L("解锁", "armed") : L("上锁", "disarmed"), L("2em", "8ch"), true)}`));
   const ch = fc.comp_hb_age;
-  out.push(chip(ch == null ? "off" : ch < 1.5 ? "good" : "critical", L("机载心跳", "Companion HB"), ch == null ? "—" : `${ch.toFixed(1)} s`));
-  if (fc.link && fc.link.loss_pct != null) out.push(chip(fc.link.loss_pct < 2 ? "good" : fc.link.loss_pct < 10 ? "warn" : "serious", L("丢包", "Loss"), `${fc.link.loss_pct}%`));
+  out.push(chip(ch == null ? "off" : ch < 1.5 ? "good" : "critical", L("机载心跳", "Companion HB"), ch == null ? "—" : `${fixw(ch.toFixed(1), "4ch")} s`));
+  if (fc.link && fc.link.loss_pct != null) out.push(chip(fc.link.loss_pct < 2 ? "good" : fc.link.loss_pct < 10 ? "warn" : "serious", L("丢包", "Loss"), `${fixw(Number(fc.link.loss_pct).toFixed(1), "4ch")}%`));
   $("chips").innerHTML = out.join("");
 }
 
