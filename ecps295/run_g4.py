@@ -308,6 +308,7 @@ def tick(t: float, dt: float, phase: str):
             "mute": int(drone.mute),
             "ventral": round(getattr(pilot.retina, "ventral", None).level, 2) if hasattr(pilot.retina, "ventral") else 0.0,
             "box_under": int(box_under(tn, te, ta)),
+            "hold": int(getattr(drone, "hold_anchor", None) is not None),
             "tof": round(max(getattr(pilot.retina, "last_tof", {"L": 0.0}).values()), 2),  # S5 retina input
             "h_est": None if getattr(pilot, "last_height_est", None) is None else round(pilot.last_height_est, 3),
             "fc_mode": getattr(drone.m.messages.get("HEARTBEAT"), "custom_mode", -1),
@@ -615,6 +616,8 @@ if pil is not None:
 if HT is not None:
     summary["hold"] = HT.hold
     summary["hold_sent"] = HT.sent
+summary["hold_mode"] = getattr(drone, "hold", "vel")  # 2026-10-20 ECPS_HOLD=pos hover hold
+summary["hold_ticks"] = getattr(drone, "hold_ticks", 0)
 summary["simclock"] = SIMCLOCK  # 2026-10-15: brain paced by simulated time
 summary["sim_s"], summary["wall_s"] = round(pace["sim_s"], 1), round(pace["wall_s"], 1)
 summary["tof_cone3d"] = os.environ.get("ECPS_TOF_CONE3D") == "1"  # N1b: Gazebo ToF emulation = full cone (else planar fan)

@@ -75,6 +75,15 @@ class Ecps295MavlinkDrone(MavlinkDrone):
 
         self.drift_mps = float(os.environ.get("ECPS_DRIFT_MPS", "0") or 0.0)
         self.drift_dir = 0.0
+        # hover hold (2026-10-20, hover_test.py results): ECPS_HOLD=pos turns a command with no horizontal motion into a
+        # LOCAL_NED position target at the EKF position where the hover began (drift rms 14 -> 5 cm in Gazebo), and caps
+        # the yaw rate of a turn in place at ECPS_HOLD_YAW_DPS (15: peak drift 13.5 -> 9.5 cm). Default vel = unchanged.
+        self.hold = os.environ.get("ECPS_HOLD", "vel")
+        self.hold_eps = float(os.environ.get("ECPS_HOLD_EPS_MPS", "0.03"))  # |horizontal cmd| below this = hovering
+        self.hold_yr_max = math.radians(float(os.environ.get("ECPS_HOLD_YAW_DPS", "15")))
+        self.hold_anchor: list[float] | None = None  # [n, e, z] while holding, else None
+        self._hold_t = 0.0
+        self.hold_ticks = 0
 
     # ------------------------------------------------------------------ link
     def connect(self) -> None:
@@ -512,7 +521,32 @@ class Ecps295MavlinkDrone(MavlinkDrone):
                                 cmd.lateral * self.v_max - math.sin(yw) * dn + math.cos(yw) * de,
                                 -cmd.throttle * self.vz_max, cmd.yaw * self.yr_max)
             return
+        if self.hold == "pos" and self._send_hold(cmd):
+            return
         super().send(cmd)
+
+    def _send_hold(self, cmd) -> bool:
+        """Position-target hover (ECPS_HOLD=pos); False when the command moves horizontally (then velocity as before)."""
+        vx, vy = cmd.forward * self.v_max, cmd.lateral * self.v_max
+        lp = self.m.messages.get("LOCAL_POSITION_NED")
+        now = time.monotonic()
+        if math.hypot(vx, vy) >= self.hold_eps or lp is None:
+            self.hold_anchor = None
+            return False
+        vz = -cmd.throttle * self.vz_max
+        if self.hold_anchor is None:
+            self.hold_anchor = [lp.x, lp.y, lp.z]
+        else:  # a climb / descent while hovering moves the height target with it
+            self.hold_anchor[2] += vz * min(0.25, now - self._hold_t)
+        self._hold_t = now
+        yr = max(-self.hold_yr_max, min(self.hold_yr_max, cmd.yaw * self.yr_max))
+        n, e, z = self.hold_anchor
+        # LOCAL_NED position + velocity (z feed-forward) + yaw rate; acceleration and yaw ignored
+        self.m.mav.set_position_target_local_ned_send(
+            0, self.m.target_system, self.m.target_component, self.mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0b0000_0101_1100_0000, n, e, z, 0, 0, vz, 0, 0, 0, 0, yr)
+        self.hold_ticks += 1
+        return True
 
     def floor_height(self) -> tuple[float | None, str]:
         """Height of the ToF above the floor: the tilt-corrected range while nothing is under the drone, otherwise
