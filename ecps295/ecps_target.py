@@ -204,6 +204,16 @@ class TargetTrack:
         self.face_gain = float(c.get("face_gain", 1.0))
         self.min_range = float(c.get("min_range_m", 0.3))
         self.max_range = float(c.get("max_range_m", 5.0))
+        # 2026-10-19 (Gazebo trk1: 13 of 39 runs lost to brain escapes): the brain's looming escape fires on the marker
+        # itself at the standoff. With the marker fresh in view within escape_trust_deg of the nose and no closer than
+        # standoff - 0.3 m, APPROACH / ARRIVED ignore brain escapes (the RangeShield after this layer still clamps on
+        # the ToF and the map); 0 = escapes always win, as before. SEARCH turns on through escapes (hovering in place).
+        self.escape_trust = float(c.get("escape_trust_deg", 30.0))
+        self.search_through_escape = bool(c.get("search_through_escape", True))
+        self.hold_gain = float(c.get("hold_gain", 1.0))  # ARRIVED: forward per metre of range error (position hold)
+        self.hold_max = float(c.get("hold_max", 0.3))
+        self.cruise = float(c.get("cruise", 0.5))  # forward handed to the waypoint layer when an escape is ignored
+        self.escapes_ignored = 0
         self.source = None  # MarkerThread (or anything with latest() -> (Detection | None, stamp))
         self.state = "OFF"
         self.t_state = 0.0
@@ -360,18 +370,29 @@ class TargetTrack:
         if self.state == "SEARCH" and t - self.t_state > self.search_s:
             self._set("FAILED", t, f"nothing in {self.search_s:.0f} s -> hover")
 
-        # ------------------------------------------------------------------ command shaping (escapes always win)
+        # ------------------------------------------------------------------ command shaping
+        d = self.last_det
+        ahead = (self.escape_trust > 0 and d is not None and t - self.last_fix_t < self.max_age
+                 and abs(d.bearing_deg) < self.escape_trust and d.range_m >= self.standoff - 0.3)
+        if cmd.escape and self.state in ("APPROACH", "ARRIVED") and ahead:
+            self.escapes_ignored += 1  # the looming thing is the marker we are flying to
+            cmd = FlightCommand(throttle=cmd.throttle, yaw=0.0, forward=self.cruise, note="target: escape ignored")
+        if self.state == "SEARCH" and (not cmd.escape or self.search_through_escape):
+            return FlightCommand(throttle=cmd.throttle, yaw=self.search_yaw, forward=min(cmd.forward, 0.0), note="target search")
         if cmd.escape:
             return cmd
-        if self.state == "SEARCH":
-            return FlightCommand(throttle=cmd.throttle, yaw=self.search_yaw, forward=min(cmd.forward, 0.0), note="target search")
         if self.state == "FAILED":
             return FlightCommand(throttle=cmd.throttle, yaw=0.0, forward=min(cmd.forward, 0.0), note="target not found")
         if self.state == "ARRIVED" and self.est is not None:
             b = math.atan2(self.est[1] - y, self.est[0] - x)
             err = math.atan2(math.sin(b - math.radians(tel.yaw_deg)), math.cos(b - math.radians(tel.yaw_deg)))
             yaw = max(-1.0, min(1.0, self.face_gain * err / math.radians(60)))
-            return FlightCommand(throttle=cmd.throttle, yaw=yaw, forward=min(cmd.forward, 0.0), note="target: facing")
+            seen = d is not None and t - self.last_fix_t < self.lost_s
+            rng = d.range_m if seen else math.hypot(self.est[0] - x, self.est[1] - y)
+            # hold the goal's range to the marker: the standoff, or more where the goal was pulled inside the fence
+            want = max(self.standoff, math.hypot(self.est[0] - self.goal[0], self.est[1] - self.goal[1])) if self.goal else self.standoff
+            fwd = max(-self.hold_max, min(self.hold_max, self.hold_gain * (rng - want)))
+            return FlightCommand(throttle=cmd.throttle, yaw=yaw, forward=fwd, note="target: holding")
         return cmd  # APPROACH / LOST: the waypoint layer steers to self.goal
 
 
