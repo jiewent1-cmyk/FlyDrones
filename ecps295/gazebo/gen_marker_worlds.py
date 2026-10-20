@@ -19,7 +19,7 @@ _here = Path(__file__).resolve().parent  # ROG ~/sim/rl_trk (next to ecps295/) o
 sys.path[:0] = [str(_here / "ecps295"), str(_here.parent)]
 from ecps_target import marker_image  # noqa: E402
 
-W_DIR, PNG = Path(sys.argv[1]), Path(sys.argv[2])
+W_DIR, PNG = Path(sys.argv[1]), Path(sys.argv[2]).resolve()  # absolute: Gazebo runs from ~/sim/runs/<tag>
 SIZE, BORDER, ID, UP, R0 = 0.30, 0.25, 7, 0.6, 2.3  # 30 cm: the Gazebo camera is a 120 deg fisheye (~2/3 of a 70 deg pinhole's px per rad); 15 cm was ~15 px at 3 m, never detected
 SIDE = SIZE * (1 + 2 * BORDER)
 cv2.imwrite(str(PNG), marker_image("4x4_50", ID, px=400, border_frac=BORDER))
