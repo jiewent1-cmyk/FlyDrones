@@ -24,4 +24,11 @@ cycles (2), search turns undone by escapes (2). Range error median ~7 cm, bearin
 
 v2 (10-19, `ecps_target.py`): ARRIVED holds the goal's range, APPROACH/ARRIVED ignore brain escapes with the marker fresh
 within 30 deg of the nose and >= 0.7 m, SEARCH turns through escapes; offline tests 8/8, Pi SITL 1.00 m / 0.6 deg.
-Gazebo rerun trk2 (same matrix) pending: ROG handed back to the user before it started.
+trk2 (10-20 02:06-02:36, TargetTrack v2, `trk2_matrix.txt`, `matrix_trk2.log`, run from the ROG worktree): 42 runs, 0
+contacts / near misses. Without cage10 (as trk1): **39/39 pass** (trk1 26/39), all 13 trk1 failures fixed, none regressed;
+end distance median 1.08 m (trk1 1.18), all 42 within 0.6-1.5 m; arrival median 19.2 s after track_start (max 31.3 s,
+trk1 max 74 s); range error median 7 cm, bearing 0.3 deg. Escapes overridden in 21 runs (1242 ticks) with no contact.
+cage10 (now inside the nets): 2/3. cage10_k2 (track_start at 20 s) failed: the drone was already 0.57-0.76 m from the
+marker, 0.3 m above its centre, so a full in-place search turn never had the whole marker in the camera's vertical
+field of view (camera pitched 12 deg down, pinhole 70 deg h-fov); search timed out after 30 s -> FAILED / hover.
+Possible fix: after one fruitless turn, back off toward the cage centre (or climb/descend to the marker height) and turn again.
