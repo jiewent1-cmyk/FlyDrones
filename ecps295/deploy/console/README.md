@@ -2,8 +2,8 @@
 
 2026-10-17。MiniFly v4 无人机的 Mac 地面控制台：实时看大脑（FlyDrones Live 风格的脑区面板、脉冲栅格、下行神经元与指令）、
 机载 3D 建图（局部占据栅格 + 两块 8×8 ToF 实时射线 + 安全盾约束）、机载相机（大脑视角 / 彩色）、飞行参数（姿态、高度、
-速度、电池、EKF、光流、振动、链路健康），指引飞行（悬停 / 大脑巡逻 / 地图点选目标 / 返回起点 / 键盘手动 / 降落），
-以及两级急停（**紧急降落**：大红按钮或 Esc；**停桨**：按住 1.5 s）。
+速度、电池、EKF、光流、振动、链路健康），指引飞行（悬停 / 大脑巡逻 / 地图点选目标 / 返回起点 / 跟踪 ArUco 标记 /
+键盘手动 / 降落），以及两级急停（**紧急降落**：大红按钮或 Esc；**停桨**：按住 1.5 s）。
 
 设计与测试报告：`项目文档/08_地面控制台/ECPS295_地面控制台设计与测试报告_20261017.md`（GitHub 仓库里在本目录的
 `docs/`，原始结果在 `docs/results/`）。
@@ -17,11 +17,12 @@
 | `mac/Info.plist`、`mac/AppIcon.icns` | 应用包信息、图标 |
 | `build.sh` | 只用 Command Line Tools（无需 Xcode）构建 `ECPS Console.app`；`--install` 装到 `/Applications` |
 | `tools/ecl_client.py` | ECL1 参考客户端（命令行看遥测、发指令、急停），也用于测试 |
-| `tools/sitl_rig.py`、`rig_start.sh`、`rig_stop.sh` | Pi 上的 SITL 测试台（无 GPS 光流导航 SITL + 第二个 mavlink-router + 机载程序 + 由 SITL 真值模拟的 ToF） |
-| `tools/console_e2e.py` | 端到端测试（扮演飞手 + 控制台，13 项检查） |
+| `tools/sitl_rig.py`、`rig_start.sh`、`rig_stop.sh` | Pi 上的 SITL 测试台（无 GPS 光流导航 SITL + 第二个 mavlink-router + 机载程序 + 由 SITL 真值模拟的 ToF；`--marker` 时相机画面由 SITL 真值渲染并带一个 ArUco 标记） |
+| `tools/console_e2e.py` | 端到端测试（扮演飞手 + 控制台：自动 13 项；经由应用 `app_full`；跟踪 `track` 9 项、`app_track`） |
 | `tools/estop_confirm_test.py` | 机载端急停确认的离线回放测试（假飞控按时间线给出模式和 COMMAND_ACK，不需要 Pi） |
+| `tools/track_mode_test.py` | 跟踪模式的离线测试（假飞控程序记录每次调用和所在线程：启停顺序、与选点前往的交接、急停、断链，不需要 Pi） |
 | `tools/gen_mavmeta.py` | 由 pymavlink 生成 `MavMeta.swift`（报文布局与 CRC_EXTRA） |
-| 机载端（在 `deploy/orangepi/`） | `companion/console_link.py`（链路 + 指引层）、`companion/sitl_world.py`（仅 SITL 测试）、`ecps_companion.py --console`、`camera.py`（保留彩色帧）、`config/companion.yaml` 的 `console:` 段 |
+| 机载端（在 `deploy/orangepi/`） | `companion/console_link.py`（链路 + 指引层，含 TRACK）、`companion/sitl_world.py`（仅 SITL 测试）、`ecps_companion.py --console`、`camera.py`（保留彩色帧）、`config/companion.yaml` 的 `console:` 段 |
 
 ## 构建与安装
 
@@ -48,6 +49,11 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 
 ## 机载端部署（2026-10-17 03:16 已部署到 Pi 的 /opt/ecps295）
 
+2026-10-18 02:26 部署了急停确认的修复（`console_link.py` 71b39a80 → 80c2aaa3，旧文件在 Pi 的
+`/root/ecps295_backups/20261018_pre_estopfix/`），部署后的复测见报告第 6.6 节。带跟踪模式（TRACK）的版本（报告第 9 节）
+目前只在课程文件夹和 Pi 的测试目录里，**还没部署**；跟踪本身（`ecps_target.py`、`ecps_pilot.py`、`ecps_companion.py` 的标记检测）
+已由另一会话在 10-18 约 02:24 部署。
+
 已装入 `companion/console_link.py`、`companion/sitl_world.py`（只用于 SITL）、`companion/ecps_companion.py`、`companion/camera.py`、
 `config/companion.yaml`（`console: port 14700`）。md5 和回滚方法见报告第 6.1 节，被替换的文件备份在 Pi 的
 `/root/ecps295_backups/20261017_pre_console/`。以后更新可以用 `deploy/orangepi/scripts/deploy_to_pi.sh`，或者手动拷贝这几个文件。
@@ -62,13 +68,17 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 1. Pi 与 Mac 在同一局域网；控制台 设置 → 地址 `192.168.86.20`（或 NetBird 地址），端口 14700 / 14550。
 2. 起飞前：顶栏「机载遥测」「飞控」「机载心跳」为绿；「交接后」选「悬停」（默认）。
 3. 飞手用遥控器起飞，拨到 GUIDED：机载程序接管，进入所选模式（悬停）。
-4. 指引：`P` 大脑巡逻 · `G` 在地图上点选目标（大脑带着避障/扫视飞过去，经航点层）· `B` 返回起点 · `M` 键盘手动
+4. 指引：`P` 大脑巡逻 · `G` 在地图上点选目标（大脑带着避障/扫视飞过去，经航点层）· `B` 返回起点 · `T` 跟踪 ArUco 标记
+   （原地转动搜索，找到后飞到它前方约 1 m，悬停并面向它；再按一次重新搜索）· `M` 键盘手动
    （W/S 前后，A/D 偏航，Q/E 平移，R/F 升降，松开即悬停）· `H` 悬停 · `L` 降落。所有指令仍经过安全调速、看门狗、围栏掉头和安全盾。
+   「交接后」也可以选「跟踪」：飞手拨到 GUIDED 后直接开始搜索。跟踪按钮只在机载程序有标记检测（hw 配置 `marker.enabled`）时出现。
 5. 急停：**Esc** 或大红按钮 = 紧急降落（飞控直连 + 机载程序两条路，重发直到飞控确认）；**停桨**按住 1.5 s = 强制上锁。
    急停后机载程序锁定、不再接管，直到在控制台「解除急停」。飞手拨模式开关永远可以接管（急停只在第一次被飞控确认前强制）。
 
-**遥控器是第一道急停**。控制台急停走 Wi-Fi：家里的 Wi-Fi 下实测按下到飞控确认 0.04–0.8 s，但 Pi Zero 3W 的 Wi-Fi
-（AIC8800）在上行超过约 40 kB/s 时会卡顿数秒，所以控制台按往返延迟自动降低遥测带宽（顶栏「带宽自动·高/中/低/极低」）。
+**遥控器是第一道急停**。控制台急停走 Wi-Fi：家里的 Wi-Fi 下实测按下到飞控确认 0.04–0.8 s。控制台按往返延迟自动调节
+遥测带宽（顶栏「带宽自动·高/中/低/极低」）。之前 Pi Zero 3W 的 Wi-Fi（AIC8800）在应用升到最高档后会卡顿数秒，10-18 查明是驱动的
+802.11ax 模式和家里的路由器配合不好，已在 Pi 上改回 11ac（`/etc/modprobe.d/aic8800-ecps.conf`：`he_on=0 ps_on=0`，重刷系统后要重新放），
+详见报告第 5.4 节。修复后控制台还没重测。
 
 ## 测试
 
@@ -92,10 +102,20 @@ ssh root@192.168.86.20 'sh /root/ecps_console_test/rig_stop.sh'
 `app_full` 的手动一项（A5）注入的摇杆会和应用网页按真实键盘状态发出的摇杆消息（没按键就是 0）交替到达，测出的速度偏低，
 详见报告第 6.4 节。
 
-改了 `console_link.py` 的急停部分后，先跑离线回放测试（本机即可，没装 flydrones 时自动替身）：
+改了 `console_link.py` 后，先跑两个离线测试（本机即可，没装 flydrones 时自动替身）：
 
 ```sh
 python tools/estop_confirm_test.py      # 7 种时序：飞控进 LAND 后飞手马上切模式、心跳滞后但 ACK 已到、ACK 被拒、停桨……
+python tools/track_mode_test.py         # 14 项：跟踪的启停只在控制线程、与选点前往交接、交接时重新搜索、急停、断链、拒绝……
+```
+
+跟踪模式的 SITL 测试（测试台的相机画面带一个 ArUco 标记，位置要和测试脚本的 `--marker` 一致；脚本里写成 `--marker=`，
+因为值以负号开头）：
+
+```sh
+ssh root@192.168.86.20 'sh /root/ecps_console_test/rig_start.sh 2400 --marker -1.6,0.8,0.7,-27,7'
+python tools/console_e2e.py --pi 192.168.86.20 --scenario track --marker=-1.6,0.8,0.7,-27,7 --out track.json
+ssh root@192.168.86.20 'sh /root/ecps_console_test/rig_stop.sh'
 ```
 
 调试：`ECPS_WEB_ROOT=<mac/web 目录>` 让应用直接读网页源文件（改完 ⌘R 重载）；`ECPS_SNAPSHOT=<png>` 后

@@ -11,6 +11,7 @@
   --muted: #8a98a8;
   /* brain roles (FlyDrones): interneuron / input / output, escape */
   --green: #39ff88; --cyan: #4cc9f0; --pink: #ff4d8d; --amber: #ffb020;
+  --target: #b388ff;  /* target tracking: the ArUco marker and the tracking goal (map, chip) */
   /* chart series (validated: dark categorical slots 1-3, all pairs, surface #0b1018) */
   --s1: #3987e5; --s2: #d95926; --s3: #199e70;
   /* status (never a series colour; always with an icon and a label) */
@@ -118,6 +119,10 @@ button.link { background: none; border: 0; color: var(--cyan); cursor: pointer; 
 .pickHint.on { display: block; }
 .goalChip { position: absolute; top: 8px; right: 8px; display: none; gap: 6px; align-items: center; background: rgba(5,7,11,.85); border: 1px solid var(--line2); border-radius: 10px; padding: 6px 8px; font-family: var(--mono); font-size: 12px; }
 .goalChip.on { display: flex; }
+.trkChip { position: absolute; top: 8px; left: 8px; display: none; gap: 6px; align-items: center; max-width: calc(100% - 16px); background: rgba(5,7,11,.85); border: 1px solid rgba(179, 136, 255, .55); border-radius: 10px; padding: 5px 9px; font-family: var(--mono); font-size: 12px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trkChip.on { display: flex; }
+.trkChip .dot { color: var(--target); }
+#hoSeg button:disabled { opacity: .38; cursor: not-allowed; }
 .dock { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .dockRow { display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; }
 .dockRow.small { align-items: center; font-size: 11.5px; color: var(--text2); }

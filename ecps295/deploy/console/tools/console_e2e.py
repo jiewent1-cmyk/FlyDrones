@@ -18,7 +18,9 @@ Phases
   P7  console link lost during GOTO: HOLD within the link timeout
   P8  illusion "left" during PATROL (informational)
   P9  emergency LAND on both paths: FC in LAND, companion latched and released; landed and disarmed
-  P9b right after the stop the pilot switches to ALT_HOLD: kept for 3 s (nothing forces LAND again), still latched
+  P9b right after the stop the pilot switches to ALT_HOLD: kept for 3 s (nothing forces LAND again), still latched;
+      also the FC mode the companion reports in its ticks may not go back to LAND after ALT_HOLD (2026-10-18: a 0.5 s
+      LAND forced over the pilot fell between two of the pilot's 1 Hz heartbeats on 10-17)
   P10 latch reset after disarm
   P11 second flight, normal LAND (console: FC mode command + companion "land")
   P12 third flight, KILL: force disarm in the air
@@ -33,9 +35,24 @@ stdout in a file and ECPS_SNAPSHOT=<snap-dir>/ui.png, then
   A3  go to a point picked in the app, A4 back to the start point
   A5  manual from the app's sticks (as the W key)
   A6  the app freezes (SIGSTOP 4 s) during a go-to: the companion holds; the app resumes (SIGCONT)
-  A7  emergency LAND from the app (big red button / Esc), A7b the pilot overrides it, A8 reset from the app
+  A7  emergency LAND from the app (big red button / Esc), A7b the pilot overrides it (checked as P9b), A8 reset from the app
   A9  flight 2: normal land from the app
   A10 flight 3: kill from the app (after the 1.5 s hold), reset
+
+Scenarios track / app_track (2026-10-18, target tracking): the rig renders an ArUco marker into the SITL camera
+(sitl_rig.py --marker, the same --marker here; truth from SIM_STATE). track is an ECL client like the automated run:
+  T1  hand-over mode TRACK accepted before take-off; the STATUS shows the marker detector
+  T2  take-off and hand-over: TRACK starts a search at once
+  T3  search -> approach -> arrived: 0.75-1.35 m from the marker (truth), facing it within 15 deg, inside the fence;
+      it must have started more than 1.4 m from the marker (restart the rig between runs: a landed drone stays put)
+  T4  HOLD stops the tracker      T5  TRACK again: a fresh search, arrived again
+  T6  GOTO while tracking: the tracker lets go, the goal is reached
+  T7  console link lost while tracking: HOLD, tracker off
+  T8  the pilot takes over (LOITER) while tracking and hands back: a fresh search (hand-over mode TRACK)
+  T9  emergency LAND while tracking: tracker off, landed and disarmed; reset, hand-over mode back to HOLD
+app_track does T1-T5 and a LAND through the Mac app's page channel, with snapshots of the map (as app_full).
+    ssh root@<pi> 'sh /root/ecps_console_test/rig_start.sh 2400 --marker -1.6,0.8,0.7,-27,7'
+    python console_e2e.py --scenario track --marker=-1.6,0.8,0.7,-27,7 --out trk.json   (with "=": the value starts with "-")
 """
 
 from __future__ import annotations
@@ -63,10 +80,11 @@ ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDe
 ap.add_argument("--pi", default="192.168.86.20")
 ap.add_argument("--mav", type=int, default=14651)
 ap.add_argument("--ecl", type=int, default=14701)
-ap.add_argument("--scenario", default="auto", choices=["auto", "app", "app_kill", "app_full"])
+ap.add_argument("--scenario", default="auto", choices=["auto", "app", "app_kill", "app_full", "track", "app_track"])
 ap.add_argument("--app-log", default="", help="app_full: the app's stdout (with its 'UI http://...' line)")
 ap.add_argument("--app-pid", type=int, default=0, help="app_full: the app's PID (SIGSTOP / SIGCONT, SIGUSR1 snapshots)")
 ap.add_argument("--snap-dir", default="", help="app_full: the app runs with ECPS_SNAPSHOT=<snap-dir>/ui.png")
+ap.add_argument("--marker", default="-1.6,0.8,0.7,-27,7", help="track: the rig's marker n,e,up,yaw,id (sitl_rig.py --marker)")
 ap.add_argument("--out", default="console_e2e.json")
 a = ap.parse_args()
 
@@ -101,11 +119,12 @@ class AppUI:
 
 g = mavutil.mavlink_connection(f"udpout:{a.pi}:{a.mav}", source_system=255, source_component=190)
 L = Link(a.pi, a.ecl, name="console_e2e", cam="off", cam_hz=0)
-UI = AppUI(a.app_log) if a.scenario == "app_full" else None
+UI = AppUI(a.app_log) if a.scenario in ("app_full", "app_track") else None
+TRACKING = a.scenario in ("track", "app_track")
 T0 = time.monotonic()
 st = {"rc": None, "rc_t": 0.0, "hb_t": 0.0, "hello_t": 0.0, "ecl_on": UI is None, "req_t": 0.0}
 obs = {"modes": [], "lpn": [], "ticks": [], "events": {}, "acks": [], "texts": [], "map": [], "tof": 0, "brain": 0, "cam": 0,
-       "app_events": [], "app_acks": {}, "app_state": {}, "app_errors": [], "snaps": []}
+       "app_events": [], "app_acks": {}, "app_state": {}, "app_errors": [], "snaps": [], "truth": []}
 last = {"tick": None, "status": None, "mode": "?", "armed": False, "hb": 0.0}
 rep: dict = {"phases": {}, "scenario": a.scenario}
 
@@ -168,7 +187,7 @@ def pump(sec: float) -> None:
             g.mav.heartbeat_send(6, 8, 0, 0, 0)
             st["hb_t"] = t
         if t - st["req_t"] > 5.0:  # display streams for this test (LOCAL_POSITION_NED, EKF), as the e2e pilot's own view
-            for mid, hz in ((32, 10), (193, 2)):
+            for mid, hz in ((32, 10), (193, 2)) + (((108, 10),) if TRACKING else ()):  # + SIM_STATE (truth)
                 g.mav.command_long_send(1, 1, 511, 0, mid, 1e6 / hz, 0, 0, 0, 0, 0)
             st["req_t"] = t
         if st["ecl_on"] and t - st["hello_t"] > 0.2:
@@ -186,6 +205,8 @@ def pump(sec: float) -> None:
                     obs["modes"].append((round(now(), 2), mode, armed))
             elif src == 1 and k == "LOCAL_POSITION_NED":
                 obs["lpn"].append((now(), m.x, m.y, -m.z, m.vx, m.vy))
+            elif src == 1 and k == "SIM_STATE":
+                obs["truth"].append((now(), m.lat_int, m.lon_int, m.yaw))
             elif k == "STATUSTEXT":
                 obs["texts"].append((round(now(), 2), src, m.text))
             m = g.recv_match(blocking=False)
@@ -275,6 +296,32 @@ def land_and_disarm(timeout: float = 40) -> float | None:
 def path_len(t0: float, t1: float) -> float:
     p = [(x, y) for t, x, y, *_ in obs["lpn"] if t0 <= t <= t1]
     return sum(math.hypot(b[0] - a_[0], b[1] - a_[1]) for a_, b in zip(p, p[1:]))
+
+
+def fc_seen(t0: float, t1: float) -> list:
+    """The FC mode as the companion reports it in its ticks (5-20 Hz) between t0 and t1, changes only: finer than the
+    pilot's 1 Hz heartbeats (on 2026-10-17 a 0.5 s LAND forced over the pilot's ALT_HOLD fell between two of them)."""
+    seq = []
+    for t, tk in obs["ticks"]:
+        m = tk.get("fc")
+        if t0 <= t <= t1 and m and (not seq or seq[-1][1] != m):
+            seq.append((round(t, 2), m))
+    return seq
+
+
+def relanded(seq: list) -> bool:
+    """LAND again after the pilot's ALT_HOLD showed up."""
+    seen = False
+    for _, m in seq:
+        seen = seen or m == "ALT_HOLD"
+        if seen and m == "LAND":
+            return True
+    return False
+
+
+def fc_actions():
+    """The companion's E-stop commands to the FC so far (STATUS, 0.5-2 Hz, so informational)."""
+    return ((last["status"] or {}).get("counters") or {}).get("estop_fc_actions")
 
 
 def body_vx() -> float:
@@ -398,8 +445,8 @@ def app_full() -> None:
     t_latch = wait(lambda: tick().get("es", 0) >= 1 and tick().get("ctl") == 0, 3, 0.02)
     wait(lambda: (app_safety().get("land") or {}).get("confirmed"), 3)
     land_app = app_safety().get("land")
-    snap("4_estop_land")
-    st["rc"] = 1500  # the pilot overrides the stop with the mode switch
+    st["rc"] = 1500  # the pilot overrides the stop with the mode switch, in the air: LAND puts it down in ~1.2 s
+    t_sw, fa0 = now(), fc_actions()
     ovr = mode_cmd("ALT_HOLD", 3.0)
     t_o = time.monotonic()
     kept = True
@@ -407,12 +454,16 @@ def app_full() -> None:
         pump(0.1)
         kept = kept and last["mode"] == "ALT_HOLD" and last["armed"]
     latched = tick().get("es", 0) >= 1 and tick().get("ctl") == 0
+    seen, fa1 = fc_seen(t_sw, now()), fc_actions()
+    snap("4_estop_land")  # after the override (a snapshot can take seconds; before it, 10-18 run 2 overrode on the ground)
     mode_cmd("LAND")
     dis = land_and_disarm(45)
     phase("A7_app_emergency_land", t_land is not None and t_latch is not None and bool(land_app and land_app.get("confirmed"))
           and dis is not None, fc_land_seen_by_pilot_s=t_land, app_confirmed_after_s=(land_app or {}).get("after"), companion_latched_s=t_latch, disarmed_after_s=dis,
           app_events=[e[2] for e in obs["app_events"] if e[0] >= t_press - 0.1][:6])
-    phase("A7b_pilot_override", ovr and kept and latched, override_accepted=ovr, alt_hold_kept_3s=kept, companion_still_latched=latched)
+    phase("A7b_pilot_override", ovr and kept and latched and any(m == "ALT_HOLD" for _, m in seen) and not relanded(seen),
+          override_after_s=round(t_sw - t_press, 2), override_accepted=ovr, alt_hold_kept_3s=kept, companion_still_latched=latched, fc_mode_seen_by_companion=seen[:10],
+          companion_fc_actions=[fa0, fa1])
     st["rc"] = None
     pump(2.0)
     app_press("estop_reset")
@@ -445,14 +496,204 @@ def app_full() -> None:
     pump(3.0)
 
 
+MK = [float(v) for v in a.marker.split(",")]
+LAT0, LON0 = 33.6430, -117.8420  # SITL home = the EKF origin (sitl_rig.py, companion.yaml mavlink.ekf_origin)
+
+
+def truth(i: int = -1):
+    """Simulator truth (SIM_STATE): (t, north, east, yaw deg) from the take-off point."""
+    if not obs["truth"]:
+        return None
+    t, la, lo, yaw = obs["truth"][i]
+    k = 111319.49e-7
+    return t, (la - LAT0 * 1e7) * k, (lo - LON0 * 1e7) * k * math.cos(math.radians(LAT0)), math.degrees(yaw)
+
+
+def at_marker() -> dict:
+    """Where the drone is (truth) relative to the marker: distance, facing error; the marker estimate's error."""
+    tr = truth()
+    if tr is None:
+        return {"in_place": False, "why": "no SIM_STATE"}
+    _, n, e, yaw = tr
+    d = math.hypot(MK[0] - n, MK[1] - e)
+    face = abs((math.degrees(math.atan2(MK[1] - e, MK[0] - n)) - yaw + 180) % 360 - 180)
+    est = (tick().get("trk") or {}).get("est")
+    out = {"dist_m": round(d, 2), "facing_err_deg": round(face, 1), "truth_ne": [round(n, 2), round(e, 2)],
+           "est_err_m": None if not est else round(math.hypot(est[0] - MK[0], est[1] - MK[1]), 2), "mk": tick().get("mk")}
+    out["in_place"] = 0.75 <= d <= 1.35 and face < 15
+    return out
+
+
+def r_max(t0: float) -> float:
+    pts = [truth(i) for i in range(len(obs["truth"])) if obs["truth"][i][0] >= t0]
+    return round(max((math.hypot(p[1], p[2]) for p in pts), default=0.0), 2)
+
+
+def trk() -> dict:
+    return tick().get("trk") or {}
+
+
+def trk_states(t0: float) -> list:
+    seq = []
+    for t, tk in obs["ticks"]:
+        s_ = (tk.get("trk") or {}).get("st", "OFF")
+        if t >= t0 and (not seq or seq[-1][1] != s_):
+            seq.append((round(t, 1), s_))
+    return seq
+
+
+def target_events(t0: float) -> list:
+    return [e[2] for e in sorted(obs["events"].values()) if e[0] >= t0 and e[2].startswith("target")]
+
+
+def track_auto() -> None:
+    """TRACK through the ECL link (as the automated run): see T1-T9 in the docstring."""
+    # ---------------------------------------------------------------- T1 hand-over mode TRACK before take-off
+    ack = cmd("handover", mode="track")
+    pump(1.0)
+    mst = (last["status"] or {}).get("marker") or {}
+    phase("T1_handover_track", bool(ack and ack.get("ok")) and tick().get("ho") == "TRACK" and bool(mst.get("detector")),
+          ack=ack, ho=tick().get("ho"), marker=mst)
+    # ---------------------------------------------------------------- T2 take-off: the search starts at the hand-over
+    ho = takeoff_handover("track flight 1")
+    t_ho = now()
+    tr0 = truth()
+    start = None if tr0 is None else {"ne": [round(tr0[1], 2), round(tr0[2], 2)], "yaw": round(tr0[3]),
+                                      "to_marker_m": round(math.hypot(MK[0] - tr0[1], MK[1] - tr0[2]), 2)}
+    t_s = wait(lambda: trk().get("st") in ("SEARCH", "APPROACH", "ARRIVED"), 3)
+    phase("T2_handover_starts_search", ho["ctl_after_s"] is not None and ho["op_at_handover"] == "TRACK" and t_s is not None,
+          **ho, start=start, trk=trk())
+    # ---------------------------------------------------------------- T3 arrived: in front of the marker, facing it
+    t_arr = wait(lambda: trk().get("st") == "ARRIVED", 120, 0.2)
+    pump(5.0)
+    res = at_marker()
+    rm = r_max(t_ho)
+    far = start is not None and start["to_marker_m"] > 1.4  # it had to fly there (a fresh rig starts at home, nose north)
+    phase("T3_track_arrived", t_arr is not None and res["in_place"] and rm < 2.0 and far, arrived_after_s=None if t_arr is None else round(t_arr, 1),
+          **res, r_max_m=rm, started_far=far, states=trk_states(t_ho)[:8], events=target_events(t_ho)[:8])
+    # ---------------------------------------------------------------- T4 HOLD stops the tracker
+    ack = cmd("hold")
+    t0 = now()
+    off = wait(lambda: "trk" not in tick() and tick().get("opm") == "HOLD", 2)
+    pump(3.0)
+    phase("T4_hold_stops_tracking", bool(ack and ack["ok"]) and off is not None, ack=ack, after_s=off,
+          drift_m=round(path_len(t0, now()), 2))
+    # ---------------------------------------------------------------- T5 TRACK again: a fresh search
+    ack = cmd("track")
+    t0 = now()
+    t_arr = wait(lambda: trk().get("st") == "ARRIVED", 90, 0.2)
+    pump(3.0)
+    res = at_marker()
+    ev = target_events(t0)
+    phase("T5_track_again", bool(ack and ack["ok"]) and t_arr is not None and res["in_place"] and any(x.startswith("target: search") for x in ev),
+          ack=ack, arrived_after_s=None if t_arr is None else round(t_arr, 1), **res, events=ev[:6])
+    # ---------------------------------------------------------------- T6 GOTO while tracking
+    ack = cmd("goto", x=0.0, y=0.0)
+    t0 = now()
+    off = wait(lambda: "trk" not in tick() and tick().get("opm") == "GOTO", 2)
+    t = wait(lambda: tick().get("opm") == "HOLD", 60)
+    dd = [math.hypot(x, y) for tt, x, y, *_ in obs["lpn"] if tt >= t0]
+    phase("T6_goto_while_tracking", bool(ack and ack["ok"]) and off is not None and t is not None and min(dd or [9]) < 0.45, ack=ack,
+          tracker_off_after_s=off, to_hold_s=t, min_dist_m=round(min(dd or [9]), 2))
+    # ---------------------------------------------------------------- T7 console link lost while tracking
+    cmd("track")
+    pump(3.0)
+    st["ecl_on"] = False
+    t_lost = now()
+    pump(4.0)
+    st["ecl_on"] = True
+    pump(2.5)
+    ev = [e[2] for k_, e in sorted(obs["events"].items()) if e[0] >= t_lost - 0.5]
+    phase("T7_link_lost_while_tracking", tick().get("opm") == "HOLD" and "trk" not in tick() and any("console link lost" in x for x in ev),
+          opm=tick().get("opm"), trk=trk(), events=ev[:8])
+    # ---------------------------------------------------------------- T8 the pilot takes over and hands back
+    cmd("track")
+    pump(4.0)
+    lo = mode_cmd("LOITER")
+    rel = wait(lambda: tick().get("ctl") == 0, 3)
+    pump(3.0)
+    t0 = now()
+    mode_cmd("GUIDED")
+    back = wait(lambda: tick().get("ctl") == 1, 8)
+    fresh = wait(lambda: any(x.startswith("target: search") for x in target_events(t0)), 4)
+    phase("T8_pilot_takeover_and_back", lo and rel is not None and back is not None and tick().get("opm") == "TRACK" and fresh is not None,
+          loiter=lo, released_s=rel, back_s=back, opm=tick().get("opm"), events=target_events(t0 - 4)[:6])
+    pump(3.0)
+    # ---------------------------------------------------------------- T9 emergency LAND while tracking
+    t_es = time.monotonic()
+    own = g.mav.srcSystem
+    t_land = t_latch = None
+    while time.monotonic() - t_es < 6:
+        L.estop(1)
+        g.mav.srcSystem = 250
+        g.mav.command_long_send(1, 1, 176, 0, 1, 9, 0, 0, 0, 0, 0)
+        g.mav.srcSystem = own
+        pump(0.2)
+        if t_land is None and last["mode"] == "LAND":
+            t_land = time.monotonic() - t_es
+        if t_latch is None and tick().get("es", 0) >= 1 and tick().get("ctl") == 0:
+            t_latch = time.monotonic() - t_es
+        if t_land is not None and t_latch is not None:
+            break
+    off = wait(lambda: "trk" not in tick(), 2)
+    dis = land_and_disarm(45)
+    phase("T9_estop_while_tracking", t_land is not None and t_latch is not None and off is not None and dis is not None,
+          fc_land_s=t_land, companion_latched_s=t_latch, tracker_off_s=off, opm=tick().get("opm"), disarmed_after_s=dis)
+    st["rc"] = None
+    pump(2.0)
+    cmd("estop_reset")
+    cmd("handover", mode="hold")
+    pump(1.0)
+
+
+def app_track() -> None:
+    """TRACK through the Mac app: hand-over mode and buttons as the page sends them, snapshots of the map."""
+    ack = app_cmd("handover", mode="track")
+    pump(1.0)
+    phase("AT1_app_handover_track", bool(ack and ack["ok"]) and tick().get("ho") == "TRACK", ack=ack, ho=tick().get("ho"))
+    ho = takeoff_handover("app track flight")
+    t_ho = now()
+    tr0 = truth()
+    d0 = None if tr0 is None else round(math.hypot(MK[0] - tr0[1], MK[1] - tr0[2]), 2)
+    wait(lambda: trk().get("st") == "APPROACH", 60, 0.2)
+    pump(1.5)
+    snap("t0_approach")
+    t_arr = wait(lambda: trk().get("st") == "ARRIVED", 120, 0.2)
+    pump(5.0)
+    res = at_marker()
+    snap("t1_arrived")
+    phase("AT2_app_track_arrived", ho["ctl_after_s"] is not None and t_arr is not None and res["in_place"] and (d0 or 0) > 1.4, handover=ho,
+          start_to_marker_m=d0,
+          arrived_after_s=None if t_arr is None else round(t_arr, 1), **res, states=trk_states(t_ho)[:8], link=app_link())
+    ack = app_cmd("hold")
+    off = wait(lambda: "trk" not in tick() and tick().get("opm") == "HOLD", 2)
+    phase("AT3_app_hold", bool(ack and ack["ok"]) and off is not None, ack=ack, after_s=off)
+    ack = app_cmd("track")
+    t_arr = wait(lambda: trk().get("st") == "ARRIVED", 90, 0.2)
+    pump(3.0)
+    res = at_marker()
+    snap("t2_track_again")
+    phase("AT4_app_track_again", bool(ack and ack["ok"]) and t_arr is not None and res["in_place"], ack=ack,
+          arrived_after_s=None if t_arr is None else round(t_arr, 1), **res)
+    app_press("land")
+    t = wait(lambda: last["mode"] == "LAND", 6, 0.02)
+    off = wait(lambda: "trk" not in tick(), 2)
+    dis = land_and_disarm(45)
+    phase("AT5_app_land", t is not None and off is not None and dis is not None, fc_land_s=t, tracker_off_s=off, disarmed_after_s=dis)
+    st["rc"] = None
+    pump(2.0)
+    app_cmd("handover", mode="hold")
+    pump(1.0)
+
+
 try:
     print(f"[{now():6.1f}] waiting for the FC and the companion...", flush=True)
     ok = wait(lambda: last["hb"] > 0 and tick().get("k", 0) > 0 and len(obs["lpn"]) > 5, 150, 0.5)
     if ok is None:
         raise SystemExit(f"no FC / companion / position: hb {last['hb']} tick {bool(last['tick'])} lpn {len(obs['lpn'])}")
     pump(8.0)  # EKF settles on flow + route B
-    if a.scenario == "app_full":
-        app_full()
+    if a.scenario in ("app_full", "app_track", "track"):
+        {"app_full": app_full, "app_track": app_track, "track": track_auto}[a.scenario]()
         raise SystemExit(0)
     if a.scenario in ("app", "app_kill"):
         # pilot only: the Mac app does the emergency stops; we record what the FC does
@@ -584,6 +825,7 @@ try:
             break
     # the pilot overrides the stop (mode switch to ALT_HOLD): nothing may force LAND / disarm again
     st["rc"] = 1500
+    t_sw, fa0 = now(), fc_actions()
     ovr = mode_cmd("ALT_HOLD", 3.0)
     t_o = time.monotonic()
     kept = True
@@ -591,12 +833,14 @@ try:
         pump(0.1)
         kept = kept and last["mode"] == "ALT_HOLD" and last["armed"]
     latched = tick().get("es", 0) >= 1 and tick().get("ctl") == 0
+    seen, fa1 = fc_seen(t_sw, now()), fc_actions()
     mode_cmd("LAND")
     dis = land_and_disarm(45)
     phase("P9_emergency_land", t_land is not None and t_latch is not None and dis is not None, fc_land_s=t_land,
           companion_latched_s=t_latch, disarmed_after_s=dis)
-    phase("P9b_pilot_override_after_stop", ovr and kept and latched, override_accepted=ovr, alt_hold_kept_3s=kept,
-          companion_still_latched=latched)
+    phase("P9b_pilot_override_after_stop", ovr and kept and latched and any(m == "ALT_HOLD" for _, m in seen) and not relanded(seen),
+          override_after_s=round(t_sw - (t_es - T0), 2), override_accepted=ovr, alt_hold_kept_3s=kept, companion_still_latched=latched, fc_mode_seen_by_companion=seen[:10],
+          companion_fc_actions=[fa0, fa1])
     st["rc"] = None
     # ---------------------------------------------------------------- P10
     pump(2.0)
@@ -638,6 +882,9 @@ try:
     st["rc"] = None
     cmd("estop_reset")
     pump(2.0)
+except Exception as e:  # a crash mid-run is a FAIL, whatever the phases so far say
+    rep["error"] = f"{type(e).__name__}: {e}"
+    raise
 finally:
     rep["modes"] = obs["modes"]
     rep["fc_texts"] = [x for x in obs["texts"] if x[1] == 1][-40:]
@@ -651,6 +898,6 @@ finally:
         rep["app_errors"] = obs["app_errors"]
         rep["app_link_end"] = app_link()
         rep["snaps"] = obs["snaps"]
-    rep["pass"] = all(p["pass"] for p in rep["phases"].values()) if rep["phases"] else False
+    rep["pass"] = all(p["pass"] for p in rep["phases"].values()) and "error" not in rep if rep["phases"] else False
     json.dump(rep, open(a.out, "w"), indent=1, default=str)
     print("PASS" if rep["pass"] else "FAIL", "->", a.out, flush=True)

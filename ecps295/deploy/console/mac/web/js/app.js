@@ -13,7 +13,9 @@ const eyes = new EyesView($("eyes"), $("camInfo"));
 const flight = new FlightView($("adi"), $("tiles"), $("health"), $("chAlt"), $("chTick"));
 const map = new MapView($("map3d"), $("mapwrap"), $("mapLegend"), onPick);
 
-const MODES = { PATROL: ["大脑巡逻", "Brain patrol"], HOLD: ["悬停", "Hold"], GOTO: ["前往目标", "Go to goal"], MANUAL: ["手动", "Manual"], LAND: ["降落", "Land"] };
+const MODES = { PATROL: ["大脑巡逻", "Brain patrol"], HOLD: ["悬停", "Hold"], GOTO: ["前往目标", "Go to goal"], MANUAL: ["手动", "Manual"], TRACK: ["跟踪目标", "Track target"], LAND: ["降落", "Land"] };
+// target tracking (2026-10-18): the pilot's target layer states, and how the TICK reports them (trk, mk)
+const TRK = { SEARCH: ["搜索中", "Searching"], APPROACH: ["接近中", "Approaching"], ARRIVED: ["已到达", "Arrived"], LOST: ["丢失", "Lost"], FAILED: ["没找到", "Not found"] };
 const modeName = (m, raw = m) => (MODES[m] ? L(...MODES[m]) : raw);
 const EKF_ORIGIN = [33.643, -117.842, 20.0];  // companion.yaml mavlink.ekf_origin (= the SITL home)
 let S = null;          // native state (10 Hz)
@@ -49,6 +51,7 @@ link.addEventListener("ack", (e) => {
   const a = e.detail;
   if (!a.c || a.c === "stick" || a.c === "lang") return;
   const what = a.op || a.c;
+  if (a.op === "handover" && !a.ok && hoAsked === "track") sendHandover("hold");  // TRACK refused here: the safe choice
   $("ackTxt").textContent = L(`${what}：${a.ok ? "✓ 已确认" : "✕ " + (a.msg || "失败")}`, `${what}: ${a.ok ? "✓ acknowledged" : "✕ " + (a.msg || "failed")}`);
   if (!a.ok || a.msg) addLog(a.ok ? "info" : "warn", L("控制台", "Console"), L(`${what}：${a.ok ? "已确认" : "失败"} ${a.msg || ""}`, `${what}: ${a.ok ? "acknowledged" : "failed"} ${a.msg || ""}`));
 });
@@ -192,22 +195,26 @@ function estopBar(fc, sf) {
 function onTick() {
   map.onTick(T);
   tickText();
-  if (!handoverSent && T.ho && T.ho.toLowerCase() !== wantHandover) { handoverSent = true; cmd("handover", { mode: wantHandover }); }
+  trkChip(T);
+  if (!handoverSent && T.ho && T.ho.toLowerCase() !== wantHandover) { handoverSent = true; sendHandover(wantHandover); }
   if (T.ho) handoverSent = true;
 }
 
 function tickText() {
   const b = behaviour(T);
   const op = T.op;
-  if (T.ctl && op !== "PATROL" && op !== "GOTO") { $("gname").innerHTML = `${modeName(op)}<small>${L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")}</small>`; }
-  else $("gname").innerHTML = `${b.name}<small>${T.ctl ? (op === "GOTO" ? L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias") : L("大脑驾驶", "brain flying")) : L("未接管：仅显示大脑会怎么做", "not in control: what the brain would do")}</small>`;
+  if (T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK") { $("gname").innerHTML = `${modeName(op)}<small>${L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")}</small>`; }
+  else $("gname").innerHTML = `${b.name}<small>${T.ctl ? (op === "GOTO" ? L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias")
+    : op === "TRACK" ? L("跟踪目标（目标层：搜索、接近、面向标记，大脑的逃逸仍优先）", "tracking: search, approach, face the marker (the brain's escapes still win)")
+    : L("大脑驾驶", "brain flying")) : L("未接管：仅显示大脑会怎么做", "not in control: what the brain would do")}</small>`;
   $("chain").textContent = b.chain + (T.illm ? L(` · 错觉：${T.illm}`, ` · illusion: ${T.illm}`) : "");
   $("tclock").textContent = `t ${T.t != null ? T.t.toFixed(1) : "—"} s`;
 }
 
-const SRC = { watchdog: ["看门狗", "Watchdog"], guard: ["传感器守护", "Sensor guard"], governor: ["安全调速", "Governor"], brain: ["大脑", "Brain"], operator: ["指引", "Guidance"], console: ["链路", "Link"] };
+const SRC = { target: ["跟踪", "Tracking"], watchdog: ["看门狗", "Watchdog"], guard: ["传感器守护", "Sensor guard"], governor: ["安全调速", "Governor"], brain: ["大脑", "Brain"], operator: ["指引", "Guidance"], console: ["链路", "Link"] };
 function onStatus() {
   if (ST.limits) map.setLimits(ST.limits);
+  map.setTrack(!!ST.marker);
   for (const e of ST.events || []) {
     const [id, , src, text] = e;
     if (id < maxEv - 50) { seenEv.clear(); maxEv = 0; }  // a new companion run: ids restart
@@ -220,12 +227,15 @@ function onStatus() {
 
 // ---------------------------------------------------------------- commands
 function cmd(op, args = {}) { return link.send({ c: "cmd", op, ...args }); }
+let hoAsked = "";  // the last hand-over mode asked for (a refused TRACK falls back to HOLD)
+function sendHandover(mode) { hoAsked = mode; cmd("handover", { mode }); }
 
 document.querySelectorAll("[data-op]").forEach((b) => (b.onclick = () => cmd(b.dataset.op)));
 $("bLand").onclick = () => link.send({ c: "land" });
 $("bEland").onclick = () => link.send({ c: "estop", level: 1 });
 $("bHome").onclick = () => cmd("goto", { x: 0, y: 0 });
 $("bManual").onclick = () => cmd("manual", { on: !(T && T.opm === "MANUAL") });
+$("bTrack").onclick = () => cmd("track");
 let picking = false;
 $("bPick").onclick = () => setPicking(!picking);
 function setPicking(on) {
@@ -243,7 +253,7 @@ function onPick(n, e) {
   $("bNo").onclick = () => setPicking(false);
 }
 document.querySelectorAll("[data-ho]").forEach((b) => (b.onclick = () => {
-  wantHandover = b.dataset.ho; localStorage.setItem("ecps.handover", wantHandover); cmd("handover", { mode: wantHandover });
+  wantHandover = b.dataset.ho; localStorage.setItem("ecps.handover", wantHandover); sendHandover(wantHandover);
 }));
 document.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => {
   document.querySelectorAll("[data-view]").forEach((x) => x.classList.toggle("on", x === b)); map.setView(b.dataset.view);
@@ -303,6 +313,7 @@ window.addEventListener("keydown", (e) => {
   else if (k === "g") setPicking(!picking);
   else if (k === "b") cmd("goto", { x: 0, y: 0 });
   else if (k === "m") $("bManual").onclick();
+  else if (k === "t") cmd("track");
   else if (k === "l") link.send({ c: "land" });
 });
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
@@ -323,17 +334,43 @@ function dockState() {
     b.title = baseTitle(b) + (on && !ctl ? L("（机载程序接管后可用：飞手起飞并拨到 GUIDED）", " (once the companion is in control: the pilot takes off and switches to GUIDED)") : "");
   });
   $("bPick").disabled = !on || !ctl || !pose; $("bHome").disabled = !on || !ctl || !pose;
+  const mk = ST && ST.marker, det = !!(mk && mk.detector);  // marker: null = no target layer in this runtime
+  $("bTrack").hidden = !mk;
+  $("bTrack").disabled = !on || !ctl || !pose || !det;
+  if (mk && !det) $("bTrack").title = baseTitle($("bTrack")) + L("（机载程序没有标记检测：hw 配置 marker.enabled、相机）", " (no marker detector on the companion: hw config marker.enabled, camera)");
+  const hoT = document.querySelector('[data-ho="track"]');
+  hoT.hidden = !mk; hoT.disabled = !det;
   $("bLand").disabled = false;
   const opm = t ? t.opm : null;
   document.querySelectorAll("[data-op]").forEach((b) => b.classList.toggle("on", ctl && opm === b.dataset.op.toUpperCase()));
   $("bManual").classList.toggle("on", ctl && opm === "MANUAL");
+  $("bTrack").classList.toggle("on", ctl && opm === "TRACK");
   $("bPick").classList.toggle("on", picking || (ctl && opm === "GOTO"));
   document.querySelectorAll("[data-ho]").forEach((b) => b.classList.toggle("on", t && (t.ho || "").toLowerCase() === b.dataset.ho));
   const ho = t ? modeName((t.ho || "").toUpperCase(), t.ho) : "";
   $("modeNow").textContent = !t ? (on ? L("等待数据", "Waiting for data") : L("未连接", "Not connected")) : t.ctl ? modeName(t.opm) : L(`待交接 → ${ho}`, `Standby → ${ho}`);
-  $("modeNote").textContent = t ? (t.ctl ? (t.gnote || zh(t.note || "")) : L("飞手起飞后拨到 GUIDED 即交接", "Hand-over: switch to GUIDED")) : "";
+  $("modeNote").textContent = t ? (t.ctl ? (t.opm === "TRACK" && t.trk ? trkText(t) : t.gnote || zh(t.note || "")) : L("飞手起飞后拨到 GUIDED 即交接", "Hand-over: switch to GUIDED")) : "";
   $("manualHint").textContent = opm === "MANUAL" ? L("手动：W/S 前后 · A/D 偏航 · Q/E 平移 · R/F 升降（松开 = 悬停）", "Manual: W/S fwd/back · A/D yaw · Q/E sideways · R/F up/down (release = hover)") : "";
   document.querySelectorAll("[data-g]").forEach((b) => (b.disabled = !(on && t && t.op === "PATROL")));
+}
+
+// ---------------------------------------------------------------- target tracking: state text and the map chip
+function side(b) { return b >= 0 ? L(`右 ${b.toFixed(0)}°`, `${b.toFixed(0)}° right`) : L(`左 ${(-b).toFixed(0)}°`, `${(-b).toFixed(0)}° left`); }
+function trkText(t) {
+  const k = t.trk, m = t.mk;
+  const seen = m ? L(`标记 ${m[0]} · ${m[1].toFixed(2)} m · ${side(m[2])}`, `marker ${m[0]} · ${m[1].toFixed(2)} m · ${side(m[2])}`) : "";
+  if (!k) return seen ? L(`看到${seen}`, `In view: ${seen}`) : "";
+  const ss = ST && ST.marker && ST.marker.search_s;
+  const clock = k.st === "SEARCH" && k.ts != null ? ` ${Math.round(k.ts)}${ss ? "/" + Math.round(ss) : ""} s` : "";
+  return `${TRK[k.st] ? L(...TRK[k.st]) : k.st}${clock}${seen ? " · " + seen : k.st === "SEARCH" ? "" : L(" · 标记不在视野内", " · marker not in view")}`;
+}
+function trkChip(t) {
+  const el = $("trkChip"), s = t ? trkText(t) : "";
+  el.classList.toggle("on", !!s);
+  if (!s) return;
+  const fx = t.trk && t.trk.fx ? L(` · 定位 ${t.trk.fx} 次`, ` · ${t.trk.fx} fixes`) : "";
+  el.innerHTML = `<span class="dot">◆</span><span></span>`;
+  el.lastChild.textContent = (t.trk ? L("跟踪 · ", "Track · ") : "") + s + fx;
 }
 
 // ---------------------------------------------------------------- settings
@@ -405,12 +442,23 @@ const ZH = [
   [/^goto timeout$/, () => "前往超时"], [/^arrived \((.*)\)$/, (m) => `到达（${m[1]}）`],
   [/^illusion (\w+)$/, (m) => `错觉刺激：${{ palm: "手掌（爬升）", drop: "放下（下降）", left: "左转", right: "右转", rush: "逼近", fist: "静止" }[m[1]] || m[1]}`],
   [/^fence: turning back$/, () => "围栏：掉头"],
+  [/^target search$/, () => "搜索目标（原地转动）"], [/^target not found$/, () => "没找到目标 → 悬停"], [/^target: facing$/, () => "面向目标悬停"],
+  [/^target: (\w+)(?: \((.*)\))?$/, (m) => `目标跟踪：${{ search: "搜索", approach: "接近", arrived: "已到达", lost: "丢失", failed: "没找到", off: "停止" }[m[1]] || m[1]}${m[2] ? `（${trkWhy(m[2])}）` : ""}`],
+  [/^tracking did not start$/, () => "跟踪没能启动"],
   [/^brain stalled (.*) -> hover$/, (m) => `大脑停顿 ${m[1]} → 悬停`],
   [/^console: (\w+)/, (m) => `控制台：${{ hold: "悬停", land: "降落", manual: "手动", goto: "前往", arrived: "到达" }[m[1]] || m[1]}`],
   [/^ceiling$/, () => "高度上限"], [/^floor$/, () => "高度下限"], [/^geofence$/, () => "围栏"],
   [/^battery low -> land$/, () => "电量低 → 降落"], [/^max flight time -> land$/, () => "最长飞行时间 → 降落"], [/^brain timeout$/, () => "大脑超时"],
   [/^camera stale/, () => "相机数据中断"], [/^no EKF position$/, () => "没有 EKF 位置"],
 ];
+function trkWhy(w) {
+  let m;
+  if ((m = w.match(/^marker (\d+) at ([-+\d.]+), ([-+\d.]+), ([\d.]+) m$/))) return `标记 ${m[1]} 在 N ${m[2]} · E ${m[3]}，距离 ${m[4]} m`;
+  if ((m = w.match(/^range ([\d.]+) m$/))) return `距离 ${m[1]} m`;
+  if ((m = w.match(/^nothing in (\d+) s -> hover$/))) return `${m[1]} s 内都没看到 → 悬停`;
+  return { "marker moved": "标记移动了", "flying on to the last goal": "飞向最后的目标点", "last goal reached": "已到最后的目标点",
+    "not seen at the last fix": "最后位置没看到标记", "out of view": "标记离开视野" }[w] || w;
+}
 function zh(text) {
   if (lang === "en") return text;
   for (const [re, f] of ZH) { const m = String(text).match(re); if (m) return f(m); }

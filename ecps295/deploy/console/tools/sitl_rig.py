@@ -17,6 +17,10 @@ Ports: SITL -I3 (TCP 5790); router: companion UDP 14563, console MAVLink UDP 146
 and the production ports: router companion UDP 14560, ground station UDP 14550 (server), console link from the config
 (14700), so the Mac app connects with its default settings. mavlink-router.service holds 14550, so the rig stops it for
 the run and starts it again at the end (and puts the governor back).
+
+--marker n,e,up,yaw[,id] (2026-10-18, target tracking): the camera is rendered from SIM_STATE with this ArUco marker
+standing in the room (companion/sitl_marker.py; the hw config's marker section must be enabled), e.g.
+-1.6,0.8,0.7,-27,7: 1.8 m behind the take-off heading, facing the origin.
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ ap.add_argument("--seconds", type=float, default=1800)
 ap.add_argument("--layout", default="ecps295_cage20.layout.json")
 ap.add_argument("--console-port", type=int, default=14701)
 ap.add_argument("--deployed", action="store_true", help="the installed companion + config and the production ports (see above)")
+ap.add_argument("--marker", default="", help="n,e,up,yaw[,id]: SITL camera with this ArUco marker (target tracking)")
 a = ap.parse_args()
 W, R = Path(a.work), Path(a.opt)
 (W / "sitl").mkdir(parents=True, exist_ok=True)
@@ -114,7 +119,8 @@ def main() -> None:
     )
     time.sleep(3)
     start(["mavlink-routerd", "-c", str(W / "router.conf")], "router.log", cpus="4")
-    sim_io = ["--camera", "sim", "--tof", f"sitl:{W / a.layout}", "--log-dir", str(W / "logs"), "--set", "safety.max_flight_s=900"]
+    cam = f"sitl_marker:{a.marker}" if a.marker else "sim"
+    sim_io = ["--camera", cam, "--tof", f"sitl:{W / a.layout}", "--log-dir", str(W / "logs"), "--set", "safety.max_flight_s=900"]
     if a.deployed:  # as ecps-companion.service (CPUAffinity 6 7, Nice -10, default --hw / --url / console port) but guided
         cmd, env = (["nice", "-n", "-10", "taskset", "-c", "6,7", str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"),
                      "--mode", "guided", "--tag", "console_lan_e2e", *sim_io], None)

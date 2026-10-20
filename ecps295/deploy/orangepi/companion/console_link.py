@@ -10,7 +10,8 @@ Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Every datagr
     stamp (sender monotonic ms); payload <= 1200 bytes; longer messages are split into chunks of one msg
   Pi -> console
     TICK 1    JSON every control tick (20 Hz): pose, brain raw / operator / sent command, DN + input rates, decoder,
-              shield and map-ring state, timing, sensor ages
+              shield and map-ring state, timing, sensor ages; target layer (trk, while it runs) and the marker in
+              view (mk, seen in the last second)
     BRAIN 2   <IHBBB tick, n, rows, cols, nfeat> + zlib(uint8 spike counts per neuron in this tick, then uint8 eye grids
               [eye L, R][feature][rows*cols] in VISION_FEATURES order, 0..1 -> 0..255)
     CAM 3     <BHHI kind (0 brain view gray, 1 colour), w, h, frame no> + JPEG; chunked
@@ -19,13 +20,14 @@ Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Every datagr
     TOF 5     <B count> + per sensor <hBB bearing, n, age (10 ms units)> + float16[n*n] slant ranges (NaN: none)
     TOPO 6    zlib(JSON brain topology: populations, CSC weights, input / output groups); chunked; on request
     ACK 7     JSON {id, op, ok, msg}
-    STATUS 8  JSON 2 Hz: config and limits, event log tail, system (temperatures, clocks, load), counters
+    STATUS 8  JSON 2 Hz: config and limits, event log tail, system (temperatures, clocks, load), counters, marker
+              detector
     PONG 9    PING payload echoed
   console -> Pi
     HELLO 64  JSON {name, cam: brain|color|off, cam_hz, color_w, color_q, lvl: 0-3}; 5 Hz, also the console heartbeat
     PING 65   8 bytes, echoed in a PONG
-    CMD 66    JSON {id, op, ...}: hold | patrol | goto {x, y} | manual {on} | stick {f, l, y, z} (no ACK) | land |
-              gesture {name} | handover {mode} | estop_reset {force}
+    CMD 66    JSON {id, op, ...}: hold | patrol | goto {x, y} | track | manual {on} | stick {f, l, y, z} (no ACK) |
+              land | gesture {name} | handover {mode: hold | patrol | track} | estop_reset {force}
     ESTOP 67  JSON {id, level: 1 land | 2 kill}; the console repeats it until the FC reports LAND / disarmed
     TOPO_REQ 68
 
@@ -43,11 +45,19 @@ governor, so everything downstream still applies: governor limits, ceiling, floo
   GOTO    heading controller to (x, y) in the map frame (flow-EKF local NED); while the brain escapes (saccade, MDN
           retreat, giant fiber) its command wins; arrival -> HOLD; goto_timeout_s -> HOLD
   MANUAL  the operator's sticks (scaled to the manual limits); zero when older than stick_timeout_s
+  TRACK   target tracking (2026-10-18; EcpsPilot.track_start, ecps_target.TargetTrack): the brain's command, which the
+          pilot's target layer shapes after the governor: search by turning on the spot, approach through the
+          waypoint layer to standoff_m in front of the ArUco marker, hover facing it. Needs the runtime's target
+          layer and a marker detector (hw config marker.enabled). The command again starts a fresh search; any
+          other guidance command (GOTO included: one waypoint layer) stops the tracker
   LAND    hover command (the FC is in LAND)
 At every hand-over (the pilot switches to GUIDED and the companion latches control) the mode is reset to the
-console's hand-over choice (default PATROL, i.e. as without a console; the console UI preselects HOLD).
-Console link lost (no HELLO for link_timeout_s): GOTO / MANUAL -> HOLD; still lost after lost_land_s while the
+console's hand-over choice (default PATROL, i.e. as without a console; the console UI preselects HOLD; TRACK starts a
+fresh search).
+Console link lost (no HELLO for link_timeout_s): GOTO / MANUAL / TRACK -> HOLD; still lost after lost_land_s while the
 companion is in control and holding -> LAND (watchdog path). PATROL continues, as without a console.
+The pilot's waypoint and target layers are only changed on the control loop's thread, between two ticks (the target
+layer runs inside pilot.tick): commands from the receive thread are queued and Operator.on_control runs them.
 Emergency stop: ESTOP land latches; the companion releases control at once (in_control gate) and sends LAND to the FC
 itself, rate-limited, until the FC reports LAND (or disarmed) once or accepts our command (COMMAND_ACK); the console
 sends LAND straight through mavlink-router as well. ESTOP kill forces a disarm (MAV_CMD_COMPONENT_ARM_DISARM 0, 21196)
@@ -91,7 +101,7 @@ LEVELS = {
     1: {"tick": 4, "brain": 10, "tof_hz": 1.0, "map_hz": 0.25, "status_hz": 0.5, "cam_max": 1.0},
     0: {"tick": 4, "brain": 0, "tof_hz": 0.0, "map_hz": 0.1, "status_hz": 0.5, "cam_max": 0.0},
 }
-MODES = ("PATROL", "HOLD", "GOTO", "MANUAL", "LAND")
+MODES = ("PATROL", "HOLD", "GOTO", "MANUAL", "TRACK", "LAND")
 ESTOP_NAMES = {0: "", 1: "land", 2: "kill"}
 
 DEFAULTS = {
@@ -106,7 +116,7 @@ DEFAULTS = {
     "goto_timeout_s": 90.0,
     "goto_fence_margin_m": 0.4,  # goals farther than geofence - margin from the origin are refused
     "manual_scale": {"f": 0.6, "l": 0.6, "y": 0.6, "z": 0.5},
-    "handover": "patrol",  # mode at hand-over until a console chooses
+    "handover": "patrol",  # mode at hand-over until a console chooses (patrol | hold | track)
     "status_hz": 2.0,  # before the first tick
     "outq_max": 24000,  # bytes in the socket send queue above which the bulky messages are skipped
 }
@@ -262,7 +272,10 @@ class ConsoleGestures:
 class Operator:
     """Console modes on top of the brain (see the module docstring). GOTO uses the pilot's own waypoint layer
     (EcpsPilot.set_waypoints, 2026-10-17: the brain keeps flying, a goal bias is added to its yaw after the governor)
-    when the runtime has it; otherwise a heading controller replaces the brain's command outside its escapes."""
+    when the runtime has it; otherwise a heading controller replaces the brain's command outside its escapes. TRACK
+    (2026-10-18) runs the pilot's target layer (EcpsPilot.track_start / track_stop).
+    Changes to the pilot's waypoint and target layers are queued (any thread) and run by on_control on the control
+    loop's thread between two ticks (_run_calls), in the order they were asked for."""
 
     def __init__(self, cfg: dict, fence_m: float, pilot, drone):
         self.cfg = cfg
@@ -270,11 +283,15 @@ class Operator:
         self.pilot = pilot
         self.drone = drone
         self.wp = hasattr(pilot, "set_waypoints")  # waypoint layer in EcpsPilot
-        self.wp_goal = False  # the console replaced the pilot's mission with its goal
+        self.trk = hasattr(pilot, "track_start") and getattr(pilot, "target", None) is not None  # target layer
+        self.wp_goal = False  # the console replaced the pilot's mission with its goal (control thread only)
         self.lock = threading.Lock()
+        self._calls: list[tuple] = []  # pilot changes waiting for the control thread
+        self._goal_gen = 0  # goals queued ...
+        self._goal_set = 0  # ... and handed to the pilot: no arrival check while a newer goal waits
         self.mode = "PATROL"
         self.handover = str(cfg.get("handover", "patrol")).upper()
-        if self.handover not in ("PATROL", "HOLD"):
+        if self.handover not in ("PATROL", "HOLD", "TRACK") or (self.handover == "TRACK" and not self.trk):
             self.handover = "PATROL"
         self.goal: tuple[float, float] | None = None
         self.goal_t0 = 0.0
@@ -287,21 +304,37 @@ class Operator:
         self.changes = 0
         self.on_event = lambda src, text: None
 
-    def set_mode(self, mode: str, why: str = "") -> None:
+    def track_ready(self) -> str:
+        """Why TRACK cannot start here ("" = it can)."""
+        if not self.trk:
+            return "no target tracking in this runtime (EcpsPilot.track_start)"
+        if getattr(self.pilot.target, "source", None) is None:
+            return "no marker detector (hw config marker.enabled, camera)"
+        return ""
+
+    def set_mode(self, mode: str, why: str = "", again: bool = False) -> None:
+        """again: enter the mode also when it is the current one (TRACK: a fresh search)."""
         with self.lock:
-            if mode == self.mode:
+            if mode == self.mode and not again:
                 return
-            self.mode = mode
+            prev, self.mode = self.mode, mode
             self.changes += 1
-        if mode != "GOTO" and self.wp_goal and mode != "LAND":
-            self._drop_goal()
+            if mode not in ("GOTO", "LAND"):
+                self._calls.append(("drop",))
+            if self.trk and (mode == "TRACK" or prev == "TRACK"):
+                self._calls.append(("track", mode == "TRACK"))
         self.on_event("operator", f"mode {mode}" + (f" ({why})" if why else ""))
 
     def _drop_goal(self) -> None:
         """Forget the console's goal; a mission the console replaced does not come back (pure brain patrol)."""
-        if self.wp_goal:
-            self.pilot.wp_on = False
-            self.wp_goal = False
+        with self.lock:
+            self._calls.append(("drop",))
+
+    def stop_target(self) -> None:
+        """Stop the pilot's target layer, also one the console did not start (ecps_companion.py --track)."""
+        if self.trk:
+            with self.lock:
+                self._calls.append(("track", False))
 
     def set_goal(self, x: float, y: float) -> str:
         if not (math.isfinite(x) and math.isfinite(y)):
@@ -313,10 +346,11 @@ class Operator:
         with self.lock:
             self.goal = (float(x), float(y))
             self.goal_t0 = time.monotonic()
-        if self.wp:
-            self.pilot.set_waypoints([(float(x), float(y))])
-            self.wp_goal = True
-        with self.lock:
+            if self.trk:  # one waypoint layer: the target layer lets go of it first
+                self._calls.append(("track", False))
+            if self.wp:
+                self._goal_gen += 1
+                self._calls.append(("goal", self.goal, self._goal_gen))
             self.mode = "PATROL" if self.mode == "GOTO" else self.mode  # a new goal while in GOTO: log it again
         self.set_mode("GOTO", f"goal {x:+.2f}, {y:+.2f}" + (" via the waypoint layer" if self.wp else ""))
         return ""
@@ -328,26 +362,53 @@ class Operator:
             self.stick_t = time.monotonic()
 
     def on_control(self, inc: bool) -> None:
-        """Once per tick with the hand-over gate's result: a new hand-over resets the mode to the hand-over choice."""
+        """Once per tick on the control loop's thread with the hand-over gate's result: a new hand-over resets the
+        mode to the hand-over choice; then the queued pilot changes run."""
         if inc and not self.inc:
             with self.lock:
                 self.goal = None
             self._drop_goal()
-            self.set_mode(self.handover, "hand-over")
+            self.set_mode(self.handover, "hand-over", again=self.handover == "TRACK")
         self.inc = inc
+        self._run_calls()
         if self.mode == "GOTO":
             self._goto_progress()
         self.gate_waypoints()
 
+    def _run_calls(self) -> None:
+        with self.lock:
+            calls, self._calls = self._calls, []
+        p = self.pilot
+        for c in calls:
+            try:
+                if c[0] == "drop":
+                    if self.wp_goal:
+                        p.wp_on = False
+                        self.wp_goal = False
+                elif c[0] == "goal":
+                    p.set_waypoints([c[1]])
+                    self.wp_goal = True
+                    self._goal_set = c[2]
+                elif c[0] == "track":
+                    if p.target.active:
+                        p.track_stop()  # also wp_on = False: only when it runs, so a goal queued before stays
+                    if c[1]:
+                        p.track_start()
+            except Exception as e:  # never stop the control loop; tracking that did not start leaves TRACK
+                self.on_event("operator", f"{c[0]} failed: {type(e).__name__}: {e}")
+                if c[0] == "track" and c[1]:
+                    self.set_mode("HOLD", "tracking did not start")
+
     def gate_waypoints(self) -> None:
-        """The pilot's waypoint layer only steers in PATROL (a configured mission) and GOTO (the console's goal)."""
-        if self.wp and getattr(self.pilot, "wp_active", False) and self.effective() not in ("PATROL", "GOTO"):
+        """The pilot's waypoint layer only steers in PATROL (a configured mission), GOTO (the console's goal) and TRACK
+        (the target layer's goal)."""
+        if self.wp and getattr(self.pilot, "wp_active", False) and self.effective() not in ("PATROL", "GOTO", "TRACK"):
             self.pilot.wp_active = False
 
     def _goto_progress(self) -> None:
         with self.lock:
-            t0 = self.goal_t0
-        if self.wp and self.wp_goal and getattr(self.pilot, "wp_done_t", None) is not None:
+            t0, current = self.goal_t0, self._goal_set == self._goal_gen
+        if self.wp and self.wp_goal and current and getattr(self.pilot, "wp_done_t", None) is not None:
             log = getattr(self.pilot, "wp_log", None) or []
             what = log[-1][2] if log else "done"
             d = log[-1][3] if log else float("nan")
@@ -553,7 +614,8 @@ class ConsoleLink:
             n = len(lst)
             if n > n0:
                 for e in list(lst[n0:n])[-20:]:
-                    self.event(name, fmt(e))
+                    text = fmt(e)
+                    self.event("target" if name == "watchdog" and text.startswith("target") else name, text)
                 self._seen[name] = n
 
     # ------------------------------------------------------------------ main-loop hook (cheap: reference hand-off)
@@ -564,7 +626,7 @@ class ConsoleLink:
             if self.lost_since is None:
                 self.lost_since = now
                 self.event("console", "link lost")
-            if self.ops.mode in ("GOTO", "MANUAL"):
+            if self.ops.mode in ("GOTO", "MANUAL", "TRACK"):
                 self.ops.set_mode("HOLD", "console link lost")
             ll = float(self.cfg.get("lost_land_s", 20.0))
             if ll > 0 and inc and self.ops.mode == "HOLD" and now - self.lost_since > ll and not self.pilot.safety.land_requested:
@@ -700,6 +762,8 @@ class ConsoleLink:
     def _command(self, op: str, m: dict, c: Client) -> tuple[bool, str]:
         if self.estop and op not in ("estop_reset", "handover", "gesture"):
             return False, "emergency stop latched: reset it first"
+        if op in ("hold", "patrol", "manual", "land"):
+            self.ops.stop_target()  # any other guidance ends tracking (GOTO: in set_goal)
         if op == "hold":
             self.ops.set_mode("HOLD", c.name)
         elif op == "patrol":
@@ -709,6 +773,11 @@ class ConsoleLink:
             why = self.ops.set_goal(float(m.get("x", "nan")), float(m.get("y", "nan")))
             if why:
                 return False, why
+        elif op == "track":
+            why = self.ops.track_ready()
+            if why:
+                return False, why
+            self.ops.set_mode("TRACK", c.name, again=True)
         elif op == "manual":
             if m.get("on", True):
                 self.ops.set_stick(0, 0, 0, 0)
@@ -723,8 +792,11 @@ class ConsoleLink:
             return True, "companion not in control: the console sends LAND to the FC"
         elif op == "handover":
             mode = str(m.get("mode", "hold")).upper()
-            if mode not in ("PATROL", "HOLD"):
+            if mode not in ("PATROL", "HOLD", "TRACK"):
                 return False, f"hand-over mode {mode}?"
+            why = self.ops.track_ready() if mode == "TRACK" else ""
+            if why:
+                return False, why
             self.ops.handover = mode
             self.event("operator", f"hand-over mode {mode}")
         elif op == "gesture":
@@ -926,7 +998,39 @@ class ConsoleLink:
             d["sh"] = [nd, nb, nv, int("shield" in (cmd.note or ""))]
         if ring:
             d["ring"] = [[round(math.degrees(math.atan2(u[1], u[0]))), round(di * 100)] for u, di in ring]
+        if self.ops.trk:
+            d.update(self._track_json())
         return d
+
+    def _track_json(self) -> dict:
+        """The target layer while it runs (state, marker estimate n / e / up, goal, fixes, seconds in the state) and the
+        detector's latest marker if seen in the last second: [id, range m, bearing deg, age s, below the camera m]."""
+        out = {}
+        tg = self.pilot.target
+        st = tg.state
+        if st != "OFF":
+            est, goal, t = tg.est, tg.goal, getattr(self.pilot, "_t", None)
+            out["trk"] = {"st": st, "est": None if est is None else [_r(est[0]), _r(est[1]), _r(tg.est_z, 2)],
+                          "goal": None if goal is None else [_r(goal[0]), _r(goal[1])], "fx": tg.fixes,
+                          "ts": None if t is None else _r(t - tg.t_state, 1)}
+        src = getattr(tg, "source", None)
+        det = src.latest()[0] if src is not None else None
+        age = None if det is None else time.monotonic() - det.stamp
+        if age is not None and age < 1.0:
+            out["mk"] = [int(det.marker_id), _r(det.range_m, 2), _r(det.bearing_deg, 1), round(age, 2), _r(det.below_m, 2)]
+        return out
+
+    def _marker_json(self):
+        """The marker detector for the console (None: no target layer in this runtime)."""
+        if not self.ops.trk:
+            return None
+        tg = self.pilot.target
+        src = getattr(tg, "source", None)
+        det = getattr(src, "detector", None)
+        return {"detector": None if src is None else str(getattr(src, "status", ""))[:40], "frames": getattr(src, "frames", 0),
+                "hits": getattr(src, "hits", 0), "errors": getattr(src, "errors", 0), "id": getattr(det, "marker_id", None),
+                "size_m": getattr(det, "size", None), "standoff_m": getattr(tg, "standoff", None),
+                "search_s": getattr(tg, "search_s", None)}
 
     def _brain_bin(self, counts, vision) -> bytes:
         cnt = np.minimum(np.asarray(counts), 255).astype(np.uint8)
@@ -1039,6 +1143,7 @@ class ConsoleLink:
                       "confirmed": self.estop_done},
             "lost": round(time.monotonic() - self.lost_since, 1) if self.lost_since else None,
             "map": None if self.map is None else {"res": self.map.res, "half": self.map.half, "frames": self.map.frames},
+            "marker": self._marker_json(),
         }
 
     def summary(self) -> dict:

@@ -1,6 +1,8 @@
 // 3D map: the companion's local occupancy map (ecps_map.LocalMap, 5 cm voxels, flow-EKF frame) as instanced cubes
 // coloured by height, the drone and its track, the live rays of the two 8x8 ToF sensors, the range shield's
 // constraints (the map's nearest obstacle per sector) and query volume, the geofence, the goal; click to pick a goal.
+// Target tracking (2026-10-18): the ArUco marker (the tracker's estimate, or the detector's sighting from the pose), the
+// tracking goal and the line of sight while the marker is in view, in violet.
 // Frame: north / east / up from the EKF origin; three.js x = east, y = up, z = south.
 
 import * as THREE from "three";
@@ -112,6 +114,17 @@ export class MapView {
     // goal and pick preview
     this.goal = this.pin(0x39ff88); this.goal.visible = false; scene.add(this.goal);
     this.preview = this.pin(0xffffff); this.preview.visible = false; scene.add(this.preview);
+
+    // target tracking: marker (solid: the tracker's estimate; faint: a sighting while not tracking), goal, line of sight
+    this.mk = this.markerSprite(); this.mk.visible = false; scene.add(this.mk);
+    this.mkStemGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+    this.mkStem = new THREE.Line(this.mkStemGeo, new THREE.LineBasicMaterial({ color: 0xb388ff, transparent: true, opacity: 0.5 }));
+    this.mkStem.frustumCulled = false; this.mkStem.visible = false; scene.add(this.mkStem);
+    this.tgoal = this.pin(0xb388ff); this.tgoal.visible = false; scene.add(this.tgoal);
+    this.sightGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+    this.sight = new THREE.Line(this.sightGeo, new THREE.LineBasicMaterial({ color: 0xb388ff, transparent: true, opacity: 0.75 }));
+    this.sight.frustumCulled = false; this.sight.visible = false; scene.add(this.sight);
+    this.hasTrack = false;
     this.picking = false;
     this.ray = new THREE.Raycaster();
     canvas.addEventListener("pointerdown", (e) => (this.down = [e.clientX, e.clientY]));
@@ -151,6 +164,24 @@ export class MapView {
     return g;
   }
 
+  markerSprite() {  // an ArUco-like tile with a violet frame, always facing the camera
+    const c = document.createElement("canvas"); c.width = 64; c.height = 64;
+    const g = c.getContext("2d");
+    g.fillStyle = "#b388ff"; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = "#ffffff"; g.fillRect(4, 4, 56, 56);
+    g.fillStyle = "#000000"; g.fillRect(12, 12, 40, 40);
+    g.fillStyle = "#ffffff";
+    for (const [x, y] of [[22, 22], [32, 22], [22, 32], [42, 32], [32, 42]]) g.fillRect(x, y, 10, 10);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+    s.scale.set(0.26, 0.26, 0.26);
+    return s;
+  }
+
+  setTrack(on) {
+    if (on === this.hasTrack) return;
+    this.hasTrack = on; this.drawLegend();
+  }
+
   circle(r, y, color, dashed) {
     const pts = [];
     for (let i = 0; i <= 96; i++) { const a = (i / 96) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r)); }
@@ -183,7 +214,8 @@ export class MapView {
       <div class="row"><span class="sw" style="background:#4cc9f0"></span>${L("ToF 射线 / 命中（前、后 8×8）", "ToF rays / hits (front, rear 8×8)")}</div>
       <div class="row"><span class="sw" style="background:#ec835a"></span>${L("■ 安全盾约束（地图最近障碍） · 橙圈", "■ Shield constraints (nearest mapped obstacle) · orange ring")} d<sub>safe</sub></div>
       <div class="row"><span class="sw" style="background:#d03b3b"></span>${L(`围栏 ${fence} m · 虚线 = 目标点范围`, `Geofence ${fence} m · dashed = goal range`)}</div>
-      <div class="row"><span class="sw" style="background:#39ff88"></span>${L("航迹 / 目标点", "Track / goal")}</div>`;
+      <div class="row"><span class="sw" style="background:#39ff88"></span>${L("航迹 / 目标点", "Track / goal")}</div>` + (this.hasTrack ? `
+      <div class="row"><span class="sw" style="background:#b388ff"></span>${L("ArUco 标记 / 跟踪目标点（浅色 = 看到但未跟踪）", "ArUco marker / tracking goal (faint = seen, not tracking)")}</div>` : "");
   }
 
   resize() {
@@ -241,6 +273,7 @@ export class MapView {
       this.trailGeo.attributes.position.needsUpdate = true;
     }
     if (t.goal) { this.goal.visible = true; this.goal.position.copy(V(t.goal[0], t.goal[1], 0)); } else this.goal.visible = false;
+    this.target(t);
     // shield constraints: body-frame sector angle (deg, + right) and distance to the obstacle surface (cm)
     const rp = this.ringGeo.attributes.position.array, rc = this.ringGeo.attributes.color.array;
     const ring = t.ring || [];
@@ -254,6 +287,31 @@ export class MapView {
       } else { rp[i * 3 + 1] = -50; }
     }
     this.ringGeo.attributes.position.needsUpdate = true; this.ringGeo.attributes.color.needsUpdate = true;
+  }
+
+  target(t) {
+    const k = t.trk, m = t.mk, p = this.pose;
+    let pos = null;
+    if (k && k.est) pos = [k.est[0], k.est[1], k.est[2] != null ? k.est[2] : p.u];
+    else if (m && m[1] != null && m[2] != null) {  // a sighting: range and bearing from the current pose
+      const a = p.yaw + rad(m[2]);
+      pos = [p.n + m[1] * Math.cos(a), p.e + m[1] * Math.sin(a), p.u - (m[4] || 0)];
+    }
+    this.mk.visible = this.mkStem.visible = !!pos;
+    if (pos) {
+      this.mk.position.copy(V(pos[0], pos[1], Math.max(0.05, pos[2])));
+      this.mk.material.opacity = k && k.est ? 1 : 0.5;
+      const s = this.mkStemGeo.attributes.position.array;
+      s.set([pos[1], 0, -pos[0], pos[1], Math.max(0.05, pos[2]), -pos[0]]);
+      this.mkStemGeo.attributes.position.needsUpdate = true;
+    }
+    this.tgoal.visible = !!(k && k.goal);
+    if (k && k.goal) this.tgoal.position.copy(V(k.goal[0], k.goal[1], 0));
+    this.sight.visible = !!(m && pos);
+    if (this.sight.visible) {
+      this.sightGeo.attributes.position.array.set([p.e, p.u, -p.n, pos[1], Math.max(0.05, pos[2]), -pos[0]]);
+      this.sightGeo.attributes.position.needsUpdate = true;
+    }
   }
 
   onTof(sensors) {

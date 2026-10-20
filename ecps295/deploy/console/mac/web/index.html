@@ -68,6 +68,7 @@
         <div class="maplegend" id="mapLegend"></div>
         <div class="pickHint" id="pickHint"><span data-en="Click the ground to pick a goal ·">点击地面选择目标点 ·</span> <kbd>Esc</kbd> <span data-en="= emergency land; press “Pick goal” again to cancel">为紧急降落，取消选点请再按「选点前往」</span></div>
         <div class="goalChip" id="goalChip"></div>
+        <div class="trkChip" id="trkChip"></div>
       </div>
       <div class="dock" id="dock">
         <div class="dockRow">
@@ -76,12 +77,13 @@
           <button class="g" data-op="patrol" title="大脑自主巡逻（无控制台时的默认行为）" data-en-title="The brain patrols on its own (the default without a console)"><span data-en="Brain patrol">大脑巡逻</span><kbd>P</kbd></button>
           <button class="g" id="bPick" title="在 3D 地图上点选目标点：大脑带着避障和扫视飞过去（航点层）" data-en-title="Pick a goal on the 3D map: the brain flies there with its own avoidance and saccades (waypoint layer)"><span data-en="Pick goal">选点前往</span><kbd>G</kbd></button>
           <button class="g" id="bHome" title="飞回起点（EKF 原点）" data-en-title="Fly back to the start point (EKF origin)"><span data-en="Home">返回起点</span><kbd>B</kbd></button>
+          <button class="g" id="bTrack" title="跟踪 ArUco 标记：原地转动搜索，找到后飞到它前方约 1 m，悬停并面向它（仍经过安全盾和围栏）" data-en-title="Track the ArUco marker: search by turning on the spot, then fly to about 1 m in front of it and hover facing it (still through the shield and the geofence)"><span data-en="Track">跟踪</span><kbd>T</kbd></button>
           <button class="g" id="bManual" title="键盘手动：W/S 前后 A/D 偏航 Q/E 平移 R/F 升降（仍经过安全盾）" data-en-title="Keyboard manual: W/S forward/back, A/D yaw, Q/E sideways, R/F up/down (still through the shield)"><span data-en="Manual">手动</span><kbd>M</kbd></button>
           <button class="g land" id="bLand" title="降落：飞控进入 LAND" data-en-title="Land: the FC switches to LAND"><span data-en="Land">降落</span><kbd>L</kbd></button>
         </div>
         <div class="dockRow small">
           <span class="lbl" data-en="After hand-over">交接后</span>
-          <span class="seg" id="hoSeg"><button data-ho="hold" data-en="Hold">悬停</button><button data-ho="patrol" data-en="Patrol">巡逻</button></span>
+          <span class="seg" id="hoSeg"><button data-ho="hold" data-en="Hold">悬停</button><button data-ho="patrol" data-en="Patrol">巡逻</button><button data-ho="track" data-en="Track">跟踪</button></span>
           <span class="hint" id="manualHint"></span>
           <span class="spacer"></span>
           <span class="lbl" id="ackTxt"></span>
