@@ -743,7 +743,9 @@ try:
     win = [tk for t, tk in obs["ticks"] if t >= t0]
     nv1 = obs["map"][-1][1] if obs["map"] else 0
     plen = path_len(t0, now())
-    phase("P3_patrol", bool(ack and ack["ok"]) and plen > 0.4 and nv1 > 100 and obs["tof"] - tof0 > 50,
+    # ToF: a client without "lvl" gets level 2, 4 Hz checked once per companion tick, i.e. 3.3-3.6 Hz = 50-54 frames in
+    # 15 s; ">= 45" leaves room for jitter (the old "> 50" failed with exactly 50 on 2026-10-19)
+    phase("P3_patrol", bool(ack and ack["ok"]) and plen > 0.4 and nv1 > 100 and obs["tof"] - tof0 >= 45,
           path_m=round(plen, 2), map_vox=[nv0, nv1], tof_msgs=obs["tof"] - tof0, brain_msgs=obs["brain"] - br0,
           op=[tk.get("op") for tk in win[-1:]], saccades=sum(1 for tk in win if tk.get("dec", {}).get("sacc")),
           shield_clamps=sum(1 for tk in win if (tk.get("sh") or [0, 0, 0, 0])[3]))
