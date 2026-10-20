@@ -1,7 +1,8 @@
 # Gazebo target-tracking tests (2026-10-18/19)
 
 Run tree (since 2026-10-19): a git worktree of branch feat/trk-gazebo, on ROG `~/sim/wt/trk` (`git worktree add` in
-`~/sim/FlyDrones`; the Mac pushes the branch there with `git push ROG-laptop:sim/FlyDrones feat/trk-gazebo`). The
+`~/sim/FlyDrones`; the Mac pushes to a hand-off ref, `git push ROG-laptop:sim/FlyDrones feat/trk-gazebo:mac/trk-gazebo`, then
+`git merge --ff-only mac/trk-gazebo` in the ROG worktree: the checked-out branch itself refuses pushes). The
 runners in `scripts/trk/` resolve every path from their own location; untracked runtime files: `minifly/*.npz` (copy from
 `~/sim/FlyDrones/ecps295/minifly`) and the generated marker worlds. Setup and run (ROG, conda env flydrones):
 
