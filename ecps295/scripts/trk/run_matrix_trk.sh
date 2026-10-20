@@ -1,0 +1,34 @@
+# usage: run_matrix.sh <matrix file> <log>     each line: <tag> <world> <variant> <seed> <run_g4 mode args...>
+# variant = minifly/<variant>.yaml with the ECPS decoder/pilot/retina; up_<name> = upstream modules with <name>.yaml
+# runs every line through gz_g4.sh (custom MiniFly read-out, pilot and retina) and logs one summary line per run
+# NAV=flow / EXTRA_PARM=... in the environment are passed on to gz_g4.sh
+H=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  # 2026-10-19: run from the git worktree (ecps295/scripts/trk), not a hand-copied ~/sim/rl_trk
+M=$(cd "$H/../.." && pwd)/minifly
+quiet() { [ "$ECPS_QUIET_OFF" = 1 ] && return 1; local m=$((10#$(TZ=America/Los_Angeles date +%H) * 60 + 10#$(TZ=America/Los_Angeles date +%M))); [ $m -ge 55 ] && [ $m -lt 420 ]; }  # user rule: no runs 01:00-07:00 PT (no start after 00:55)
+while read -r tag world variant seed args; do
+  [ -z "$tag" ] || [ "${tag:0:1}" = "#" ] && continue
+  while quiet; do sleep 120; done
+  args=${args//@E@/${M%/minifly}}  # @E@ in a matrix line = this worktree's ecps295/ (marker specs under gazebo/worlds)
+  arm=intact; [[ $variant == *@* ]] && { arm=${variant#*@}; variant=${variant%%@*}; }  # <variant>@<rl.arms arm>
+  case $variant in
+    up_*) mods="--config $M/${variant#up_}.yaml --decoder upstream --pilot upstream --retina upstream" ;;  # upstream FlyDrones
+    *) mods="--config $M/$variant.yaml --decoder ecps --pilot ecps --retina ecps" ;;
+  esac
+  ECPS_ARM=$arm bash $H/gz_g4_trk.sh ecps295_$world.sdf $tag "$args --seed $seed $mods --out run" > /dev/null 2>&1
+  /usr/bin/python3 - "$tag" "$HOME/sim/runs/$tag/run.json" <<'PY' >> "$2"
+import json, os, sys
+tag, path = sys.argv[1], sys.argv[2]
+try:
+    j = json.load(open(path))
+except Exception as e:
+    print(f"{tag} FAILED {e!r}"); sys.exit()
+keys = ["contact_episodes", "near_miss_episodes", "min_clearance_m", "path_m", "coverage", "fence_turn_s", "escapes",
+        "nav", "ekf_err_xy_max_m", "radius_true_max_m", "trk_pass", "trk_final_state", "trk_t_start", "trk_t_approach", "trk_t_arrived", "trk_end_dist_m", "trk_end_facing_err_deg", "trk_est_err_m", "trk_range_err_med_m", "trk_bearing_err_med_deg", "trk_hits", "trk_frames", "trk_escapes_ignored"]
+rtf = None  # whole-run "RTF run X over N s" (gz_g4.sh); the 40-sample window mean was too noisy to judge a run
+for line in open(path.replace("run.json", "rtf.log")) if os.path.exists(path.replace("run.json", "rtf.log")) else []:
+    if line.startswith("RTF run"):
+        rtf = line.split()[2]
+print(tag, " ".join(f"{k}={j.get(k)}" for k in keys), f"rtf_run={rtf}", "saccades=" + ",".join(("L" if e[2] < 0 else "R") for e in j["escape_log"]))
+PY
+done < "$1"
+echo DONE >> "$2"

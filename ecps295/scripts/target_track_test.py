@@ -34,7 +34,7 @@ class Cam:
     def latest(self): return self.det, self.stamp
 
 
-def fly(p, secs, marker=lambda t: (2.5, 1.0, 1.0, 200.0), yaw0=180.0, active=lambda t: True, start_t=0.5):
+def fly(p, secs, marker=lambda t: (2.5, 1.0, 1.0, 200.0), yaw0=180.0, active=lambda t: True, start_t=0.5, brain=None):
     x = y = 0.0; yaw = yaw0; t, dt = 0.0, 0.05
     cam = Cam(); p.target.source = cam
     rng = np.random.default_rng(1)
@@ -52,7 +52,7 @@ def fly(p, secs, marker=lambda t: (2.5, 1.0, 1.0, 200.0), yaw0=180.0, active=lam
             d = DET.detect(img, t)
             cam.det, cam.stamp = (d[0] if d else cam.det), t
         tel = types.SimpleNamespace(t=t, x_m=x, y_m=y, yaw_deg=yaw, alt_m=1.0)
-        cmd = FlightCommand(throttle=0.0, yaw=0.0, forward=0.5)
+        cmd = FlightCommand(throttle=0.0, yaw=0.0, forward=0.5) if brain is None else brain(t, x, y, yaw)
         p._t = t
         if p.target.active:
             cmd = p.target.update(p, cmd, tel, t)
@@ -120,4 +120,32 @@ for a in tr:
     if not states or states[-1] != a[4]: states.append(a[4])
 d = math.hypot(M[0] - x, M[1] - y)
 check("F occluded", p.target.state == "ARRIVED" and NEAR[0] < d < NEAR[1], f"states={states} dist={d:.2f}")
+
+# G (2026-10-19, Gazebo trk1): the brain's looming escape fires on the marker inside 1.4 m (saccade left + back off).
+# The tracker trusts the detection straight ahead and holds the standoff; escape_trust_deg 0 = the old behaviour.
+def looming(M):
+    def brain(t, x, y, yaw):
+        if facing_err(x, y, yaw, M) < 40 and math.hypot(M[0] - x, M[1] - y) < 1.4:
+            return FlightCommand(throttle=0.0, yaw=-1.0, forward=-0.3, escape=True)
+        return FlightCommand(throttle=0.0, yaw=0.0, forward=0.5)
+    return brain
+M = (1.6, 0.8, 1.0, 200.0)
+p = make_pilot(); x, y, yaw, tr = fly(p, 60, marker=lambda t: M, brain=looming(M))
+d = math.hypot(M[0] - x, M[1] - y)
+check("G looming marker", p.target.state == "ARRIVED" and NEAR[0] < d < NEAR[1] and facing_err(x, y, yaw, M) < 10,
+      f"state={p.target.state} dist={d:.2f} ignored={p.target.escapes_ignored}")
+p = make_pilot({"escape_trust_deg": 0}); x, y, yaw, tr = fly(p, 60, marker=lambda t: M, brain=looming(M))
+print("     G0 old behaviour (info):", p.target.state, f"dist={math.hypot(M[0] - x, M[1] - y):.2f}")
+
+# H: searching, the brain escapes left whenever the nose points into one sector (a wall nearby): the search turns on
+def wall(t, x, y, yaw):
+    if 60 < yaw < 110:
+        return FlightCommand(throttle=0.0, yaw=-1.0, forward=0.0, escape=True)
+    return FlightCommand(throttle=0.0, yaw=0.0, forward=0.5)
+M = (-0.5, -1.8, 1.0, 75.0)  # bearing about -105 deg: right turns from 0 reach it only through the wall sector
+p = make_pilot(); x, y, yaw, tr = fly(p, 60, marker=lambda t: M, yaw0=0.0, brain=wall)
+d = math.hypot(M[0] - x, M[1] - y)
+check("H search through escapes", p.target.state == "ARRIVED" and NEAR[0] < d < NEAR[1], f"state={p.target.state} dist={d:.2f}")
+p = make_pilot({"search_through_escape": False}); x, y, yaw, tr = fly(p, 60, marker=lambda t: M, yaw0=0.0, brain=wall)
+print("     H0 old behaviour (info):", p.target.state)
 print("ALL OK" if ok else "SOME FAILED")

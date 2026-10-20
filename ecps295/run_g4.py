@@ -72,6 +72,10 @@ ap.add_argument(
 ap.add_argument("--shm", default="/dev/shm/ecps295_cam", help="camera shm written by cam_bridge.py (per instance)")
 ap.add_argument("--home", default="33.6430,-117.8420,20", help="SITL --home (Gazebo origin) for SIM_STATE truth")
 ap.add_argument("--out", default="g4")
+ap.add_argument("--track", default="", help="2026-10-18 target tracking: <world>_mk.marker.json (trk_gz.py)")
+ap.add_argument("--track-at", type=float, default=6.0, help="flight time [s] of pilot.track_start()")
+ap.add_argument("--track-hold", type=float, default=10.0, help="end the run this long after target: arrived")
+ap.add_argument("--shm-rgb", default="/dev/shm/ecps295_cam_rgb", help="colour drone camera (cam_bridge rgb stream)")
 a = ap.parse_args()
 
 cfg = load_config(a.config or None, {"safety": dict(ECPS295_SAFETY_20FT), "brain": {"seed": a.seed}})
@@ -126,6 +130,12 @@ if getattr(drone, "drift_mps", 0.0) > 0:  # N4 drift stress: paired runs (same b
 
     drone.drift_dir = _random.Random(77_000 + a.seed).uniform(0.0, 2 * math.pi)
 HZ = cfg["control"]["hz"]
+TRK = None  # 2026-10-18 target tracking (trk_gz.py): marker detection on the colour camera, truth scoring
+if a.track:
+    from trk_gz import GzMarker
+
+    TRK = GzMarker(a.track, a.shm_rgb, cfg.get("marker", {}), out_dir=str(Path(a.out).resolve().parent))
+    pilot.target.source = TRK
 
 if a.layout:
     drone.room = room_from_layout(a.layout)  # read by the dashboard ROOM panel
@@ -268,6 +278,11 @@ def tick(t: float, dt: float, phase: str):
     if 0 <= a.freeze_cam_at <= t and not drone.frozen:
         drone.frozen = True
         print(f"fault injection: camera frozen at t={t:.1f} s", flush=True)
+    if TRK is not None:
+        if not TRK.started and t >= a.track_at:
+            pilot.track_start(t)
+            TRK.started, TRK.t_start = True, round(t, 2)
+        TRK.step(t, drone)
     c0 = time.perf_counter()
     info = pilot.tick(t, dt) if pil is None else pil.info(drone.telemetry())
     compute_ms = (time.perf_counter() - c0) * 1000
@@ -322,6 +337,7 @@ def tick(t: float, dt: float, phase: str):
             "brain_ms": round(dt * 1000 / info.rtf, 2) if info.rtf > 0 else float("nan"),
             **{k: round(v, 2) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
             **(pil.row() if pil is not None else {}),
+            **(TRK.row(pilot) if TRK is not None else {}),
         }
     )
     if a.gif:
@@ -391,6 +407,8 @@ def _run_phase_sim(phase: str, secs: float, s0: float) -> bool:
 
 def _wp_finished(hold_s: float = 3.0) -> bool:
     """2026-10-17 waypoint flight: end the run hold_s after the last point (the drone hovers meanwhile)."""
+    if TRK is not None:  # tracking flies through the waypoint layer: its wp_done_t is not the end of the run
+        return TRK.done(pilot, clock["t"], a.track_hold)
     done = getattr(pilot, "wp_done_t", None)
     return done is not None and clock["t"] - done > hold_s
 
@@ -633,6 +651,8 @@ if getattr(pilot, "wp_on", False):  # 2026-10-17 waypoint flight, scored on trut
         round(float(np.median([w["true_err_at_m"] for w in _wp if w["result"] == "reached"])), 3) if summary["wp_reached"] else None
     )
     summary["wp_bias_s"] = round(pilot.wp_ticks / HZ, 1)
+if TRK is not None:
+    summary.update(TRK.summary(pilot, rows, a.mode))
 json.dump(summary, open(f"{a.out}.json", "w"), indent=1)
 print(json.dumps(summary, indent=1))
 
