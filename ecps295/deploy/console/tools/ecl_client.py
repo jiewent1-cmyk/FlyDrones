@@ -8,6 +8,7 @@ commands and the emergency stop. Used by the console tests and handy on the Pi i
     python ecl_client.py --host 127.0.0.1 --cmd hold --cmd 'goto {"x": 1.0, "y": 0.5}' --seconds 20
     python ecl_client.py --host 127.0.0.1 --estop 1 --seconds 3 --json-out /tmp/ecl.json
     python ecl_client.py --host 127.0.0.1 --save-cam /tmp/cam.jpg --cam color --seconds 3
+    python ecl_client.py --host 192.168.86.20 --port 14701 --lvl 3 --cam-hz 20 --seconds 30 --quiet --json-out cam.json
 """
 
 from __future__ import annotations
@@ -32,15 +33,19 @@ T_HELLO, T_PING, T_CMD, T_ESTOP, T_TOPO_REQ = 64, 65, 66, 67, 68
 
 
 class Link:
-    def __init__(self, host: str, port: int, name: str = "ecl_client", cam: str = "brain", cam_hz: float = 5.0):
+    def __init__(self, host: str, port: int, name: str = "ecl_client", cam: str = "brain", cam_hz: float = 5.0,
+                 lvl: int | None = None, color_w: int = 640, color_q: int = 60):
         self.addr = (host, port)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(0.05)
         self.msg = 0
         self.parts: dict = {}
-        self.hello = {"name": name, "cam": cam, "cam_hz": cam_hz, "color_w": 640, "color_q": 60}
+        self.hello = {"name": name, "cam": cam, "cam_hz": cam_hz, "color_w": color_w, "color_q": color_q}
+        if lvl is not None:  # without it the companion assumes level 2 (as the console before the bandwidth levels)
+            self.hello["lvl"] = lvl
         self.cid = 0
         self.acks: dict = {}
+        self.rx_bytes = collections.Counter()  # per message type, every datagram (chunks of incomplete messages too)
 
     def _send(self, typ: int, payload: bytes, flags: int = 0) -> None:
         self.msg = (self.msg + 1) & 0xFFFF
@@ -81,6 +86,7 @@ class Link:
         magic, typ, flags, msg, chunk, n, stamp = HDR.unpack_from(data)
         if magic != MAGIC:
             return None
+        self.rx_bytes[NAMES.get(typ, str(typ))] += len(data)
         body = data[HDR.size:]
         if n > 1:
             now = time.monotonic()
@@ -150,23 +156,29 @@ def main() -> int:
     ap.add_argument("--seconds", type=float, default=10)
     ap.add_argument("--cam", default="brain", choices=["brain", "color", "off"])
     ap.add_argument("--cam-hz", type=float, default=5)
+    ap.add_argument("--color-w", type=int, default=640)
+    ap.add_argument("--color-q", type=int, default=60)
+    ap.add_argument("--lvl", type=int, default=None, help="bandwidth level 0-3 to ask for (default: none sent = level 2)")
     ap.add_argument("--cmd", action="append", default=[], help="op [json args], sent 1 s after connecting, 1 s apart")
     ap.add_argument("--estop", type=int, default=0, help="1 land / 2 kill, repeated at 5 Hz from t = 2 s")
     ap.add_argument("--save-cam", default="")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
-    L = Link(a.host, a.port, cam=a.cam, cam_hz=a.cam_hz)
+    L = Link(a.host, a.port, cam=a.cam, cam_hz=a.cam_hz, lvl=a.lvl, color_w=a.color_w, color_q=a.color_q)
     t0 = time.monotonic()
     nxt_hello = nxt_ping = nxt_print = t0
     counts = collections.Counter()
-    bytes_n = 0
     last = {}
+    first_status = None  # (time, STATUS): the companion's send counters over the run
     rtts: list[float] = []
     acks: list[dict] = []
     events: dict = {}
     topo = None
     tick_ts: list[float] = []
+    cam_ts: list[float] = []
+    cam_kb: list[float] = []
+    cam_last = [None, 0]  # previous frame's JPEG, frames equal to the one before
     pending = list(a.cmd)
     nxt_cmd = t0 + 1.0
     L.topo()
@@ -188,10 +200,9 @@ def main() -> int:
             L.topo()
         r = L.recv()
         if r is not None:
-            typ, body, nbytes = r
+            typ, body, _ = r
             name = NAMES.get(typ, str(typ))
             counts[name] += 1
-            bytes_n += nbytes
             d = decode(typ, body)
             last[name] = d
             if name == "TICK":
@@ -203,6 +214,9 @@ def main() -> int:
                 if not a.quiet:
                     print(f"ACK {d}")
             elif name == "STATUS":
+                if first_status is None:
+                    first_status = (now, d)
+                last_status_t = now
                 for e in d.get("events", []):
                     if e[0] not in events:
                         events[e[0]] = e
@@ -210,20 +224,36 @@ def main() -> int:
                             print(f"EVENT {e[2]}: {e[3]}")
             elif name == "TOPO":
                 topo = d
-            elif name == "CAM" and a.save_cam:
-                open(a.save_cam, "wb").write(d["jpeg"])
+            elif name == "CAM":
+                cam_ts.append(now)
+                cam_kb.append(len(d["jpeg"]) / 1024)
+                cam_last[1] += d["jpeg"] == cam_last[0]
+                cam_last[0] = d["jpeg"]
+                if a.save_cam:
+                    open(a.save_cam, "wb").write(d["jpeg"])
         if now >= nxt_print and not a.quiet:
             nxt_print = now + 1.0
             tk = last.get("TICK", {})
             mp = last.get("MAP", {})
             print(f"[{now - t0:5.1f}] " + " ".join(f"{k}:{v}" for k, v in sorted(counts.items()))
-                  + f" | {bytes_n / max(1e-3, now - t0) / 1024:.0f} kB/s rtt {np.median(rtts[-10:]) if rtts else float('nan'):.1f} ms"
+                  + f" | {sum(L.rx_bytes.values()) / max(1e-3, now - t0) / 1024:.0f} kB/s rtt {np.median(rtts[-10:]) if rtts else float('nan'):.1f} ms"
                   + f" | fc {tk.get('fc')} ctl {tk.get('ctl')} op {tk.get('op')} es {tk.get('es')} ms {tk.get('ms')}"
                   + f" | map {mp.get('nvox')} vox", flush=True)
     span = (tick_ts[-1] - tick_ts[0]) if len(tick_ts) > 1 else 0
+    el = max(1e-3, time.monotonic() - t0)
+    pi_tx = None
+    if first_status is not None and last.get("STATUS") and last_status_t > first_status[0]:
+        c0, c1 = first_status[1].get("counters", {}), last["STATUS"].get("counters", {})
+        l0, l1 = first_status[1].get("link", {}), last["STATUS"].get("link", {})
+        pi_tx = {"kB_per_s": round((c1.get("tx_kB", 0) - c0.get("tx_kB", 0)) / (last_status_t - first_status[0]), 1),
+                 "skipped": l1.get("skipped", 0) - l0.get("skipped", 0), "level": l1.get("level")}
+    cam_span = (cam_ts[-1] - cam_ts[0]) if len(cam_ts) > 1 else 0
+    gaps = np.diff(cam_ts) * 1000 if len(cam_ts) > 1 else np.zeros(0)
     res = {
         "counts": dict(counts),
-        "kB_per_s": round(bytes_n / max(1e-3, time.monotonic() - t0) / 1024, 1),
+        "kB_per_s": round(sum(L.rx_bytes.values()) / el / 1024, 1),
+        "kB_per_s_by_type": {k: round(v / el / 1024, 2) for k, v in sorted(L.rx_bytes.items())},
+        "pi_tx": pi_tx,  # the companion's own send counter (all consoles) and bulky messages skipped over the run
         "tick_hz": round((len(tick_ts) - 1) / span, 2) if span > 0 else 0,
         "rtt_ms_p50": round(float(np.median(rtts)), 2) if rtts else None,
         "acks": acks,
@@ -234,13 +264,21 @@ def main() -> int:
         "map_nvox": last.get("MAP", {}).get("nvox"),
         "map_frames": last.get("MAP", {}).get("frames"),
         "cam": {k: v for k, v in last.get("CAM", {}).items() if k != "jpeg"},
+        # first to last frame; repeats = frames equal to the one before (a camera slower than the requested rate)
+        "cam_rx": {"frames": len(cam_ts), "fps": round((len(cam_ts) - 1) / cam_span, 2) if cam_span > 0 else 0,
+                   "repeats": cam_last[1], "kB_mean": round(float(np.mean(cam_kb)), 2) if cam_kb else None,
+                   "gap_ms_p50": round(float(np.median(gaps)), 1) if len(gaps) else None,
+                   "gap_ms_p95": round(float(np.percentile(gaps, 95)), 1) if len(gaps) else None,
+                   "gap_ms_max": round(float(gaps.max()), 1) if len(gaps) else None},
+        "rtt_ms_p95": round(float(np.percentile(rtts, 95)), 2) if rtts else None,
         "status": {k: v for k, v in (last.get("STATUS") or {}).items() if k != "events"},
         "topo": None if topo is None else {"n": topo["n"], "nnz": topo["nnz"], "pops": len(topo["pops"])},
     }
     if a.json_out:
         json.dump(res, open(a.json_out, "w"), indent=1, default=str)
     if not a.quiet:
-        print(json.dumps({k: res[k] for k in ("counts", "kB_per_s", "tick_hz", "rtt_ms_p50", "map_nvox", "topo", "cam")}, default=str))
+        print(json.dumps({k: res[k] for k in ("counts", "kB_per_s", "tick_hz", "rtt_ms_p50", "map_nvox", "topo", "cam", "cam_rx")},
+                         default=str))
     return 0
 
 

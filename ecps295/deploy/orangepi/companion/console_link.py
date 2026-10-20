@@ -24,7 +24,7 @@ Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Every datagr
               detector
     PONG 9    PING payload echoed
   console -> Pi
-    HELLO 64  JSON {name, cam: brain|color|off, cam_hz, color_w, color_q, lvl: 0-3}; 5 Hz, also the console heartbeat
+    HELLO 64  JSON {name, cam: brain|color|off, cam_hz <= 20, color_w, color_q, lvl: 0-3}; 5 Hz, also the heartbeat
     PING 65   8 bytes, echoed in a PONG
     CMD 66    JSON {id, op, ...}: hold | patrol | goto {x, y} | track | manual {on} | stick {f, l, y, z} (no ACK) |
               land | gesture {name} | handover {mode: hold | patrol | track} | estop_reset {force}
@@ -35,7 +35,9 @@ Bandwidth (2026-10-17): the Pi Zero 3W's Wi-Fi (AIC8800, SDIO) stalls for second
 roughly 40 kB/s (PIL and console tests), so everything is sent at a level 0-3 that the console adapts from its round-trip
 times (LEVELS; the lowest level of the connected consoles applies), spike counts are summed over the ticks between two
 BRAIN messages, and while the socket's send queue holds more than outq_max bytes the camera, map, brain and ToF messages
-are skipped (TICK, STATUS, ACK and PONG always go).
+are skipped (TICK, STATUS, ACK and PONG always go). The stalls turned out to be the driver's 802.11ax mode (he_on=0 on
+the Pi since 2026-10-18); the levels stay, and since 2026-10-20 the top level lets the camera run at up to 20 fps (one
+frame per control tick).
 
 Operator layer (Operator.apply wraps pilot.decoder.update): it replaces the brain's raw command BEFORE the safety
 governor, so everything downstream still applies: governor limits, ceiling, floor and geofence, the camera / height
@@ -94,13 +96,16 @@ T_HELLO, T_PING, T_CMD, T_ESTOP, T_TOPO_REQ = 64, 65, 66, 67, 68
 VISION_FEATURES = ("ftb", "btf", "up", "down", "loom", "loom_speed", "blank", "near", "ventral")
 # per level: TICK / BRAIN every n control ticks (20 Hz / n; 0 = never), ToF / map / status rates (Hz), camera fps cap.
 # Measured on the home Wi-Fi (2026-10-17, one console, brain-view camera): level 0 ~4 kB/s, 1 ~10 kB/s, 2 ~25 kB/s,
-# 3 ~60-80 kB/s (a good link only: above ~40 kB/s the AIC8800 uplink stalls for seconds).
+# 3 ~60-80 kB/s (then above ~40 kB/s the AIC8800 uplink stalled for seconds: 802.11ax, fixed 2026-10-18). 2026-10-20,
+# level 3 on the SITL rig: ~36 kB/s without the camera; at 20 fps the brain view adds ~77 kB/s (3.8 kB a frame), the
+# colour view ~270 kB/s at 480 px q55 (13.4 kB) or ~410 kB/s at 640 px q60 (20 kB); nothing skipped, ticks unchanged.
 LEVELS = {
-    3: {"tick": 1, "brain": 1, "tof_hz": 10.0, "map_hz": 2.0, "status_hz": 2.0, "cam_max": 10.0},
+    3: {"tick": 1, "brain": 1, "tof_hz": 10.0, "map_hz": 2.0, "status_hz": 2.0, "cam_max": 20.0},
     2: {"tick": 2, "brain": 4, "tof_hz": 4.0, "map_hz": 0.5, "status_hz": 1.0, "cam_max": 3.0},
     1: {"tick": 4, "brain": 10, "tof_hz": 1.0, "map_hz": 0.25, "status_hz": 0.5, "cam_max": 1.0},
     0: {"tick": 4, "brain": 0, "tof_hz": 0.0, "map_hz": 0.1, "status_hz": 0.5, "cam_max": 0.0},
 }
+CAM_EARLY_S = 0.025  # half a control tick: a camera frame due this much later still goes out on this tick (see _tx)
 MODES = ("PATROL", "HOLD", "GOTO", "MANUAL", "TRACK", "LAND")
 ESTOP_NAMES = {0: "", 1: "land", 2: "kill"}
 
@@ -714,7 +719,7 @@ class ConsoleLink:
             c.last = now
             c.name = str(h.get("name", "?"))[:40]
             c.cam = str(h.get("cam", c.cam))
-            c.cam_hz = max(0.0, min(15.0, float(h.get("cam_hz", c.cam_hz))))
+            c.cam_hz = max(0.0, min(20.0, float(h.get("cam_hz", c.cam_hz))))
             c.color_w = int(max(160, min(640, int(h.get("color_w", c.color_w)))))
             c.color_q = int(max(20, min(90, int(h.get("color_q", c.color_q)))))
             c.lvl = int(max(0, min(3, int(h.get("lvl", c.lvl)))))
@@ -938,10 +943,15 @@ class ConsoleLink:
                 self._bcast(live, self.pk.datagrams(T_TOF, p))
         for c in live:
             hz = min(c.cam_hz, L["cam_max"])
-            if c.cam != "off" and hz > 0 and now - c.cam_t >= 1.0 / hz:
+            # frames are due 1/hz apart on a fixed schedule that is only checked once per control tick (20 Hz), so a frame
+            # due within half a tick goes out now; "now - last >= 1/hz" rounded every interval up to whole ticks and
+            # missed the next one on any jitter, so the camera came out slower than set (2026-10-20)
+            if c.cam != "off" and hz > 0 and now - c.cam_t >= 1.0 / hz - CAM_EARLY_S:
                 p = self._cam_jpeg(c)
                 if p:
-                    c.cam_t = now
+                    # keep the schedule; after a gap (first frame, a new rate, a missed tick) start it again from this
+                    # tick's time, not from this thread's wake-up, which can be late
+                    c.cam_t = c.cam_t + 1.0 / hz if now - c.cam_t < 2.0 / hz else t_mono
                     self._send(c.addr, self.pk.datagrams(T_CAM, p))
         if self.map is not None and now - self._last["map"] >= 1.0 / L["map_hz"]:
             self._last["map"] = now
