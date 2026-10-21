@@ -8,7 +8,9 @@ MarkerThread     runs the detector on its own thread at hz on the given CPUs (A5
                  A76 cores), on the newest frame of a grab() callable -> (image, monotonic stamp).
 TargetTrack      the layer EcpsPilot runs before its waypoint layer (ecps_pilot.py `target:`). Started by the ground
                  console (TRACK) or a test; it never takes off, lands or leaves the safety stack:
-  SEARCH    no fix yet: hover and yaw slowly on the spot (the brain's escapes still win) for search_s
+  SEARCH    no fix yet: hover and yaw slowly on the spot for search_s; after a full turn without a fix, fly relocate_m
+            toward the take-off point (fence centre) and turn again, up to relocate_max times (each restarts search_s):
+            started too close to the marker, it can stay out of the camera's vertical field of view (Gazebo trk2 cage10)
   APPROACH  fix: the marker's position in the map frame (EKF local NED, the pose at the frame's time) is filtered; the
             goal is standoff_m short of it on the line of sight, clipped inside the geofence, and is flown by the
             waypoint layer (goal bias on the brain, then fence turn and range shield); a moved marker moves the goal
@@ -214,6 +216,17 @@ class TargetTrack:
         self.hold_max = float(c.get("hold_max", 0.3))
         self.cruise = float(c.get("cruise", 0.5))  # forward handed to the waypoint layer when an escape is ignored
         self.escapes_ignored = 0
+        # 2026-10-20 (Gazebo trk2 cage10_k2: started 0.6 m from the marker and 0.3 m above it, a full turn never had it
+        # in the frame): after turn_deg of search without a fix, relocate toward the fence centre and search again
+        self.turn_deg = float(c.get("search_turn_deg", 360.0))
+        self.relocate = float(c.get("relocate_m", 0.8))
+        self.relocate_min_r = float(c.get("relocate_min_r_m", 0.4))  # nearer the centre than this: no point moving
+        self.relocate_max = int(c.get("relocate_max", 2))
+        self.relocate_s = float(c.get("relocate_s", 12.0))  # give up a relocation leg after this (stuck)
+        self._turned = 0.0
+        self._last_yaw: float | None = None
+        self._reloc_t: float | None = None  # relocation leg in progress since
+        self.relocations = 0
         self.source = None  # MarkerThread (or anything with latest() -> (Detection | None, stamp))
         self.state = "OFF"
         self.t_state = 0.0
@@ -235,6 +248,7 @@ class TargetTrack:
     def start(self, t: float = 0.0) -> None:
         self.est = self.est_z = self.goal = self.est_arrived = None
         self.fixes, self._jump_n, self.last_fix_t = 0, 0, -1e9
+        self._turned, self._last_yaw, self._reloc_t, self.relocations = 0.0, None, None, 0
         self._set("SEARCH", t)
 
     def stop(self, t: float = 0.0, pilot=None) -> None:
@@ -251,6 +265,7 @@ class TargetTrack:
         if state != self.state:
             if state == "ARRIVED":
                 self.est_arrived = self.est
+            self._turned, self._last_yaw, self._reloc_t = 0.0, None, None  # a new search starts with a full turn
             self.state, self.t_state = state, t
             what = f"target: {state.lower()}" + (f" ({why})" if why else "")
             self.log.append((round(t, 2), what))
@@ -311,6 +326,33 @@ class TargetTrack:
             gn, ge = gn * rmax / r, ge * rmax / r
         return gn, ge
 
+    def _search_turn(self, pilot, tel, t: float) -> None:
+        """SEARCH bookkeeping: count the turn; after a full one without a fix, relocate toward the fence centre."""
+        x, y = tel.x_m, tel.y_m
+        if self._reloc_t is not None:  # relocation leg: done when reached / stuck / timed out, then turn again
+            if pilot.wp_done_t is not None or not pilot.wp_on or t - self._reloc_t > self.relocate_s:
+                pilot.wp_on = False
+                self._reloc_t, self._turned, self._last_yaw = None, 0.0, None
+                self.t_state = t  # a fresh search_s for the new spot
+                self._note(t, f"target: search again at {x:+.2f}, {y:+.2f}")
+            return
+        if self._last_yaw is not None:
+            self._turned += abs((tel.yaw_deg - self._last_yaw + 180) % 360 - 180)
+        self._last_yaw = tel.yaw_deg
+        r = math.hypot(x, y)
+        if self._turned < self.turn_deg or self.relocations >= self.relocate_max or r < self.relocate_min_r:
+            return
+        k = max(0.0, r - self.relocate) / r
+        self.relocations += 1
+        self._reloc_t = t
+        pilot.set_waypoints([(x * k, y * k)])
+        self._note(t, f"target: search: nothing in a full turn -> moving to {x * k:+.2f}, {y * k:+.2f}")
+
+    def _note(self, t: float, what: str) -> None:
+        self.log.append((round(t, 2), what))
+        if self.on_event is not None:
+            self.on_event(t, what)
+
     # ------------------------------------------------------------------ the layer
     def update(self, pilot, cmd: FlightCommand, tel, t: float) -> FlightCommand:
         if self.state == "OFF":
@@ -321,6 +363,9 @@ class TargetTrack:
             self._wp_radius, pilot.wp_radius = pilot.wp_radius, self.goal_radius
         if not pilot.wp_active:  # not under our control (pilot flying, console HOLD / MANUAL): timers wait
             self.t_state = t if self.state in ("SEARCH", "LOST") else self.t_state
+            self._last_yaw = None
+            if self._reloc_t is not None:
+                self._reloc_t = t
             return cmd
         fresh = self._fix(now)
         if fresh:
@@ -365,9 +410,11 @@ class TargetTrack:
             elif t - self.last_fix_t > 3 * self.lost_s:
                 self._set("SEARCH", t, "out of view")
 
-        if self.state in ("SEARCH", "FAILED") and pilot.wp_on:
+        if self.state == "SEARCH":
+            self._search_turn(pilot, tel, t)
+        if self.state in ("SEARCH", "FAILED") and pilot.wp_on and self._reloc_t is None:
             pilot.wp_on = False
-        if self.state == "SEARCH" and t - self.t_state > self.search_s:
+        if self.state == "SEARCH" and self._reloc_t is None and t - self.t_state > self.search_s:
             self._set("FAILED", t, f"nothing in {self.search_s:.0f} s -> hover")
 
         # ------------------------------------------------------------------ command shaping
@@ -377,6 +424,8 @@ class TargetTrack:
         if cmd.escape and self.state in ("APPROACH", "ARRIVED") and ahead:
             self.escapes_ignored += 1  # the looming thing is the marker we are flying to
             cmd = FlightCommand(throttle=cmd.throttle, yaw=0.0, forward=self.cruise, note="target: escape ignored")
+        if self.state == "SEARCH" and self._reloc_t is not None:
+            return cmd  # relocating: the waypoint layer flies toward the centre (escapes win)
         if self.state == "SEARCH" and (not cmd.escape or self.search_through_escape):
             return FlightCommand(throttle=cmd.throttle, yaw=self.search_yaw, forward=min(cmd.forward, 0.0), note="target search")
         if cmd.escape:
