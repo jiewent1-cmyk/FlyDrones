@@ -82,6 +82,10 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         self.hold_eps = float(os.environ.get("ECPS_HOLD_EPS_MPS", "0.03"))  # |horizontal cmd| below this = hovering
         self.hold_yr_max = math.radians(float(os.environ.get("ECPS_HOLD_YAW_DPS", "15")))
         self.hold_anchor: list[float] | None = None  # [n, e, z] while holding, else None
+        # 2026-10-20 patrol: an anchor taken while still decelerating makes the FC overshoot and pull back (max drift per
+        # hover 27 -> 33 cm), so brake with velocity 0 first and anchor once |v| < ECPS_HOLD_BRAKE_MPS (or after 1.5 s)
+        self.hold_brake = float(os.environ.get("ECPS_HOLD_BRAKE_MPS", "0.1"))
+        self._brake_t0: float | None = None
         self._hold_t = 0.0
         self.hold_ticks = 0
 
@@ -531,8 +535,13 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         lp = self.m.messages.get("LOCAL_POSITION_NED")
         now = time.monotonic()
         if math.hypot(vx, vy) >= self.hold_eps or lp is None:
-            self.hold_anchor = None
+            self.hold_anchor = self._brake_t0 = None
             return False
+        if self.hold_anchor is None and self.hold_brake > 0:
+            if self._brake_t0 is None:
+                self._brake_t0 = now
+            if math.hypot(lp.vx, lp.vy) >= self.hold_brake and now - self._brake_t0 < 1.5:
+                return False  # still braking: velocity 0
         vz = -cmd.throttle * self.vz_max
         if self.hold_anchor is None:
             self.hold_anchor = [lp.x, lp.y, lp.z]
