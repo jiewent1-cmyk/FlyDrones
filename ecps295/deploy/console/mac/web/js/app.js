@@ -451,6 +451,7 @@ const ZH = [
   [/^illusion (\w+)$/, (m) => `错觉刺激：${{ palm: "手掌（爬升）", drop: "放下（下降）", left: "左转", right: "右转", rush: "逼近", fist: "静止" }[m[1]] || m[1]}`],
   [/^fence: turning back$/, () => "围栏：掉头"],
   [/^target search$/, () => "搜索目标（原地转动）"], [/^target not found$/, () => "没找到目标 → 悬停"], [/^target: facing$/, () => "面向目标悬停"],
+  [/^target: holding$/, () => "面向目标并保持距离"], [/^target: escape ignored$/, () => "忽略逃逸：前方逼近的是目标标记"],
   [/^target: (\w+)(?: \((.*)\))?$/, (m) => `目标跟踪：${{ search: "搜索", approach: "接近", arrived: "已到达", lost: "丢失", failed: "没找到", off: "停止" }[m[1]] || m[1]}${m[2] ? `（${trkWhy(m[2])}）` : ""}`],
   [/^tracking did not start$/, () => "跟踪没能启动"],
   [/^brain stalled (.*) -> hover$/, (m) => `大脑停顿 ${m[1]} → 悬停`],
