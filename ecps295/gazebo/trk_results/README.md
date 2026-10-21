@@ -32,3 +32,8 @@ cage10 (now inside the nets): 2/3. cage10_k2 (track_start at 20 s) failed: the d
 marker, 0.3 m above its centre, so a full in-place search turn never had the whole marker in the camera's vertical
 field of view (camera pitched 12 deg down, pinhole 70 deg h-fov); search timed out after 30 s -> FAILED / hover.
 Possible fix: after one fruitless turn, back off toward the cage centre (or climb/descend to the marker height) and turn again.
+
+trk3 (10-20 23:10-23:45, v2 + search relocation, `trk3_matrix.txt`, `matrix_trk3.log`): **42/42 pass** including cage10,
+0 contacts / near misses, end distance median 1.08 m, arrival median 19.3 s (max 56 s: lowbox_s4_k2, relocated once).
+Two runs relocated after a fruitless full turn: cage10_k2 (the trk2 failure, now arrived 1.07 m) and lowbox_s4_k2. None
+regressed against trk2. Ran alongside a 1-instance PIL batch (INST 5).
