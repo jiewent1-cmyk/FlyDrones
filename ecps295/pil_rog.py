@@ -8,10 +8,15 @@ here. This end streams what the Pi's sensors would see:
   ToF     the S7 multi-zone frames (front / rear 8x8) emulated from SIM_STATE truth by mavlink_twin.zones(), with the
           same sample-and-hold rate and noise as in the local Gazebo runs
   ctl     10 Hz: the 'go' flag (1 only during the patrol phase; the Pi takes control only while it is set)
+          aux bit 0 = console session (run_g4 --mode console, 2026-10-21): go 1 -> 0 is a landing, the Pi keeps running
 
 The Pi flies the drone itself over MAVLink (SITL --serial2=udpclient:<pi>:14561) and answers every tick with a status
 datagram (commands, DN rates, compute time), which run_g4 logs in place of the local pilot's tick. All traffic is
 started from here, so ROG's firewall admits the replies.
+
+chase   (run_g4 --mode console with ECPS_PIL_CHASE=<shm>, 2026-10-21) the Gazebo chase camera (the *_monitor worlds'
+          ecps295_quad_monitor, rigid 0.9 m behind the drone), CHASE_W wide JPEG at <= CHASE_HZ, for the ground
+          console's colour view; the brain never sees it
 
 Datagram: HDR + payload. type 1 cam: aux = width, payload = gray bytes; type 2 tof: aux = bearing (deg), payload =
 float32 zones (NaN = no target); type 3 ctl: no payload.
@@ -33,12 +38,14 @@ from shm_frames import ShmFrame
 
 MAGIC = b"EPL1"
 HDR = struct.Struct("<4sBBHId")  # magic, type, go, aux, seq, sim time (s)
-CAM, TOF, CTL, CAM_JPG = 1, 2, 3, 4
+CAM, TOF, CTL, CAM_JPG, CHASE_JPG = 1, 2, 3, 4, 5
+CHASE_W, CHASE_HZ, CHASE_Q = 480, 15.0, 70
 JPEG_Q = 85  # 2026-10-16: JPEG like the real MJPEG camera; raw 28 kB frames (~20 IP fragments) stalled the home WiFi for seconds
 
 
 class PilRog:
-    def __init__(self, target: str, drone, shm: str, sensors: list[dict], hz: float = 200.0, jpeg: bool = True):
+    def __init__(self, target: str, drone, shm: str, sensors: list[dict], hz: float = 200.0, jpeg: bool = True,
+                 chase: str = ""):
         host, port = target.rsplit(":", 1)
         self.addr = (host, int(port))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -46,12 +53,15 @@ class PilRog:
         self.sock.settimeout(0.05)
         self.drone, self.cam, self.sensors, self.dt = drone, ShmFrame(shm), list(sensors), 1.0 / hz
         self.jpeg, self.bytes_cam = jpeg, 0
+        self.chase = ShmFrame(chase) if chase else None
+        self.bytes_chase = 0
         self.go = 0
+        self.session = False  # CTL aux bit 0 (run_g4 --mode console): go 1 -> 0 is a landing, the Pi keeps running
         self.sim_t = 0.0
         self.seq = 0
         self.ctl_sent: dict[int, float] = {}  # ctl seq -> send time, for the round trip
         self.rtt_ms: list[float] = []
-        self.sent = {"cam": 0, "tof": 0, "ctl": 0}
+        self.sent = {"cam": 0, "tof": 0, "ctl": 0, "chase": 0}
         self.status: dict | None = None
         self.status_n = 0
         self.status_t = 0.0
@@ -69,7 +79,7 @@ class PilRog:
         return self
 
     def stop(self) -> None:
-        self.go = 0
+        self.go, self.session = 0, False  # the end of the run, also of a console session: the Pi companion exits
         for _ in range(3):  # make sure the Pi sees go = 0
             self._send(CTL, 0, b"")
             time.sleep(0.05)
@@ -91,9 +101,18 @@ class PilRog:
 
     def _tx(self) -> None:
         last = [None] * len(self.sensors)
-        last_ctl = 0.0
+        last_ctl = last_chase = 0.0
         while not self._stop.is_set():
             t0 = time.monotonic()
+            if self.chase is not None and t0 - last_chase >= 1.0 / CHASE_HZ and self.chase.read() and self.chase.img is not None:
+                last_chase = t0
+                im = self.chase.img
+                im = cv2.resize(im, (CHASE_W, int(round(im.shape[0] * CHASE_W / im.shape[1]))), interpolation=cv2.INTER_AREA)
+                ok, buf = cv2.imencode(".jpg", np.ascontiguousarray(im[..., ::-1]), [cv2.IMWRITE_JPEG_QUALITY, CHASE_Q])
+                if ok:
+                    self._send(CHASE_JPG, CHASE_W, buf.tobytes())
+                    self.bytes_chase += len(buf)
+                    self.sent["chase"] += 1
             if self.cam.read() and self.cam.img is not None:
                 img = self.cam.img if self.cam.img.ndim == 2 else self.cam.img[..., 0]
                 if self.jpeg:
@@ -112,7 +131,7 @@ class PilRog:
                     self.sent["tof"] += 1
             if t0 - last_ctl >= 0.1:
                 last_ctl = t0
-                self._send(CTL, 0, b"")
+                self._send(CTL, int(self.session), b"")
                 self.sent["ctl"] += 1
             self._stop.wait(max(0.0, self.dt - (time.monotonic() - t0)))
 
@@ -167,6 +186,7 @@ class PilRog:
             "pil_sent": self.sent,
             "pil_cam_jpeg": self.jpeg,
             "pil_cam_kB_per_frame": round(self.bytes_cam / max(1, self.sent["cam"]) / 1000, 1),
+            "pil_chase_kB_per_frame": round(self.bytes_chase / max(1, self.sent["chase"]) / 1000, 1),
             "pil_status_n": self.status_n,
             "pil_in_control_ticks": self.in_control_n,
             "pil_rtt_ms_p50_p95_p99_max": pct(self.rtt_ms),

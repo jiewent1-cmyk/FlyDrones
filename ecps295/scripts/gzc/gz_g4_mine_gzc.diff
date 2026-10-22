@@ -1,0 +1,31 @@
+--- gz_g4_mine.sh.pre_gzc	2026-10-21 22:03:04.300869940 -0700
++++ gz_g4_mine.sh	2026-10-21 22:03:18.774844170 -0700
+@@ -38,6 +38,9 @@
+ if [ -n "$INST" ]; then
+   # own copy of the airframe with this instance's plugin port, found first on the resource path
+   mkdir -p models && cp -r $G/models/ecps295_quad models/ && sed -i "s#<fdm_port_in>9002</fdm_port_in>#<fdm_port_in>$FDM</fdm_port_in>#" models/ecps295_quad/model.sdf
++  case $WORLD in *_monitor.sdf)  # 2026-10-21 console sessions: the airframe with the chase camera, same port patch
++    cp -r $G/models/ecps295_quad_monitor models/ && sed -i "s#<fdm_port_in>9002</fdm_port_in>#<fdm_port_in>$FDM</fdm_port_in>#" models/ecps295_quad_monitor/model.sdf ;;
++  esac
+   export GZ_SIM_RESOURCE_PATH=$D/models:$GZ_SIM_RESOURCE_PATH
+ fi
+ if [ "$GUI" = "--gui" ]; then
+@@ -52,7 +55,8 @@
+ sleep 10
+ rm -f $SHM
+ if [ -n "$INST" ]; then
+-  setsid /usr/bin/python3 $G/cam_bridge.py --stream /ecps295/camera:$SHM:192x144:gray > bridge.log 2>&1 &
++  CH=; [ -n "$ECPS_PIL_CHASE" ] && CH="--stream /ecps295/chase_camera:$ECPS_PIL_CHASE:960x540:rgb"  # console sessions (pil_rog.py)
++  setsid /usr/bin/python3 $G/cam_bridge.py --stream /ecps295/camera:$SHM:192x144:gray $CH > bridge.log 2>&1 &
+ else
+   /usr/bin/python3 $G/cam_bridge.py > bridge.log 2>&1 &
+ fi
+@@ -84,7 +88,7 @@
+ (sleep 60; gz topic -e -t /world/$WN/stats -n 40 2>/dev/null | grep real_time_factor | awk '{print $2}' | sort -g \
+   | awk '{v[NR]=$1; s+=$1} END {if (NR) printf "RTF mean %.3f median %.3f min %.3f over %d samples\n", s/NR, v[int((NR+1)/2)], v[1], NR}' > rtf_window.log) &
+ source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
+-PYTHONPATH=$E MPLBACKEND=Agg timeout 900 python $E/run_g4.py $ARGS 2>&1 | grep -v "EOF on TCP" > exp.log
++PYTHONPATH=$E MPLBACKEND=Agg timeout ${RUN_TIMEOUT:-900} python $E/run_g4.py $ARGS 2>&1 | grep --line-buffered -v "EOF on TCP" > exp.log
+ clocks > clock1.txt
+ read s0 r0 < clock0.txt 2>/dev/null; read s1 r1 < clock1.txt 2>/dev/null
+ [ -n "$r1" ] && [ -n "$r0" ] && awk -v a=$s0 -v b=$s1 -v c=$r0 -v d=$r1 'BEGIN {if (d > c) printf "RTF run %.3f over %.0f s\n", (b-a)/(d-c), d-c}' >> rtf.log

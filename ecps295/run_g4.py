@@ -35,7 +35,7 @@ from flydrones.motor.command import FlightCommand
 from flydrones.runtime import Pilot
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--mode", choices=["probe", "hover", "approach", "patrol", "hovertest"], required=True)
+ap.add_argument("--mode", choices=["probe", "hover", "approach", "patrol", "hovertest", "console"], required=True)
 ap.add_argument("--url", default="tcp:127.0.0.1:5760")
 ap.add_argument("--seconds", type=float, default=40)
 ap.add_argument("--cruise", type=float, default=0.5, help="approach: decoder.cruise (x safety max_forward x v_max)")
@@ -136,7 +136,11 @@ if PIL:
     from pil_rog import PilRog
 
     _sh = getattr(getattr(pilot, "struct", None), "shield", None)
-    pil = PilRog(PIL, drone, a.shm, list(getattr(_sh, "map_sensors", None) or []), jpeg=os.environ.get("ECPS_PIL_RAW") != "1")
+    pil = PilRog(PIL, drone, a.shm, list(getattr(_sh, "map_sensors", None) or []), jpeg=os.environ.get("ECPS_PIL_RAW") != "1",
+                 chase=os.environ.get("ECPS_PIL_CHASE", "") if a.mode == "console" else "")
+    pil.session = a.mode == "console"  # several flights: go 1 -> 0 is a landing, not the end (the Pi companion stays up)
+if a.mode == "console" and pil is None:
+    raise SystemExit("--mode console needs ECPS_PIL (the companion + ground console run on the Pi)")
 
 HT = None  # 2026-10-18 hover-precision test (hover_test.py): scripted setpoints, ECPS_HOLD=vel|pos
 if a.mode == "hovertest":
@@ -431,6 +435,44 @@ def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0):
     return True
 
 
+def _quiet_soon() -> bool:
+    """ROG quiet hours (no runs 01:00-07:00 PT): an interactive session lands at 00:55."""
+    lt = time.localtime()
+    return 55 <= lt.tm_hour * 60 + lt.tm_min < 420
+
+
+def console_session(secs: float) -> None:
+    """2026-10-21 Gazebo ground-console session: this script plays the RC pilot. After each take-off it hands over
+    (pil.go = 1, as the pilot's switch to GUIDED); the operator flies with the console app through the Pi companion.
+    Once the FC is disarmed (the operator landed, or E-stop) it takes off again RETAKEOFF_S later, until secs of wall
+    clock have passed or the quiet hours begin."""
+    t_end, flights = time.monotonic() + secs, 1
+    pil.go = 1
+    print(f"console: flight {flights} handed over to the companion", flush=True)
+    while time.monotonic() < t_end and not _quiet_soon():
+        run_phase("console", 1.0)
+        if drone.m.motors_armed():
+            continue
+        pil.go = 0
+        print(f"console: flight {flights} ended (disarmed), take-off again in {RETAKEOFF_S:.0f} s", flush=True)
+        t1 = time.monotonic()
+        while time.monotonic() - t1 < RETAKEOFF_S:
+            drone.telemetry()
+            time.sleep(0.1)
+        if time.monotonic() >= t_end or _quiet_soon():
+            break
+        try:
+            drone.takeoff()
+        except Exception as e:  # noqa: BLE001 - keep the session alive, try again after the pause
+            print(f"console: take-off failed ({e}), retrying", flush=True)
+            continue
+        flights += 1
+        pil.go = 1
+        print(f"console: flight {flights} handed over to the companion", flush=True)
+    print(f"console: session over after {flights} flight(s)", flush=True)
+
+
+RETAKEOFF_S = float(os.environ.get("ECPS_CONSOLE_RETAKEOFF_S", "10"))
 drone.connect()
 print("warming up the brain on the ground...", flush=True)
 pilot.warmup(pilot.decoder.settle_s + 0.1, DT)
@@ -465,6 +507,8 @@ try:
             HT.begin(name, kind, arg)
             if not run_phase(name, secs):
                 break
+    elif a.mode == "console":
+        console_session(a.seconds)
     else:
         if pil is not None:
             pil.go = 1
