@@ -18,7 +18,7 @@ start)
   ssh $R "cd ~/sim/rl_h2; M=~/sim/rl_h2/ecps295/minifly; V=~/sim/rl_h2/ecps295/sitl/variants; (setsid nohup env INST=5 RUN_TIMEOUT=$((S + 600)) ECPS_ARM=intact ECPS_TOF_CONE3D=1 ECPS_SIMCLOCK=1 ECPS_PIL=192.168.86.20:14600 ECPS_PIL_CHASE=/dev/shm/ecps295_i5_chase SITL_EXTRA=--serial2=udpclient:192.168.86.20:14561 NAV=flow EXTRA_PARM=\$V/G_extnav_height.parm,\$V/companion_fs.parm,\$V/H_terrain_fast.parm bash gz_g4_mine.sh ecps295_${W}_monitor.sdf $TAG \"--mode console --seconds $S --cruise 0.5 --max-forward 0.5 --fence-turn --seed 0 --config \$M/s7_w2map.yaml --decoder ecps --pilot ecps --retina ecps\" > ~/sim/runs/$TAG.out 2>&1 < /dev/null &)"
   echo "started $TAG ($MIN min). ROG log: ~/sim/runs/$TAG/exp.log" ;;
 stop)
-  ssh $R 'for p in $(pgrep -f "[r]un_g4.py --mode console"); do kill -INT $p; done; echo "run_g4 interrupted (lands, then the instance tears down)"'
+  ssh $R 'for p in $(pgrep -f "^python [^ ]*run_g4.py --mode console"); do kill -INT $p; done; echo "run_g4 interrupted (lands, then the instance tears down)"'
   for i in $(seq 1 24); do ssh $R "pgrep -f '[r]un_g4.py --mode console' >/dev/null" || break; sleep 5; done
   ssh $PI /root/pil_hover/gzc_stop.sh ;;
 status)

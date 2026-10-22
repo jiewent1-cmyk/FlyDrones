@@ -298,6 +298,7 @@ def tick(t: float, dt: float, phase: str):
         {
             "t": round(t, 3),
             "phase": phase,
+            **({"wall": round(time.time(), 3)} if a.mode == "console" else {}),  # console sessions: align with the client's log
             "alt": round(ta, 3),
             "north": round(tn, 3),
             "east": round(te, 3),
