@@ -34,8 +34,8 @@ class Cam:
     def latest(self): return self.det, self.stamp
 
 
-def fly(p, secs, marker=lambda t: (2.5, 1.0, 1.0, 200.0), yaw0=180.0, active=lambda t: True, start_t=0.5, brain=None):
-    x = y = 0.0; yaw = yaw0; t, dt = 0.0, 0.05
+def fly(p, secs, marker=lambda t: (2.5, 1.0, 1.0, 200.0), yaw0=180.0, active=lambda t: True, start_t=0.5, brain=None, xy0=(0.0, 0.0)):
+    (x, y), yaw = xy0, yaw0; t, dt = 0.0, 0.05
     cam = Cam(); p.target.source = cam
     rng = np.random.default_rng(1)
     trace = []
@@ -148,4 +148,14 @@ d = math.hypot(M[0] - x, M[1] - y)
 check("H search through escapes", p.target.state == "ARRIVED" and NEAR[0] < d < NEAR[1], f"state={p.target.state} dist={d:.2f}")
 p = make_pilot({"search_through_escape": False}); x, y, yaw, tr = fly(p, 60, marker=lambda t: M, yaw0=0.0, brain=wall)
 print("     H0 old behaviour (info):", p.target.state)
+
+# I (2026-10-20, Gazebo trk2 cage10_k2): tracking starts 0.55 m from the marker and 0.4 m above it, so the marker stays
+# below the camera's vertical field of view through a whole turn: relocate toward the centre, turn again, find it
+M = (1.75, 0.0, 0.6, 180.0)
+p = make_pilot(); x, y, yaw, tr = fly(p, 90, marker=lambda t: M, yaw0=90.0, xy0=(1.2, 0.0))
+d = math.hypot(M[0] - x, M[1] - y)
+check("I too close to see it", p.target.state == "ARRIVED" and p.target.relocations == 1 and NEAR[0] < d < NEAR[1],
+      f"state={p.target.state} dist={d:.2f} relocations={p.target.relocations} log={p.target.log}")
+p = make_pilot({"relocate_max": 0}); x, y, yaw, tr = fly(p, 90, marker=lambda t: M, yaw0=90.0, xy0=(1.2, 0.0))
+print("     I0 old behaviour (info):", p.target.state)
 print("ALL OK" if ok else "SOME FAILED")
