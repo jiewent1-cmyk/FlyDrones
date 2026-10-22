@@ -149,6 +149,7 @@ export class BrainView {
     const pd = Math.pow(0.5, dt / 0.05);
     for (const p of this.pulses) p[1] *= pd;
     while (this.pulses.length && this.pulses[0][1] < 0.1) this.pulses.shift();
+    if (this.pulses.length > 5000) this.pulses.splice(0, this.pulses.length - 5000);
     g.globalCompositeOperation = "lighter";
     g.lineWidth = 1.2;
     const { indptr, indices, data } = this.topo;
@@ -203,7 +204,9 @@ export class BrainView {
     const key = `${GROUP_OF[best.type] || best.type}_${best.side}`;
     const hz = this.rates && this.rates[key] !== undefined ? `${this.rates[key].toFixed(1)} Hz` : "—";
     const info = POP_INFO[best.type];
-    this.tip.innerHTML = `<b>${best.type} ${best.side}</b> · ${L(`${best.count} 个神经元`, `${best.count} neurons`)} · ${hz}<br>${info ? L(...info) : ""}`;
+    this.tip.replaceChildren();
+    const title = document.createElement("b"); title.textContent = `${best.type} ${best.side}`;
+    this.tip.append(title, document.createTextNode(` · ${L(`${best.count} 个神经元`, `${best.count} neurons`)} · ${hz}\n${info ? L(...info) : ""}`));
     this.tip.style.display = "block";
     this.tip.style.left = `${Math.min(window.innerWidth - 290, ev.clientX + 14)}px`;
     this.tip.style.top = `${ev.clientY + 14}px`;

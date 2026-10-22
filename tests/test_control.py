@@ -48,7 +48,10 @@ def test_safety_limits():
     c = s.filter(FlightCommand(throttle=1.0, yaw=1.0), Telemetry(t=0, alt_m=1.0, flying=True), dt=10)
     assert c.throttle <= cfg["safety"]["max_throttle"] + 1e-9
     assert c.yaw <= cfg["safety"]["max_yaw"] + 1e-9
-    c = s.filter(FlightCommand(throttle=0.5), Telemetry(t=1, alt_m=5.0, flying=True), dt=10)
+    # above the ceiling: descend within a few ticks (security fix 10-22 caps dt at 0.1 s, so dt=10 no longer skips
+    # the slew limit; the reversal is slewed exactly as at 20 Hz before)
+    for i in range(10):
+        c = s.filter(FlightCommand(throttle=0.5), Telemetry(t=1 + 0.05 * i, alt_m=5.0, flying=True), dt=0.05)
     assert c.throttle < 0
     c = s.filter(FlightCommand(throttle=-0.5), Telemetry(t=2, alt_m=0.1, flying=True), dt=10)
     assert c.throttle == 0

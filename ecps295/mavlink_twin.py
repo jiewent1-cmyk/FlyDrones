@@ -21,6 +21,7 @@ ext_height  (S7e, TechRoute route B) the companion computer supplies the flight 
 from __future__ import annotations
 
 import math
+import threading
 import time
 
 from flydrones.drones.mavlink import MavlinkDrone
@@ -50,6 +51,7 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         self.stream_hz = stream_hz
         self.takeoff_timeout_s = takeoff_timeout_s
         self._last_hb = 0.0
+        self._hb_lock = threading.Lock()
         self.nav = nav
         self.origin = origin
         self.rng_m: float | None = None
@@ -130,11 +132,12 @@ class Ecps295MavlinkDrone(MavlinkDrone):
         # F9
         if self.mute:
             return
-        now = time.monotonic()
-        if now - self._last_hb >= 1.0:
-            mav = self.mavutil.mavlink
-            self.m.mav.heartbeat_send(mav.MAV_TYPE_ONBOARD_CONTROLLER, mav.MAV_AUTOPILOT_INVALID, 0, 0, mav.MAV_STATE_ACTIVE)
-            self._last_hb = now
+        with self._hb_lock:
+            now = time.monotonic()
+            if now - self._last_hb >= 1.0:
+                mav = self.mavutil.mavlink
+                self.m.mav.heartbeat_send(mav.MAV_TYPE_ONBOARD_CONTROLLER, mav.MAV_AUTOPILOT_INVALID, 0, 0, mav.MAV_STATE_ACTIVE)
+                self._last_hb = now
 
     def _pump(self, timeout: float = 0.1):
         self._heartbeat()
@@ -584,13 +587,15 @@ class Ecps295MavlinkDrone(MavlinkDrone):
             return
         h, src = self.floor_height()
         self._ext_last = now
-        if h is None:
+        if h is None or not math.isfinite(h):
             return
         self.ext_h_m, self.ext_src = h, src
         lp = self.m.messages.get("LOCAL_POSITION_NED")
         att = self.m.messages.get("ATTITUDE")
         x, y = (lp.x, lp.y) if lp is not None else (0.0, 0.0)
         r, p, yw = (att.roll, att.pitch, att.yaw) if att is not None else (0.0, 0.0, 0.0)
+        if not all(math.isfinite(v) for v in (x, y, r, p, yw)):
+            return
         self.m.mav.vision_position_estimate_send(int(now * 1e6), x, y, -h, r, p, yw)
         self._ext_sent = now
 

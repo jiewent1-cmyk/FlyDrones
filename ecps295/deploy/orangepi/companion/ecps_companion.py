@@ -88,6 +88,11 @@ model = a.config or str(ROOT / "ecps295" / "minifly" / hw.get("model", "s7_w2map
 cam_src = a.camera or hw.get("camera", {}).get("source", "uvc")
 tof_src = a.tof or hw.get("tof", {}).get("source", "real")
 url = a.url or hw.get("mavlink", {}).get("url", "udpin:127.0.0.1:14560")
+if a.mode == "guided":
+    if a.pil or cam_src != "uvc" or tof_src != "real":
+        ap.error("guided mode requires physical UVC camera and real ToF; PIL, sim, replay, and SITL sources are disabled")
+    if float(os.environ.get("ECPS_DRIFT_MPS", "0") or 0) != 0:
+        ap.error("guided mode refuses the ECPS_DRIFT_MPS test hook")
 
 import camera as camera_mod  # noqa: E402
 import tof_vl53l7cx as tof_mod  # noqa: E402
@@ -122,9 +127,9 @@ dyn.update(cfg.get("ecps_drone", {}) or {})
 stop = {"flag": False}  # set by SIGTERM / SIGINT; checked while waiting for the FC as well as by the control loop
 signal.signal(signal.SIGTERM, lambda *_: stop.update(flag=True))
 signal.signal(signal.SIGINT, lambda *_: stop.update(flag=True))
-# test hook (sitl_hil_test.py SCENARIO=tof_*): SIGUSR1 freezes the front ToF thread, as a hung I2C bus would: the last
-# frame stays, its age grows
-signal.signal(signal.SIGUSR1, lambda *_: [getattr(x, "_stop", None) and x._stop.set() for x in [tofs.get(0)] if x is not None])
+# SITL fault injection only. Guided mode leaves SIGUSR1 at its normal process-termination behavior.
+if a.mode != "guided":
+    signal.signal(signal.SIGUSR1, lambda *_: [getattr(x, "_stop", None) and x._stop.set() for x in [tofs.get(0)] if x is not None])
 
 # ------------------------------------------------------------------ sensors
 link = None
@@ -278,6 +283,8 @@ def sysinfo() -> dict:
 print(f"ecps_companion: mode={a.mode} model={Path(model).name} camera={cam_src} tof={tof_src} url={url if a.mode != 'bench' else '-'}"
       f" affinity={sorted(os.sched_getaffinity(0))} log={out}", flush=True)
 drone.connect()
+if a.mode == "guided" and isinstance(drone, RealDrone):
+    drone.verify_flight_parameters(str(ROOT / "config" / "fc_flight.parm"))
 T0 = time.monotonic()
 print("warming up the brain...", flush=True)
 pilot.warmup(pilot.decoder.settle_s + 0.1, DT)
@@ -414,6 +421,8 @@ finally:
             drone.send(FlightCommand.hover("companion stop"))
     except Exception:
         pass
+    if isinstance(drone, RealDrone):
+        drone.stop_heartbeat()  # let FS_GCS_TIMEOUT take effect after shutdown
     sensors = [x for x in [marker, cam, *tofs.values()] if x is not None]
     for s in sensors:  # signal every thread first so their join timeouts overlap (systemd TimeoutStopSec)
         ev = getattr(s, "_stop", None)

@@ -22,6 +22,8 @@ final class Safety {
     private(set) var killActive = false
     private(set) var killStart = 0.0
     private(set) var killConfirmed = 0.0
+    private(set) var landAbandoned = false
+    private(set) var killAbandoned = false
     private(set) var normalLand = 0.0
     private(set) var source = ""
     private var lastLandSend = 0.0
@@ -39,10 +41,11 @@ final class Safety {
 
     func emergencyLand(source: String) {
         trig += 1
-        if !landActive || landConfirmed > 0 {
+        if !landActive || landConfirmed > 0 || landAbandoned {
             landActive = true
             landStart = mono()
             landConfirmed = 0
+            landAbandoned = false
             self.source = source
             onEvent?("critical", L("紧急降落（\(source)）：向飞控和机载程序同时发送 LAND", "Emergency land (\(source)): LAND sent to the FC and the companion"))
         }
@@ -53,10 +56,11 @@ final class Safety {
 
     func kill(source: String) {
         trig += 1
-        if !killActive || killConfirmed > 0 {
+        if !killActive || killConfirmed > 0 || killAbandoned {
             killActive = true
             killStart = mono()
             killConfirmed = 0
+            killAbandoned = false
             self.source = source
             onEvent?("critical", L("停桨（\(source)）：强制上锁，电机立即停转", "Kill (\(source)): force disarm, the motors stop at once"))
         }
@@ -77,25 +81,32 @@ final class Safety {
 
     /// Clear the console side; the companion latch is reset by its own command (estop_reset).
     func reset(force: Bool) {
+        guard fcFresh(), (!fc.armed || force) else {
+            onEvent?("warning", L("飞控状态过期或仍解锁，拒绝解除急停", "Cannot reset E-stop: FC state is stale or still armed"))
+            return
+        }
         ecl.sendCmd("estop_reset", ["force": force]) { [weak self] ok, msg in
             self?.onEvent?(ok ? "info" : "warning", ok ? L("机载程序急停锁已解除", "Companion E-stop latch reset")
                                                         : L("机载程序拒绝解除急停：\(msg)", "The companion refused the E-stop reset: \(msg)"))
             if ok {
                 self?.landActive = false
                 self?.killActive = false
+                self?.landAbandoned = false
+                self?.killAbandoned = false
             }
-        }
-        if !fc.armed || force {
-            landActive = false
-            killActive = false
         }
     }
 
     /// Cancel the console's own repetition (e.g. the pilot took over): the companion latch stays until reset.
     func stopSending() {
-        if landActive && landConfirmed == 0 { onEvent?("warning", L("停止重发紧急降落（未经飞控确认）", "Stopped resending the emergency land (not confirmed by the FC)")) }
-        landConfirmed = landConfirmed > 0 ? landConfirmed : mono()
-        killConfirmed = killConfirmed > 0 ? killConfirmed : (killActive ? mono() : 0)
+        if landActive && landConfirmed == 0 {
+            landAbandoned = true
+            onEvent?("warning", L("已停止重发紧急降落；飞控未确认", "Stopped resending the emergency land; the FC has not confirmed it"))
+        }
+        if killActive && killConfirmed == 0 {
+            killAbandoned = true
+            onEvent?("warning", L("已停止重发停桨；飞控未确认", "Stopped resending motor kill; the FC has not confirmed it"))
+        }
         normalLand = 0
     }
 
@@ -124,7 +135,7 @@ final class Safety {
     /// 10 Hz from AppCore (on the network queue), and right away on a trigger.
     func tick() {
         let now = mono()
-        if killActive && killConfirmed == 0 {
+        if killActive && killConfirmed == 0 && !killAbandoned {
             if fcFresh() && !fc.armed {
                 killConfirmed = now
                 onEvent?("info", String(format: L("飞控已上锁（停桨后 %.2f s）", "The FC disarmed (%.2f s after the kill)"), now - killStart))
@@ -139,7 +150,7 @@ final class Safety {
             lastKillSend = now
             ecl.sendEstop(2, trig: trig)  // make sure the companion latched too
         }
-        if landActive && landConfirmed == 0 && !(killActive && killConfirmed == 0) {
+        if landActive && landConfirmed == 0 && !landAbandoned && !(killActive && killConfirmed == 0) {
             if fcFresh() && (fc.mode == MODE_LAND || !fc.armed) {
                 landConfirmed = now
                 onEvent?("info", String(format: fc.armed ? L("飞控已进入 LAND（紧急降落后 %.2f s）", "The FC is in LAND (%.2f s after the emergency land)")
@@ -173,11 +184,11 @@ final class Safety {
         let now = mono()
         var s: [String: Any] = ["sends": sends, "source": source]
         if landActive {
-            s["land"] = ["t": jnum(now - landStart, 1), "confirmed": landConfirmed > 0,
+            s["land"] = ["t": jnum(now - landStart, 1), "confirmed": landConfirmed > 0, "abandoned": landAbandoned,
                          "after": jnum(landConfirmed > 0 ? landConfirmed - landStart : nil, 2)]
         }
         if killActive {
-            s["kill"] = ["t": jnum(now - killStart, 1), "confirmed": killConfirmed > 0,
+            s["kill"] = ["t": jnum(now - killStart, 1), "confirmed": killConfirmed > 0, "abandoned": killAbandoned,
                          "after": jnum(killConfirmed > 0 ? killConfirmed - killStart : nil, 2)]
         }
         if normalLand > 0 { s["normal_land"] = jnum(now - normalLand, 1) }

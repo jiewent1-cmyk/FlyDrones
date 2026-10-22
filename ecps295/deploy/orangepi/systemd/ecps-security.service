@@ -1,0 +1,13 @@
+[Unit]
+Description=ECPS295 flight control network allowlist
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/sbin/nft delete table inet ecps_security
+ExecStart=/usr/sbin/nft -f /etc/ecps295/security.nft
+
+[Install]
+WantedBy=multi-user.target

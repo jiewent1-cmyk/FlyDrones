@@ -2,6 +2,7 @@
 
 import Compression
 import Foundation
+import Security
 
 enum Log {
     /// Every log line also goes to the web UI's log panel (set by AppCore).
@@ -35,6 +36,27 @@ enum Lang {
 /// The text in the current UI language: L("中文", "English").
 func L(_ zh: String, _ en: String) -> String { Lang.current == "en" ? en : zh }
 
+private let eclKeyService = "edu.ecps295.console.ecl1"
+func loadECLKey() -> Data? {
+    let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                            kSecAttrService as String: eclKeyService,
+                            kSecAttrAccount as String: "shared-key",
+                            kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
+    var result: CFTypeRef?
+    guard SecItemCopyMatching(q as CFDictionary, &result) == errSecSuccess else { return nil }
+    return result as? Data
+}
+
+@discardableResult func saveECLKey(_ data: Data) -> Bool {
+    let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                            kSecAttrService as String: eclKeyService,
+                            kSecAttrAccount as String: "shared-key"]
+    SecItemDelete(q as CFDictionary)
+    var item = q
+    item[kSecValueData as String] = data
+    return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
+}
+
 /// Monotonic seconds (not affected by wall-clock changes).
 @inline(__always) func mono() -> Double { ProcessInfo.processInfo.systemUptime }
 
@@ -45,7 +67,7 @@ func zlibInflate(_ data: Data) -> Data? {
     return inflateRaw(data.subdata(in: (data.startIndex + 2)..<(data.endIndex - 4)))
 }
 
-func inflateRaw(_ input: Data) -> Data? {
+func inflateRaw(_ input: Data, maximumOutput: Int = 8 * 1024 * 1024) -> Data? {
     let stream = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
     defer { stream.deallocate() }
     guard compression_stream_init(stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB) == COMPRESSION_STATUS_OK else { return nil }
@@ -60,9 +82,11 @@ func inflateRaw(_ input: Data) -> Data? {
         stream.pointee.src_size = input.count
         while true {
             stream.pointee.dst_ptr = buf
-            stream.pointee.dst_size = cap
+            let dstCapacity = min(cap, maximumOutput + 1 - out.count)
+            stream.pointee.dst_size = dstCapacity
             let st = compression_stream_process(stream, Int32(COMPRESSION_STREAM_FINALIZE.rawValue))
-            out.append(buf, count: cap - stream.pointee.dst_size)
+            out.append(buf, count: dstCapacity - stream.pointee.dst_size)
+            if out.count > maximumOutput { return false }
             if st == COMPRESSION_STATUS_END { return true }
             if st != COMPRESSION_STATUS_OK { return false }
             if stream.pointee.src_size == 0 && stream.pointee.dst_size == cap { return true }

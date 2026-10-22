@@ -16,7 +16,8 @@ const map = new MapView($("map3d"), $("mapwrap"), $("mapLegend"), onPick);
 const MODES = { PATROL: ["大脑巡逻", "Brain patrol"], HOLD: ["悬停", "Hold"], GOTO: ["前往目标", "Go to goal"], MANUAL: ["手动", "Manual"], TRACK: ["跟踪目标", "Track target"], LAND: ["降落", "Land"] };
 // target tracking (2026-10-18): the pilot's target layer states, and how the TICK reports them (trk, mk)
 const TRK = { SEARCH: ["搜索中", "Searching"], APPROACH: ["接近中", "Approaching"], ARRIVED: ["已到达", "Arrived"], LOST: ["丢失", "Lost"], FAILED: ["没找到", "Not found"] };
-const modeName = (m, raw = m) => (MODES[m] ? L(...MODES[m]) : raw);
+const escapeHTML = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
+const modeName = (m, raw = m) => (MODES[m] ? L(...MODES[m]) : String(raw));
 const EKF_ORIGIN = [33.643, -117.842, 20.0];  // companion.yaml mavlink.ekf_origin (= the SITL home)
 let S = null;          // native state (10 Hz)
 let T = null;          // last companion TICK
@@ -24,6 +25,7 @@ let ST = null;         // last companion STATUS
 let topo = null;       // companion TOPO (once per connection)
 let mapHdr = null;     // header of the last MAP
 let tickAt = 0;
+let stateAt = 0;
 let uiDown = false;    // the page lost its WebSocket to the app
 let armedAt = null, lastArmed = false, lastFlight = 0;
 let wantHandover = localStorage.getItem("ecps.handover") || "hold";
@@ -33,11 +35,12 @@ let maxEv = 0;
 
 // ---------------------------------------------------------------- link events
 link.addEventListener("state", (e) => {
-  S = e.detail;
+  S = e.detail; stateAt = performance.now();
   followLang(S.settings);
   const fc = S.fc || {};
   if (fc.texts) for (const t of fc.texts) addLog(t[2] <= 3 ? "critical" : t[2] <= 4 ? "warn" : "info", t[1], t[3]);
   flight.push(fc, freshTick());
+  mapText();
   onState();
 });
 link.addEventListener("tick", (e) => { T = e.detail; tickAt = performance.now(); onTick(); });
@@ -69,7 +72,9 @@ function topoText() {
 function mapText() {
   if (!mapHdr) return;
   const h = mapHdr, nv = h.nvox.toLocaleString(), cm = (h.res * 100).toFixed(0);
-  $("mapInfo").textContent = L(`· ${nv} 个占据体素（${cm} cm）· 第 ${h.frames} 帧 ToF`, `· ${nv} voxels (${cm} cm) · ${h.frames} ToF frames`);
+  const poseAge = map.poseAt ? (performance.now() - map.poseAt) / 1000 : null;
+  $("mapInfo").textContent = L(`· ${nv} 个占据体素（${cm} cm）· 第 ${h.frames} 帧 ToF${poseAge == null ? "" : ` · 位姿 ${poseAge.toFixed(1)} s 前`}`,
+    `· ${nv} voxels (${cm} cm) · ${h.frames} ToF frames${poseAge == null ? "" : ` · pose ${poseAge.toFixed(1)} s ago`}`);
 }
 
 // ---------------------------------------------------------------- state from the native side
@@ -120,6 +125,7 @@ function chips(fc, ecl) {
     ecl.connected ? `${fixw(ecl.rtt != null ? ecl.rtt.toFixed(0) : "?", "3ch")} ms${lvTxt}` : ecl.age != null ? L(`${ecl.age.toFixed(0)} s 无数据`, `no data for ${ecl.age.toFixed(0)} s`) : L("未连接", "not connected")));
   const hb = fc.hb_age;
   out.push(chip(hb == null ? "off" : hb < 1.5 ? "good" : hb < 3 ? "warn" : "critical", L("飞控", "FC"), hb == null ? L("无心跳", "no heartbeat")
+    : hb > 2 ? L(`心跳过期 ${hb.toFixed(1)} s`, `stale heartbeat ${hb.toFixed(1)} s`)
     : `${fixw(fc.mode, "9ch", true)} · ${fixw(fc.armed ? L("解锁", "armed") : L("上锁", "disarmed"), L("2em", "8ch"), true)}`));
   const ch = fc.comp_hb_age;
   out.push(chip(ch == null ? "off" : ch < 1.5 ? "good" : "critical", L("机载心跳", "Companion HB"), ch == null ? "—" : `${fixw(ch.toFixed(1), "4ch")} s`));
@@ -174,47 +180,58 @@ function estopBar(fc, sf) {
   const parts = [];
   let ok = true;
   if (sf.kill) {
-    parts.push(sf.kill.confirmed ? L(`✓ 已停桨（飞控确认上锁，用时 ${sf.kill.after} s）`, `✓ Motors stopped (the FC confirmed the disarm after ${sf.kill.after} s)`)
+    parts.push(sf.kill.abandoned ? L(`✕ 停止重发：飞控未确认停桨`, `✕ Resending stopped: motor kill unconfirmed by FC`)
+      : sf.kill.confirmed ? L(`✓ 已停桨（飞控确认上锁，用时 ${sf.kill.after} s）`, `✓ Motors stopped (the FC confirmed the disarm after ${sf.kill.after} s)`)
       : L(`✕ 停桨中：强制上锁已发送 ${sf.kill.t} s，等待飞控确认…`, `✕ Kill: sending force disarm for ${sf.kill.t} s, waiting for the FC…`));
     ok = ok && sf.kill.confirmed;
   }
   if (sf.land) {
-    let s = sf.land.confirmed ? L(`✓ 紧急降落：飞控已确认（${sf.land.after} s）`, `✓ Emergency land: confirmed by the FC (${sf.land.after} s)`)
+    let s = sf.land.abandoned ? L(`✕ 停止重发：飞控未确认降落`, `✕ Resending stopped: landing unconfirmed by FC`)
+      : sf.land.confirmed ? L(`✓ 紧急降落：飞控已确认（${sf.land.after} s）`, `✓ Emergency land: confirmed by the FC (${sf.land.after} s)`)
       : L(`✕ 紧急降落：LAND 已发送 ${sf.land.t} s，等待飞控确认…`, `✕ Emergency land: sending LAND for ${sf.land.t} s, waiting for the FC…`);
     if (sf.land.confirmed && fc.armed && fc.mode !== "LAND") s += L(` · 飞手已改为 ${fc.mode}`, ` · the pilot switched to ${fc.mode}`);
     parts.push(s); ok = ok && sf.land.confirmed;
   }
   if (t && t.es) parts.push(L(`机载程序急停锁：${t.es === 2 ? "停桨" : "降落"}（解除前不会再接管）`, `Companion E-stop latch: ${t.es === 2 ? "kill" : "land"} (no take-over until reset)`));
-  if (!parts.length) { bar.className = "estopBar"; bar.innerHTML = ""; return; }
-  bar.className = "estopBar on" + (ok ? " ok" : "");
-  bar.innerHTML = `<span>${parts.join(" · ")}</span>${!ok ? `<button class="icon" id="bStopSend">${L("停止重发", "Stop resending")}</button>` : ""}<button class="icon" id="bReset">${L("解除急停", "Reset E-stop")}</button>`;
-  const r = $("bReset");
-  if (r) r.onclick = () => {
-    const armed = S && S.fc && S.fc.armed;
-    const q = armed ? L("飞控仍处于解锁状态。强制解除急停锁？解除后机载程序可在 GUIDED 下重新接管（先悬停）。",
-      "The FC is still armed. Force-reset the E-stop latch? The companion can then take control again in GUIDED (it starts with a hover).") : L("解除急停锁？", "Reset the E-stop latch?");
-    if (confirm(q)) link.send({ c: "estop_reset", force: !!armed });
-  };
+  if (!parts.length) { bar.className = "estopBar"; $("estopText").textContent = ""; return; }
+  bar.className = "estopBar on" + (ok && !sf.kill?.abandoned && !sf.land?.abandoned ? " ok" : "");
+  $("estopText").textContent = parts.join(" · ");
   const st = $("bStopSend");
-  if (st) st.onclick = () => link.send({ c: "estop_stop" });
+  const landDone = !sf.land || sf.land.confirmed || sf.land.abandoned;
+  const killDone = !sf.kill || sf.kill.confirmed || sf.kill.abandoned;
+  st.hidden = ok || (landDone && killDone);
+  st.textContent = L("停止重发", "Stop resending");
+  const r = $("bReset"); r.textContent = L("解除急停", "Reset E-stop");
 }
+$("bReset").onclick = () => {
+  const armed = !!(S && S.fc && S.fc.armed), fresh = !!(S && S.fc && S.fc.hb_age != null && S.fc.hb_age < 2);
+  if (!fresh) return addLog("critical", L("控制台", "Console"), L("飞控状态过期，无法解除急停", "FC state is stale; E-stop reset refused"));
+  const q = armed ? L("飞控仍处于解锁状态。强制解除急停锁？", "The FC is still armed. Force-reset the E-stop latch?") : L("解除急停锁？", "Reset the E-stop latch?");
+  if (confirm(q)) link.send({ c: "estop_reset", force: !!armed });
+};
+$("bStopSend").onclick = () => link.send({ c: "estop_stop" });
 
 // ---------------------------------------------------------------- companion TICK / STATUS
 function onTick() {
   map.onTick(T);
+  mapText();
   tickText();
   trkChip(T);
-  if (!handoverSent && T.ho && T.ho.toLowerCase() !== wantHandover) { handoverSent = true; sendHandover(wantHandover); }
   if (T.ho) handoverSent = true;
 }
 
 function tickText() {
   const b = behaviour(T);
   const op = T.op;
-  if (T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK") { $("gname").innerHTML = `${modeName(op)}<small>${L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")}</small>`; }
-  else $("gname").innerHTML = `${b.name}<small>${T.ctl ? (op === "GOTO" ? L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias")
+  const controlled = T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK";
+  const title = controlled ? modeName(op) : b.name;
+  const detail = controlled ? L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")
+    : T.ctl ? (op === "GOTO" ? L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias")
     : op === "TRACK" ? L("跟踪目标（目标层：搜索、接近、面向标记，大脑的逃逸仍优先）", "tracking: search, approach, face the marker (the brain's escapes still win)")
-    : L("大脑驾驶", "brain flying")) : L("未接管：仅显示大脑会怎么做", "not in control: what the brain would do")}</small>`;
+    : L("大脑驾驶", "brain flying")) : L("未接管：仅显示大脑会怎么做", "not in control: what the brain would do");
+  const name = document.createElement("span"); name.textContent = title;
+  const small = document.createElement("small"); small.textContent = detail;
+  $("gname").replaceChildren(name, small);
   $("chain").textContent = b.chain + (T.illm ? L(` · 错觉：${T.illm}`, ` · illusion: ${T.illm}`) : "");
   $("tclock").textContent = `t ${T.t != null ? T.t.toFixed(1) : "—"} s`;
 }
@@ -311,7 +328,7 @@ document.querySelectorAll("[data-cam]").forEach((b) => (b.onclick = () => setCam
 // keyboard: shortcuts + manual sticks (Esc is handled natively: emergency LAND)
 const keys = new Set();
 window.addEventListener("keydown", (e) => {
-  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.metaKey || e.ctrlKey) return;
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.isContentEditable || $("settings").classList.contains("on") || e.metaKey || e.ctrlKey) return;
   const k = e.key.toLowerCase();
   const manual = T && T.opm === "MANUAL";
   if (manual && "wasdqerf".includes(k) && k.length === 1) { keys.add(k); e.preventDefault(); return; }
@@ -386,12 +403,14 @@ function fillSettings(s) {
   $("sHost").value = s.host; $("sEcl").value = s.ecl; $("sMav").value = s.mav;
   $("sStreams").checked = !!s.streams; $("sRecAuto").checked = !!s.rec_auto;
   $("sCamHz").value = String(Math.round(s.cam_hz || 5));
+  $("sEclKey").placeholder = s.eclKeySet ? L("已保存到钥匙串（留空保持不变）", "Saved in Keychain (blank keeps it)") : L("必填：从 Pi 安全复制 console.key 并 base64 编码", "Required: securely copy Pi console.key and base64 encode it");
   $("sBw").value = String(s.bw == null ? -1 : s.bw);
 }
-$("bSettings").onclick = () => { if (S) fillSettings(S.settings); $("settings").classList.add("on"); };
+$("bSettings").onclick = () => { keys.clear(); if (S) fillSettings(S.settings); $("settings").classList.add("on"); };
 $("bSetClose").onclick = () => $("settings").classList.remove("on");
 $("bConnect").onclick = () => {
-  link.send({ c: "connect", host: $("sHost").value.trim(), ecl: +$("sEcl").value, mav: +$("sMav").value });
+  link.send({ c: "connect", host: $("sHost").value.trim(), ecl: +$("sEcl").value, mav: +$("sMav").value, eclKey: $("sEclKey").value.trim() });
+  $("sEclKey").value = "";
   link.send({ c: "streams", on: $("sStreams").checked });
   link.send({ c: "rec", auto: $("sRecAuto").checked });
   link.send({ c: "cam", hz: +$("sCamHz").value, color_w: +$("sColorW").value });
@@ -481,8 +500,11 @@ function addLog(level, src, text) {
   const icon = { critical: "✕", warn: "▲", warning: "▲", info: "●", serious: "■" }[level] || "●";
   const cls = { critical: "critical", warn: "warn", warning: "warn", serious: "serious" }[level] || "good";
   const row = document.createElement("div");
-  row.innerHTML = `<span class="tm">${d.toTimeString().slice(0, 8)}</span><span class="st ${cls}">${icon}</span><span class="src">${src}</span><span class="tx"></span>`;
-  row.querySelector(".tx").textContent = text;
+  const tm = document.createElement("span"); tm.className = "tm"; tm.textContent = d.toTimeString().slice(0, 8);
+  const status = document.createElement("span"); status.className = `st ${cls}`; status.textContent = icon;
+  const source = document.createElement("span"); source.className = "src"; source.textContent = String(src);
+  const message = document.createElement("span"); message.className = "tx"; message.textContent = String(text);
+  row.append(tm, status, source, message);
   logEl.prepend(row);
   while (logEl.childElementCount > 300) logEl.lastChild.remove();
 }
@@ -493,13 +515,22 @@ let prev = performance.now();
 function frame(now) {
   const dt = Math.min(0.1, (now - prev) / 1000); prev = now;
   const t = freshTick();
-  brain.draw(dt, t ? t.rates : null);
-  brain.drawMotor(t);
-  eyes.draw(t);
-  map.render();
-  const sr = brain.spikeRate;
-  $("brainStat").textContent = t ? `${(sr / 1000).toFixed(1)}k ${L("脉冲/s", "spikes/s")} · ${t.rtf != null ? t.rtf.toFixed(0) : "?"}×` : "—";
+  for (const [name, draw] of [["brain", () => brain.draw(dt, t ? t.rates : null)], ["motor", () => brain.drawMotor(t)],
+    ["camera", () => eyes.draw(t)], ["map", () => map.render()]]) {
+    try { draw(); } catch (e) { addDrawError(name, e); }
+  }
+  try { $("brainStat").textContent = t ? `${(brain.spikeRate / 1000).toFixed(1)}k ${L("脉冲/s", "spikes/s")} · ${t.rtf != null ? t.rtf.toFixed(0) : "?"}×` : "—"; }
+  catch (e) { addDrawError("status", e); }
+  const frozen = !stateAt || now - stateAt > 500;
+  $("freezeBar").classList.toggle("on", frozen);
+  $("freezeBar").textContent = frozen ? L("数据已冻结：原生状态流超过 0.5 秒未更新", "DATA FROZEN: native state has not updated for 0.5 seconds") : "";
   requestAnimationFrame(frame);
+}
+const drawErrors = new Set();
+function addDrawError(name, error) {
+  const msg = `${name}: ${String(error && error.message || error)}`;
+  if (drawErrors.has(msg)) return;
+  drawErrors.add(msg); addLog("critical", L("渲染异常", "Render error"), msg);
 }
 requestAnimationFrame(frame);
 addLog("info", L("控制台", "Console"), L("Esc = 紧急降落（任何时候）；停桨需按住 1.5 秒", "Esc = emergency land (any time); kill needs a 1.5 s hold"));

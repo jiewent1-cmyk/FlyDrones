@@ -4,18 +4,20 @@
 Connects like the Mac console (HELLO 5 Hz, PING 2 Hz), decodes every message type, prints a 1 Hz summary and can send
 commands and the emergency stop. Used by the console tests and handy on the Pi itself for a headless check.
 
-    python ecl_client.py --host 192.168.86.20 --seconds 10
-    python ecl_client.py --host 127.0.0.1 --cmd hold --cmd 'goto {"x": 1.0, "y": 0.5}' --seconds 20
-    python ecl_client.py --host 127.0.0.1 --estop 1 --seconds 3 --json-out /tmp/ecl.json
-    python ecl_client.py --host 127.0.0.1 --save-cam /tmp/cam.jpg --cam color --seconds 3
-    python ecl_client.py --host 192.168.86.20 --port 14701 --lvl 3 --cam-hz 20 --seconds 30 --quiet --json-out cam.json
+    python ecl_client.py --key-file console.key --host 192.168.86.20 --seconds 10
+    python ecl_client.py --key-file console.key --host 127.0.0.1 --cmd hold --seconds 20
+    python ecl_client.py --key-file console.key --host 127.0.0.1 --estop 1 --seconds 3
+    python ecl_client.py --key-file console.key --host 192.168.86.20 --port 14701 --lvl 3 --cam-hz 20 --seconds 30
 """
 
 from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
+import hmac
 import json
+from pathlib import Path
 import socket
 import struct
 import sys
@@ -26,16 +28,38 @@ import numpy as np
 
 MAGIC = b"ECL1"
 HDR = struct.Struct("<4sBBHHHI")
-MAX_PAYLOAD = 1200
+MAX_PAYLOAD = 1152
+MAX_CHUNKS = 512
+MAX_MESSAGE = MAX_PAYLOAD * MAX_CHUNKS
+MAX_INFLATED = 8 * 1024 * 1024
+REPLAY_WINDOW = 256
+
+
+def replay_accept(state: tuple[int, int], seq: int) -> tuple[tuple[int, int], bool]:
+    high, seen = state
+    if seq > high:
+        shift = seq - high
+        seen = 1 if shift >= REPLAY_WINDOW else ((seen << shift) | 1) & ((1 << REPLAY_WINDOW) - 1)
+        return (seq, seen), True
+    offset = high - seq
+    if offset >= REPLAY_WINDOW or seen & (1 << offset):
+        return state, False
+    return (high, seen | (1 << offset)), True
 F_ZLIB = 1
 NAMES = {1: "TICK", 2: "BRAIN", 3: "CAM", 4: "MAP", 5: "TOF", 6: "TOPO", 7: "ACK", 8: "STATUS", 9: "PONG"}
 T_HELLO, T_PING, T_CMD, T_ESTOP, T_TOPO_REQ = 64, 65, 66, 67, 68
+AUTH_FIELDS = struct.Struct("<QQ")
 
 
 class Link:
     def __init__(self, host: str, port: int, name: str = "ecl_client", cam: str = "brain", cam_hz: float = 5.0,
-                 lvl: int | None = None, color_w: int = 640, color_q: int = 60):
+                 lvl: int | None = None, color_w: int = 640, color_q: int = 60, key: bytes | None = None):
+        if key is None or len(key) != 32:
+            raise ValueError("ECL1 requires a 32-byte key; securely copy console.key and pass --key-file")
         self.addr = (host, port)
+        self.key = key
+        self.tx_seq = 0
+        self.rx_state = (0, 0)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(0.05)
         self.msg = 0
@@ -52,7 +76,11 @@ class Link:
         n = max(1, -(-len(payload) // MAX_PAYLOAD))
         st = int(time.monotonic() * 1000) & 0xFFFFFFFF
         for i in range(n):
-            self.sock.sendto(HDR.pack(MAGIC, typ, flags, self.msg, i, n, st) + payload[i * MAX_PAYLOAD:(i + 1) * MAX_PAYLOAD], self.addr)
+            d = bytearray(HDR.pack(MAGIC, typ, flags | 2, self.msg, i, n, st) + payload[i * MAX_PAYLOAD:(i + 1) * MAX_PAYLOAD])
+            self.tx_seq += 1
+            d.extend(AUTH_FIELDS.pack(self.tx_seq, int(time.time() * 1000)))
+            d.extend(hmac.new(self.key, d, hashlib.sha256).digest())
+            self.sock.sendto(d, self.addr)
 
     def send_json(self, typ: int, obj) -> None:
         self._send(typ, json.dumps(obj).encode())
@@ -81,25 +109,46 @@ class Link:
             data, _ = self.sock.recvfrom(65535)
         except (socket.timeout, BlockingIOError):
             return None
-        if len(data) < HDR.size:
+        if len(data) < HDR.size + AUTH_FIELDS.size + 32 or len(data) > HDR.size + MAX_PAYLOAD + 48:
             return None
         magic, typ, flags, msg, chunk, n, stamp = HDR.unpack_from(data)
-        if magic != MAGIC:
+        if magic != MAGIC or not flags & 2 or n < 1 or n > MAX_CHUNKS or chunk >= n:
             return None
+        seq, stamp_ms = AUTH_FIELDS.unpack_from(data, len(data) - 48)
+        state, fresh = replay_accept(self.rx_state, seq)
+        if abs(int(time.time() * 1000) - stamp_ms) > 30_000 or not fresh:
+            return None
+        if not hmac.compare_digest(hmac.new(self.key, data[:-32], hashlib.sha256).digest(), data[-32:]):
+            return None
+        self.rx_state = state
         self.rx_bytes[NAMES.get(typ, str(typ))] += len(data)
-        body = data[HDR.size:]
+        body = data[HDR.size:-48]
         if n > 1:
             now = time.monotonic()
-            ent = self.parts.setdefault((typ, msg), [now, {}])
-            ent[1][chunk] = body
             for k in [k for k, v in self.parts.items() if now - v[0] > 1.0]:
                 del self.parts[k]
-            if len(ent[1]) < n:
+            if (typ, msg) not in self.parts and len(self.parts) >= 64:
                 return None
-            body = b"".join(ent[1][i] for i in range(n))
+            key = (typ, msg)
+            ent = self.parts.get(key)
+            if ent is None:
+                ent = self.parts[key] = [now, n, flags, {}]
+            elif ent[1] != n or ent[2] != flags:
+                self.parts.pop(key, None)
+                return None
+            ent[3][chunk] = body
+            if sum(map(len, ent[3].values())) > MAX_MESSAGE:
+                self.parts.pop((typ, msg), None)
+                return None
+            if len(ent[3]) < n:
+                return None
+            body = b"".join(ent[3][i] for i in range(n))
             self.parts.pop((typ, msg), None)
         if flags & F_ZLIB:
-            body = zlib.decompress(body)
+            dec = zlib.decompressobj()
+            body = dec.decompress(body, MAX_INFLATED + 1)
+            if len(body) > MAX_INFLATED or dec.unconsumed_tail or not dec.eof:
+                return None
         return typ, body, len(data)
 
 
@@ -152,6 +201,7 @@ def decode(typ: int, body: bytes) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--key-file", required=True, help="secure copy of the Pi's 32-byte console.key")
     ap.add_argument("--port", type=int, default=14700)
     ap.add_argument("--seconds", type=float, default=10)
     ap.add_argument("--cam", default="brain", choices=["brain", "color", "off"])
@@ -165,7 +215,8 @@ def main() -> int:
     ap.add_argument("--json-out", default="")
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
-    L = Link(a.host, a.port, cam=a.cam, cam_hz=a.cam_hz, lvl=a.lvl, color_w=a.color_w, color_q=a.color_q)
+    L = Link(a.host, a.port, cam=a.cam, cam_hz=a.cam_hz, lvl=a.lvl, color_w=a.color_w, color_q=a.color_q,
+             key=Path(a.key_file).read_bytes())
     t0 = time.monotonic()
     nxt_hello = nxt_ping = nxt_print = t0
     counts = collections.Counter()

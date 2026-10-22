@@ -55,40 +55,55 @@ export class Link extends EventTarget {
       case T.ACK: this.emit("eclack", JSON.parse(td.decode(p))); break;
       case T.TOPO: this.emit("topo", JSON.parse(td.decode(p))); break;
       case T.BRAIN: {
+        if (p.length < 9) throw new Error("short brain packet");
         const tick = dv.getUint32(0, true), n = dv.getUint16(4, true), rows = p[6], cols = p[7], nfeat = p[8];
+        if (n > 250000 || rows > 64 || cols > 64 || nfeat > 32 || 9 + n + 2 * nfeat * rows * cols > p.length) throw new Error("invalid brain dimensions");
         const counts = p.subarray(9, 9 + n);
         const grids = nfeat ? p.subarray(9 + n, 9 + n + 2 * nfeat * rows * cols) : null;
         this.emit("brain", { tick, n, rows, cols, nfeat, counts, grids });
         break;
       }
       case T.CAM: {
+        if (p.length < 9) throw new Error("short camera packet");
         const kind = p[0], w = dv.getUint16(1, true), h = dv.getUint16(3, true), no = dv.getUint32(5, true);
         this.emit("cam", { kind, w, h, no, jpeg: p.slice(9) });
         break;
       }
       case T.MAP: {
+        if (p.length < 2) throw new Error("short map packet");
         const hl = dv.getUint16(0, true);
+        if (hl < 2 || 2 + hl > p.length) throw new Error("invalid map header length");
         const hdr = JSON.parse(td.decode(p.subarray(2, 2 + hl)));
+        if (![hdr.n, hdr.nz, hdr.nvox, hdr.res, hdr.half].every(Number.isFinite) || hdr.n < 1 || hdr.n > 128 || hdr.nz < 1 || hdr.nz > 128 || hdr.nvox < 0 || hdr.nvox > 400000) throw new Error("invalid map dimensions");
         const nv = hdr.nvox, off = 2 + hl;
+        if (off + 5 * nv > p.length) throw new Error("truncated map voxels");
         const idx = new Float64Array(nv);
         let acc = 0;
-        for (let i = 0; i < nv; i++) { acc += dv.getUint32(off + 4 * i, true); idx[i] = acc; }
+        for (let i = 0; i < nv; i++) {
+          acc += dv.getUint32(off + 4 * i, true);
+          if (!Number.isSafeInteger(acc) || acc >= hdr.n * hdr.n * hdr.nz) throw new Error("map voxel index out of range");
+          idx[i] = acc;
+        }
         const conf = p.subarray(off + 4 * nv, off + 5 * nv);
         this.emit("map", { hdr, idx, conf });
         break;
       }
       case T.TOF: {
+        if (p.length < 1) throw new Error("short ToF packet");
         const cnt = p[0];
         let off = 1;
         const sensors = [];
         for (let s = 0; s < cnt; s++) {
+          if (off + 4 > p.length) throw new Error("truncated ToF header");
           const bearing = dv.getInt16(off, true), n = p[off + 2], age = p[off + 3] * 10;
+          if (n < 1 || n > 8 || off + 4 + 2 * n * n > p.length) throw new Error("invalid ToF dimensions");
           off += 4;
           const r = new Float32Array(n * n);
           for (let i = 0; i < n * n; i++) r[i] = f16(dv.getUint16(off + 2 * i, true));
           off += 2 * n * n;
           sensors.push({ bearing, n, age, r });
         }
+        if (off !== p.length) throw new Error("unexpected ToF bytes");
         this.emit("tof", sensors);
         break;
       }

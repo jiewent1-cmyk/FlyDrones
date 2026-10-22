@@ -18,6 +18,7 @@ Two parts, the level is the larger one:
 
 from __future__ import annotations
 
+import math
 from collections import deque
 
 
@@ -49,7 +50,7 @@ class VentralCue:
     def height_above_floor(self, baro_m: float | None) -> float | None:
         """Baro height minus the floor's surface baseline. The baseline is frozen while something is under the drone,
         so this stays a height above the FLOOR over a box, independent of the flow EKF that the box corrupts."""
-        if baro_m is None or self._tb is None:
+        if baro_m is None or not math.isfinite(baro_m) or self._tb is None:
             return None
         return baro_m - self._tb
 
@@ -64,6 +65,8 @@ class VentralCue:
         return best
 
     def update(self, t: float, range_m: float | None, baro_m: float | None, dt: float) -> float:
+        if baro_m is not None and not math.isfinite(baro_m):
+            baro_m = None
         ok = range_m is not None and range_m == range_m and self.range_valid[0] <= range_m <= self.range_valid[1]
         if ok:
             while self._hist and t - self._hist[0][0] > self.window_s:

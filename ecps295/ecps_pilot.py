@@ -214,19 +214,21 @@ class EcpsPilot(Pilot):
         inputs = self.encoder.encode(vision, tel.yaw_rate_dps)
         rates = self.brain.tick(inputs, ms=dt * 1000.0)
         raw = self.decoder.update(rates, dt)
-        cmd = self.safety.filter(raw, tel, dt, brain_age_s=brain_age)
+        cmd = raw
+        stop_reason = ""
+        invalid_raw = not all(math.isfinite(getattr(raw, a)) for a in ("throttle", "yaw", "forward", "lateral"))
         if brain_age > self.safety.brain_timeout:
             self._event(t, f"brain stalled {brain_age:.2f} s -> hover")
         stale = getattr(self.drone, "frame_age_s", lambda: 0.0)() if self.drone.has_camera else 0.0
         if stale > self.stale_s:
-            cmd = FlightCommand.hover(f"camera stale {stale:.1f} s")
+            stop_reason = f"camera stale {stale:.1f} s"
             self._event(t, "camera stale -> hover")
             if stale > self.land_after_s:
                 self.safety.land_requested = True
                 self._event(t, "camera stale -> land")
         ext_age = getattr(self.drone, "ext_age_s", lambda: 0.0)()
         if self.ext_wd_on and ext_age > self.ext_stale_s and getattr(self.drone, "ext_height", False):
-            cmd = FlightCommand.hover(f"companion height stale {min(ext_age, 99):.1f} s")
+            stop_reason = f"companion height stale {min(ext_age, 99):.1f} s"
             self._event(t, "height source stale -> hover")
             if ext_age > self.ext_land_after_s:
                 self.safety.land_requested = True
@@ -253,6 +255,11 @@ class EcpsPilot(Pilot):
             cmd = self._fence_turn(cmd, tel, t)
         if self.struct is not None:
             cmd = self.struct.filter(cmd, tel, self.decoder, self.drone, t)
+        # No steering layer may overwrite the governor or a watchdog stop.
+        # Preserve invalid raw input even if an intermediate clamp hid its NaN.
+        cmd = self.safety.filter(raw if invalid_raw else cmd, tel, dt, brain_age_s=brain_age)
+        if stop_reason:
+            cmd = self.safety.hover(stop_reason)
         if self.safety.land_requested:
             self.drone.land()
         else:
@@ -271,6 +278,7 @@ class EcpsPilot(Pilot):
             }
         )
         self._last_tick_end = time.monotonic()
+        del self.history[:-1200]  # one minute at 20 Hz; full telemetry is already streamed to ticks.csv
         return TickInfo(
             t,
             cam if cam is not None else frame,

@@ -1,6 +1,6 @@
 // ECPS Console - the companion link (ECL1 over UDP, companion/console_link.py on the Pi, default port 14700).
 //
-// Datagram: <4sBBHHHI magic 'ECL1', type, flags (bit 0 zlib), msg, chunk, nchunk, stamp ms> + <= 1200 payload bytes.
+// Datagram: <4sBBHHHI magic 'ECL1', type, flags, msg, chunk, nchunk, stamp> + <= 1152 bytes + <QQ seq, Unix ms> + HMAC-SHA256.
 // Everything that arrives compressed is inflated here, so the web UI gets plain payloads:
 //   TICK / ACK / STATUS / TOPO   JSON
 //   BRAIN   <IHBBB tick, n, rows, cols, nfeat> + uint8 counts[n] + uint8 grids[2][nfeat][rows*cols]
@@ -14,6 +14,7 @@
 
 import Foundation
 import Network
+import CryptoKit
 
 final class ECLLink {
     static let MAGIC: [UInt8] = Array("ECL1".utf8)
@@ -29,7 +30,11 @@ final class ECLLink {
     var prefs: [String: Any] = ["name": "ECPS Console (Mac)", "cam": "brain", "cam_hz": 5, "color_w": 480, "color_q": 55]
 
     private var msg: UInt16 = 0
-    private var parts: [UInt32: (t: Double, n: Int, chunks: [Int: Data])] = [:]
+    private var authKey: Data?
+    private var txSeq: UInt64 = 0
+    private var rxHigh: UInt64 = 0
+    private var rxSeen = Set<UInt64>()
+    private var parts: [UInt32: (t: Double, n: Int, flags: UInt8, chunks: [Int: Data])] = [:]
     private(set) var lastRx = 0.0
     private(set) var rtt: Double?
     private(set) var rxBytes = 0
@@ -68,7 +73,10 @@ final class ECLLink {
 
     init(queue: DispatchQueue) { q = queue }
 
+    func setAuthKey(_ key: Data?) { authKey = key?.count == 32 ? key : nil }
+
     var connected: Bool { lastRx > 0 && mono() - lastRx < 1.5 }
+    var authenticatedKeyReady: Bool { authKey?.count == 32 }
 
     func connect(host: String, port: UInt16) {
         self.host = host
@@ -114,7 +122,7 @@ final class ECLLink {
     // ------------------------------------------------------------------ send
     private func datagrams(_ typ: UInt8, _ payload: Data) -> [Data] {
         msg &+= 1
-        let n = max(1, (payload.count + 1199) / 1200)
+        let n = max(1, (payload.count + 1151) / 1152)
         let st = UInt32(truncatingIfNeeded: Int64(mono() * 1000))
         var out: [Data] = []
         for i in 0..<n {
@@ -124,8 +132,15 @@ final class ECLLink {
             d.appendLE(UInt16(i))
             d.appendLE(UInt16(n))
             d.appendLE(st)
-            let a = payload.startIndex + i * 1200
-            d.append(payload.subdata(in: a..<min(payload.endIndex, a + 1200)))
+            let a = payload.startIndex + i * 1152
+            d.append(payload.subdata(in: a..<min(payload.endIndex, a + 1152)))
+            guard let key = authKey else { continue }
+            d[5] |= 2
+            txSeq &+= 1
+            d.appendLE(txSeq)
+            d.appendLE(UInt64(Date().timeIntervalSince1970 * 1000))
+            let tag = HMAC<SHA256>.authenticationCode(for: d, using: SymmetricKey(data: key))
+            d.append(contentsOf: tag)
             out.append(d)
         }
         return out
@@ -258,15 +273,35 @@ final class ECLLink {
     // ------------------------------------------------------------------ receive
     private func handle(_ d: Data) {
         guard d.count >= 16, Array(d.prefix(4)) == ECLLink.MAGIC else { return }
+        guard let key = authKey, d.count >= 64, d.u8(5) & 2 != 0 else { return }
+        let signed = d.prefix(d.count - 32)
+        let tag = d.suffix(32)
+        guard HMAC<SHA256>.isValidAuthenticationCode(Data(tag), authenticating: Data(signed), using: SymmetricKey(data: key)) else { return }
+        let authAt = d.count - 48
+        let seq = d.u64(authAt), sentMs = d.u64(authAt + 8)
+        let nowMs = UInt64(Date().timeIntervalSince1970 * 1000)
+        guard nowMs > sentMs ? nowMs - sentMs <= 30_000 : sentMs - nowMs <= 30_000 else { return }
+        guard seq > 0, seq <= rxHigh ? (rxHigh - seq < 256 && !rxSeen.contains(seq)) : true else { return }
+        rxSeen.insert(seq)
+        if seq > rxHigh {
+            rxHigh = seq
+            rxSeen = rxSeen.filter { rxHigh - $0 < 256 }
+        }
+        var clean = Data(d.prefix(16))
+        clean[5] &= ~2
+        clean.append(d.subdata(in: 16..<authAt))
+        let d = clean
         let typ = d.u8(4), flags = d.u8(5), m = d.u16(6), chunk = Int(d.u16(8)), n = Int(d.u16(10))
-        guard n >= 1, chunk < n else { return }
+        guard d.count <= 1216, n >= 1, n <= 512, chunk < n else { return }
         rxBytes += d.count
         lastRx = mono()
         var body = d.subdata(in: (d.startIndex + 16)..<d.endIndex)
         if n > 1 {
             let key = UInt32(typ) << 16 | UInt32(m)
-            var e = parts[key] ?? (mono(), n, [:])
+            var e = parts[key] ?? (mono(), n, flags, [:])
+            guard e.n == n, e.flags == flags, parts[key] != nil || parts.count < 64 else { parts[key] = nil; return }
             e.chunks[chunk] = body
+            guard e.chunks.values.reduce(0, { $0 + $1.count }) <= 1152 * 512 else { parts[key] = nil; return }
             if e.chunks.count < n { parts[key] = e; return }
             parts[key] = nil
             var all = Data()

@@ -67,6 +67,8 @@ html[lang="en"] .eland span { white-space: pre-line; text-align: center; }
 .estopBar { display: none; padding: 7px 14px; font-weight: 700; font-size: 14px; background: #3a0d0f; color: #ffd5d6; border-bottom: 1px solid #8f2a2c; align-items: center; gap: 12px; }
 .estopBar.on { display: flex; }
 .estopBar.ok { background: #12241a; color: #c8f5d5; border-bottom-color: #1f6b3a; }
+.freezeBar { display:none; padding:7px 14px; font-weight:800; background:#641719; color:#fff; text-align:center; }
+.freezeBar.on { display:block; }
 .estopBar button { margin-left: auto; }
 
 /* ---------------------------------------------------------------- layout */
