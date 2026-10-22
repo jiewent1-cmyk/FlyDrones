@@ -18,7 +18,7 @@ Full test report: `项目文档/07_机载部署/ECPS295_OrangePi部署与性能�
 | `config/mavlink-router.conf` | → `/etc/mavlink-router/main.conf` |
 | `config/fc_flight.parm` | 飞控飞行参数：只认机载程序 sysid 254 为地面站，失联 2 s LAND / FC flight params: companion-loss failsafe (`MAV_GCS_SYSID_HI 254`) |
 | `systemd/ecps-companion.service` | → `/etc/systemd/system/`（已安装，**未设开机启动**） |
-| `scripts/` | `install_pi.sh`、`profile_matrix.sh`、`sil_equiv.py`、`sitl_hil_test.py`、`tof_probe.py`、`cam_probe.py` |
+| `scripts/` | `install_pi.sh`、`profile_matrix.sh`、`sil_equiv.py`、`sitl_hil_test.py`、`tof_probe.py`、`cam_probe.py`、`pil_link_test.py`（PIL 报文乱序的离线测试，10-21） |
 | `build/` | mavlink-router 源码与编译、ArduPilot Copter-4.7.0 SITL（测试用） |
 | `logs/` | 每次运行一个目录：`ticks.csv`、`system.csv`、`run.json` |
 

@@ -132,12 +132,12 @@
     <label class="chk"><input type="checkbox" id="sStreams"> <span data-en="Ask the FC for extra display-only data (optical flow, vibration, HUD, battery; the streams the companion relies on are left alone)">向飞控请求额外显示用数据（光流、振动、HUD、电池；不影响机载程序依赖的数据流）</span></label>
     <label class="chk"><input type="checkbox" id="sRecAuto"> <span data-en="Record automatically while the FC is armed, stop 10 s after it disarms">飞控解锁时自动记录，上锁 10 秒后停止</span></label>
     <div class="row2">
-      <label><span data-en="Camera frame rate (capped by the bandwidth level)">相机帧率（受带宽档位限制）</span><select id="sCamHz"><option value="2">2 fps</option><option value="5">5 fps</option><option value="10">10 fps</option><option value="15">15 fps</option></select></label>
+      <label><span data-en="Camera frame rate (capped by the bandwidth level)">相机帧率（受带宽档位限制）</span><select id="sCamHz"><option value="2">2 fps</option><option value="5">5 fps</option><option value="10">10 fps</option><option value="15">15 fps</option><option value="20">20 fps</option></select></label>
       <label><span data-en="Color picture width">彩色画面宽度</span><select id="sColorW"><option value="320">320 px</option><option value="480" selected>480 px</option><option value="640">640 px</option></select></label>
     </div>
-    <label><span data-en="Telemetry bandwidth (the Pi's Wi-Fi uplink stalls for seconds above about 40 kB/s)">遥测带宽（Pi 的 Wi-Fi 上行超过约 40 kB/s 会卡顿数秒）</span><select id="sBw">
+    <label><span data-en="Telemetry bandwidth">遥测带宽</span><select id="sBw">
       <option value="-1" data-en="Automatic (follows the round-trip time, recommended)">自动（按往返延迟升降，推荐）</option><option value="0" data-en="Very low: status only (≈5 kB/s)">极低：只有状态（≈5 kB/s）</option>
-      <option value="1" data-en="Low (≈12 kB/s)">低（≈12 kB/s）</option><option value="2" data-en="Medium (≈25 kB/s)">中（≈25 kB/s）</option><option value="3" data-en="High (≈60–100 kB/s, good links only)">高（≈60–100 kB/s，仅限好的链路）</option></select></label>
+      <option value="1" data-en="Low (≈12 kB/s)">低（≈12 kB/s）</option><option value="2" data-en="Medium (≈25 kB/s)">中（≈25 kB/s）</option><option value="3" data-en="High (≈40 kB/s + camera; at 20 fps ≈110 kB/s with the brain view, ≈300 kB/s with 480 px color)">高（≈40 kB/s 加相机；20 fps 时大脑视角约 110 kB/s，480 px 彩色约 300 kB/s）</option></select></label>
     <div class="actions"><button class="g" id="bConnect" data-en="Connect">连接</button></div>
     <div class="note" data-en="Real drone: the Pi's LAN IP (or NetBird 100.112.163.133, slower), ports 14700 / 14550. SITL test instances use their own ports. Esc is the emergency land at any time. The RC transmitter always comes first: the pilot takes control back with the mode switch.">真机：地址填 Pi 的局域网 IP（或 NetBird 100.112.163.133，延迟较大），端口 14700 / 14550。SITL 测试实例用各自的端口。
       Esc 在任何时候都是紧急降落。遥控器永远是最高优先级：飞手拨模式开关即可收回控制。</div>

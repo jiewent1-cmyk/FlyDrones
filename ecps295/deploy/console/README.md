@@ -16,11 +16,12 @@
 | `mac/web/` | 界面（three.js r170 来自 FlyDrones `docs/vendor`，MIT）：`brain.js` 大脑面板、`eyes.js` 相机、`map3d.js` 3D 建图、`flight.js` + `charts.js` 飞行参数、`app.js` 指引与急停交互、`i18n.js` 界面语言 |
 | `mac/Info.plist`、`mac/AppIcon.icns` | 应用包信息、图标 |
 | `build.sh` | 只用 Command Line Tools（无需 Xcode）构建 `ECPS Console.app`；`--install` 装到 `/Applications` |
-| `tools/ecl_client.py` | ECL1 参考客户端（命令行看遥测、发指令、急停），也用于测试 |
+| `tools/ecl_client.py` | ECL1 参考客户端（命令行看遥测、发指令、急停；`--lvl` 指定带宽档位，输出相机实收帧率、帧间隔和流量），也用于测试 |
 | `tools/sitl_rig.py`、`rig_start.sh`、`rig_stop.sh` | Pi 上的 SITL 测试台（无 GPS 光流导航 SITL + 第二个 mavlink-router + 机载程序 + 由 SITL 真值模拟的 ToF；`--marker` 时相机画面由 SITL 真值渲染并带一个 ArUco 标记） |
 | `tools/console_e2e.py` | 端到端测试（扮演飞手 + 控制台：自动 13 项；经由应用 `app_full`；跟踪 `track` 9 项、`app_track`） |
 | `tools/estop_confirm_test.py` | 机载端急停确认的离线回放测试（假飞控按时间线给出模式和 COMMAND_ACK，不需要 Pi） |
 | `tools/track_mode_test.py` | 跟踪模式的离线测试（假飞控程序记录每次调用和所在线程：启停顺序、与选点前往的交接、急停、断链，不需要 Pi） |
+| `tools/cam_rate_test.py` | 相机帧率的离线测试（模拟带抖动、晚醒和漏拍的 20 Hz 控制周期，检查各档位、各帧率设定下实际发出的帧率，不需要 Pi） |
 | `tools/gen_mavmeta.py` | 由 pymavlink 生成 `MavMeta.swift`（报文布局与 CRC_EXTRA） |
 | 机载端（在 `deploy/orangepi/`） | `companion/console_link.py`（链路 + 指引层，含 TRACK）、`companion/sitl_world.py`（仅 SITL 测试）、`ecps_companion.py --console`、`camera.py`（保留彩色帧）、`config/companion.yaml` 的 `console:` 段 |
 
@@ -79,6 +80,8 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 遥测带宽（顶栏「带宽自动·高/中/低/极低」）。之前 Pi Zero 3W 的 Wi-Fi（AIC8800）在应用升到最高档后会卡顿数秒，10-18 查明是驱动的
 802.11ax 模式和家里的路由器配合不好，已在 Pi 上改回 11ac（`/etc/modprobe.d/aic8800-ecps.conf`：`he_on=0 ps_on=0`，重刷系统后要重新放），
 详见报告第 5.4 节。修复后的控制台测试里，应用升到最高档后没有再自动降档（报告第 9.5 节）。
+最高档的相机帧率 2026-10-20 起最多 20 fps（设置 → 相机帧率；默认仍是 5 fps），实测 20 fps 时总流量大脑视角约 113 kB/s、
+480 px 彩色约 307 kB/s（报告第 10 节）；机载端要用 c634ab97 及以后的 `console_link.py`，旧版最高 10 fps。
 
 ## 测试
 

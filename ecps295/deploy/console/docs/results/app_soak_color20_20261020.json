@@ -1,0 +1,41 @@
+{
+ "date": "2026-10-20 03:06-03:09 PDT",
+ "setup": "test build of the app (camera colour 480 px q55, 20 fps, argument domain), non-deployed Pi rig with the new console_link, drone on the ground; frames and link state as the app's page receives them",
+ "seconds": 180.0,
+ "cam_frames": 3600,
+ "cam_fps": 20.0,
+ "cam_fps_per_10s": [
+  20.0,
+  19.9,
+  20.1,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  20.0,
+  19.9,
+  20.0,
+  20.1,
+  20.0,
+  20.0
+ ],
+ "cam_kB_mean": 13.38,
+ "levels_seen": [
+  3
+ ],
+ "level_changes": [],
+ "rtt_ms_p50": 12.8,
+ "rtt_ms_p95": 60.8,
+ "rtt_ms_max": 151.4,
+ "states": 1792,
+ "cam_gap_ms": {
+  "p50": 50.0,
+  "p95": 88.0,
+  "max": 361.0
+ }
+}

@@ -10,6 +10,11 @@ old; every tick it answers with a status datagram (commands, DN rates, compute t
 
 Datagram: <4sBBHId magic 'EPL1', type (1 cam, 2 tof, 3 ctl), go, aux (cam: width; tof: bearing deg), seq, sim time>
 + payload (cam: uint8 gray; type 4 cam: JPEG of the gray frame; tof: float32 metres, NaN = no target).
+
+The sender numbers all its datagrams in send order (seq), but they can arrive out of order: a camera JPEG spans several
+IP fragments, a control datagram does not. A datagram older than the newest one of its stream (camera, control, one ToF
+bearing) is dropped, and only control datagrams set 'go' (2026-10-21: every datagram used to set it, and a late camera
+frame with go = 0 right after the control datagram with go = 1 ended a PIL run at the patrol start).
 """
 
 from __future__ import annotations
@@ -26,6 +31,7 @@ import numpy as np
 MAGIC = b"EPL1"
 HDR = struct.Struct("<4sBBHId")
 CAM, TOF, CTL, CAM_JPG = 1, 2, 3, 4
+REWIND = 1000  # a seq this far below the newest of its stream is a restarted sender, not a late datagram
 
 
 class PilCamera:
@@ -85,7 +91,8 @@ class PilLink:
         self._ctl_t = 0.0
         self.ctl_seq = -1
         self.sim_t = 0.0
-        self.rx = {"cam": 0, "tof": 0, "ctl": 0, "bad": 0}
+        self._seq: dict = {}  # newest seq per stream ("cam", CTL, (TOF, bearing))
+        self.rx = {"cam": 0, "tof": 0, "ctl": 0, "bad": 0, "late": 0}
         self.go_changes: list = []
         self.finished = False
         self._stop = threading.Event()
@@ -107,6 +114,13 @@ class PilLink:
         self._stop.set()
         self._th.join(timeout=1)
 
+    def _late(self, stream, seq: int) -> bool:
+        last = self._seq.get(stream)
+        if last is not None and last - REWIND < seq <= last:
+            return True
+        self._seq[stream] = seq
+        return False
+
     def _run(self) -> None:
         while not self._stop.is_set():
             try:
@@ -119,12 +133,18 @@ class PilLink:
             _, kind, go, aux, seq, sim_t = HDR.unpack_from(data, 0)
             body = data[HDR.size:]
             now = time.monotonic()
-            self.peer, self.sim_t = addr, sim_t
-            if go != self._go:
-                self.go_changes.append((round(now, 3), go))
-                if self._go and not go:
-                    self.finished = True  # patrol over: the companion exits (no remote kill needed)
-            self._go, self._ctl_t = go, now  # every datagram carries the flag
+            if addr != self.peer:  # first datagram, or a new sender (each run binds a new port): order starts afresh
+                self._seq.clear()
+            self.peer = addr
+            if kind == CTL:
+                try:  # immediate echo, late ones too: the sender measures the network round trip
+                    self.sock.sendto(json.dumps({"ctl_seq": seq}).encode(), addr)
+                except OSError:
+                    pass
+            if self._late("cam" if kind in (CAM, CAM_JPG) else (TOF, aux % 360) if kind == TOF else kind, seq):
+                self.rx["late"] += 1
+                continue
+            self.sim_t = sim_t
             if kind in (CAM, CAM_JPG) and aux:
                 c = self.cam
                 t0 = time.perf_counter()
@@ -149,12 +169,12 @@ class PilLink:
                     s.frames += 1
                 self.rx["tof"] += 1
             elif kind == CTL:
-                self.ctl_seq = seq
+                if go != self._go:
+                    self.go_changes.append((round(now, 3), go))
+                    if self._go and not go:
+                        self.finished = True  # patrol over: the companion exits (no remote kill needed)
+                self._go, self._ctl_t, self.ctl_seq = go, now, seq
                 self.rx["ctl"] += 1
-                try:  # immediate echo: the sender measures the network round trip
-                    self.sock.sendto(json.dumps({"ctl_seq": seq}).encode(), addr)
-                except OSError:
-                    pass
 
     def send_status(self, st: dict) -> None:
         if self.peer is None:
