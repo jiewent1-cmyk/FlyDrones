@@ -1,0 +1,85 @@
+{
+ "date": "2026-10-21 19:07:45-19:08:46 PDT",
+ "rig": "deployed runtime on the Pi (rig_start.sh --deployed: /opt companion + config, production ports, governor performance), after app_full (drone landed); console_link c634ab97",
+ "client": "tools/ecl_client.py from the Mac over the home Wi-Fi, --lvl 3, 30 s each, app closed",
+ "brain_20": {
+  "cam_rx": {
+   "frames": 599,
+   "fps": 20.0,
+   "repeats": 0,
+   "kB_mean": 3.83,
+   "gap_ms_p50": 50.6,
+   "gap_ms_p95": 59.7,
+   "gap_ms_max": 69.4
+  },
+  "pi_tx": {
+   "kB_per_s": 114.4,
+   "skipped": 0,
+   "level": 3
+  },
+  "kB_per_s": 114.6,
+  "kB_per_s_by_type": {
+   "BRAIN": 10.46,
+   "CAM": 77.8,
+   "MAP": 0.85,
+   "PONG": 0.06,
+   "STATUS": 2.55,
+   "TICK": 20.44,
+   "TOF": 2.09,
+   "TOPO": 0.39
+  },
+  "tick_hz": 20.0,
+  "rtt_ms_p50": 7.12,
+  "rtt_ms_p95": 15.76,
+  "counts": {
+   "TOPO": 1,
+   "PONG": 59,
+   "TICK": 600,
+   "STATUS": 57,
+   "BRAIN": 599,
+   "TOF": 228,
+   "CAM": 599,
+   "MAP": 57
+  }
+ },
+ "color_20_480px_q55": {
+  "cam_rx": {
+   "frames": 599,
+   "fps": 20.0,
+   "repeats": 0,
+   "kB_mean": 13.23,
+   "gap_ms_p50": 50.1,
+   "gap_ms_p95": 58.6,
+   "gap_ms_max": 95.8
+  },
+  "pi_tx": {
+   "kB_per_s": 313.7,
+   "skipped": 0,
+   "level": 3
+  },
+  "kB_per_s": 304.5,
+  "kB_per_s_by_type": {
+   "BRAIN": 10.41,
+   "CAM": 268.04,
+   "MAP": 0.64,
+   "PONG": 0.06,
+   "STATUS": 2.48,
+   "TICK": 20.41,
+   "TOF": 2.08,
+   "TOPO": 0.39
+  },
+  "tick_hz": 20.0,
+  "rtt_ms_p50": 8.23,
+  "rtt_ms_p95": 13.31,
+  "counts": {
+   "TOPO": 1,
+   "PONG": 60,
+   "TICK": 600,
+   "BRAIN": 599,
+   "CAM": 599,
+   "TOF": 228,
+   "STATUS": 56,
+   "MAP": 56
+  }
+ }
+}

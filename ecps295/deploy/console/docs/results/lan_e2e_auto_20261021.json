@@ -1,0 +1,673 @@
+{
+ "phases": {
+  "P1_before_handover": {
+   "pass": true,
+   "ack": {
+    "id": 1,
+    "op": "handover",
+    "ok": true,
+    "msg": ""
+   },
+   "ho": "HOLD",
+   "ctl": 0,
+   "fc": "STABILIZE"
+  },
+  "P2_handover_hold": {
+   "pass": true,
+   "armed": true,
+   "climb_s": 10.4,
+   "alt_handover": 0.64,
+   "ctl_after_s": 8.750008419156075e-06,
+   "op_at_handover": "HOLD",
+   "max_cmd": 0.0,
+   "drift_m": 0.05
+  },
+  "P3_patrol": {
+   "pass": true,
+   "path_m": 0.78,
+   "map_vox": [
+    1514,
+    2273
+   ],
+   "tof_msgs": 51,
+   "brain_msgs": 75,
+   "op": [
+    "PATROL"
+   ],
+   "saccades": 32,
+   "shield_clamps": 0
+  },
+  "P4_goto": {
+   "pass": true,
+   "ack": {
+    "id": 3,
+    "op": "goto",
+    "ok": true,
+    "msg": ""
+   },
+   "to_hold_s": 18.757020291988738,
+   "min_dist_m": 0.34,
+   "events": [
+    "mode GOTO (goal +1.00, +0.60 via the waypoint layer)",
+    "escape: brake, saccade left",
+    "floor",
+    "escape: brake, saccade right"
+   ]
+  },
+  "P5_home": {
+   "pass": true,
+   "to_hold_s": 24.304368458979297,
+   "min_dist_m": 0.35
+  },
+  "P6_manual": {
+   "pass": true,
+   "vx_before": 0.015,
+   "vx_max": 0.245,
+   "stopped_after_s": 1.2458066249964759,
+   "op": "MANUAL"
+  },
+  "P7_link_lost": {
+   "pass": true,
+   "opm": "HOLD",
+   "events": [
+    "escape: brake, saccade left",
+    "link lost",
+    "mode HOLD (console link lost)",
+    "console_e2e connected from 192.168.86.245",
+    "link restored"
+   ]
+  },
+  "P8_illusion_left": {
+   "pass": true,
+   "illusion": [
+    "fist -> still scene + rotate"
+   ],
+   "brain_yaw_baseline": -0.095,
+   "brain_yaw_illusion": -0.473,
+   "note": "informational (brain behaviour, not a console check)"
+  },
+  "P9_emergency_land": {
+   "pass": true,
+   "fc_land_s": 0.2972971660201438,
+   "companion_latched_s": 0.2973140410031192,
+   "disarmed_after_s": 3.904714541975409
+  },
+  "P9b_pilot_override_after_stop": {
+   "pass": true,
+   "override_after_s": 0.3,
+   "override_accepted": true,
+   "alt_hold_kept_3s": true,
+   "companion_still_latched": true,
+   "fc_mode_seen_by_companion": [
+    [
+     117.05,
+     "ALT_HOLD"
+    ]
+   ],
+   "companion_fc_actions": [
+    0,
+    1
+   ]
+  },
+  "P10_reset": {
+   "pass": true,
+   "ack": {
+    "id": 44,
+    "op": "estop_reset",
+    "ok": true,
+    "msg": ""
+   },
+   "es": 0
+  },
+  "P11_normal_land": {
+   "pass": true,
+   "handover": {
+    "armed": true,
+    "climb_s": 9.5,
+    "alt_handover": 0.64,
+    "ctl_after_s": 9.124982170760632e-06,
+    "op_at_handover": "HOLD"
+   },
+   "ack": {
+    "id": 45,
+    "op": "land",
+    "ok": true,
+    "msg": "companion LAND"
+   },
+   "fc_land_s": 0.09755912498803809,
+   "disarmed_after_s": 4.409063416998833
+  },
+  "P12_kill": {
+   "pass": true,
+   "handover": {
+    "armed": true,
+    "climb_s": 10.4,
+    "alt_handover": 0.66,
+    "ctl_after_s": 6.249989382922649e-06,
+    "op_at_handover": "HOLD"
+   },
+   "alt_at_kill": 0.66,
+   "disarmed_s": 0.5998555410187691,
+   "companion_es": 2,
+   "alt_after": -0.01
+  }
+ },
+ "scenario": "auto",
+ "modes": [
+  [
+   0.93,
+   "STABILIZE",
+   false
+  ],
+  [
+   9.81,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   19.91,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   31.92,
+   "GUIDED",
+   true
+  ],
+  [
+   116.81,
+   "LAND",
+   true
+  ],
+  [
+   117.11,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   120.26,
+   "LAND",
+   true
+  ],
+  [
+   124.01,
+   "LAND",
+   false
+  ],
+  [
+   127.01,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   129.01,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   140.41,
+   "GUIDED",
+   true
+  ],
+  [
+   142.61,
+   "LAND",
+   true
+  ],
+  [
+   147.01,
+   "LAND",
+   false
+  ],
+  [
+   150.31,
+   "ALT_HOLD",
+   false
+  ],
+  [
+   152.01,
+   "ALT_HOLD",
+   true
+  ],
+  [
+   164.51,
+   "GUIDED",
+   true
+  ],
+  [
+   167.01,
+   "GUIDED",
+   false
+  ]
+ ],
+ "fc_texts": [
+  [
+   11.11,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   12.71,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   14.21,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   15.81,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   17.41,
+   1,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   19.01,
+   1,
+   "Arming motors"
+  ],
+  [
+   121.11,
+   1,
+   "SIM Hit ground at 0.497254 m/s"
+  ],
+  [
+   123.11,
+   1,
+   "Disarming motors"
+  ],
+  [
+   128.22,
+   1,
+   "Arming motors"
+  ],
+  [
+   144.31,
+   1,
+   "SIM Hit ground at 0.523244 m/s"
+  ],
+  [
+   146.31,
+   1,
+   "Disarming motors"
+  ],
+  [
+   151.51,
+   1,
+   "Arming motors"
+  ],
+  [
+   166.66,
+   1,
+   "Disarming motors"
+  ],
+  [
+   167.11,
+   1,
+   "SIM Hit ground at 3.525618 m/s"
+  ]
+ ],
+ "companion_texts": [
+  [
+   69.91,
+   254,
+   "ECPS: waypoint 0 reached"
+  ],
+  [
+   69.91,
+   254,
+   "ECPS: waypoints: done -> hover"
+  ],
+  [
+   94.52,
+   254,
+   "ECPS: waypoint 0 reached"
+  ],
+  [
+   94.52,
+   254,
+   "ECPS: waypoints: done -> hover"
+  ],
+  [
+   116.81,
+   254,
+   "ECPS: E-STOP LAND from console"
+  ],
+  [
+   166.66,
+   254,
+   "ECPS: E-STOP KILL from console"
+  ]
+ ],
+ "events": [
+  [
+   0.06,
+   "console",
+   "console_e2e connected from 192.168.86.245"
+  ],
+  [
+   0.06,
+   "watchdog",
+   "height source stale -> hover"
+  ],
+  [
+   0.06,
+   "watchdog",
+   "height source stale -> land"
+  ],
+  [
+   0.06,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   6.21,
+   "brain",
+   "escape: brake, saccade left"
+  ],
+  [
+   9.35,
+   "operator",
+   "hand-over mode HOLD"
+  ],
+  [
+   14.4,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   22.55,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   30.75,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   32.87,
+   "operator",
+   "mode HOLD (hand-over)"
+  ],
+  [
+   37.0,
+   "operator",
+   "mode PATROL (console_e2e)"
+  ],
+  [
+   39.05,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   46.21,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   51.3,
+   "operator",
+   "mode GOTO (goal +1.00, +0.60 via the waypoint layer)"
+  ],
+  [
+   54.35,
+   "brain",
+   "escape: brake, saccade left"
+  ],
+  [
+   59.5,
+   "governor",
+   "floor"
+  ],
+  [
+   62.5,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   70.7,
+   "operator",
+   "mode HOLD (goal reached (EKF distance 0.35 m))"
+  ],
+  [
+   70.7,
+   "watchdog",
+   "waypoint 0 reached"
+  ],
+  [
+   70.7,
+   "watchdog",
+   "waypoints: done -> hover"
+  ],
+  [
+   70.7,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   70.7,
+   "operator",
+   "mode GOTO (goal +0.00, +0.00 via the waypoint layer)"
+  ],
+  [
+   78.95,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   86.15,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   94.35,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   95.36,
+   "operator",
+   "mode HOLD (goal reached (EKF distance 0.35 m))"
+  ],
+  [
+   95.36,
+   "watchdog",
+   "waypoint 0 reached"
+  ],
+  [
+   95.36,
+   "watchdog",
+   "waypoints: done -> hover"
+  ],
+  [
+   95.36,
+   "operator",
+   "mode MANUAL (console_e2e)"
+  ],
+  [
+   100.55,
+   "operator",
+   "mode HOLD (console_e2e)"
+  ],
+  [
+   100.55,
+   "operator",
+   "mode GOTO (goal -1.00, -0.50 via the waypoint layer)"
+  ],
+  [
+   105.81,
+   "brain",
+   "escape: brake, saccade left"
+  ],
+  [
+   105.84,
+   "console",
+   "link lost"
+  ],
+  [
+   105.84,
+   "operator",
+   "mode HOLD (console link lost)"
+  ],
+  [
+   105.87,
+   "console",
+   "console_e2e connected from 192.168.86.245"
+  ],
+  [
+   105.87,
+   "console",
+   "link restored"
+  ],
+  [
+   108.96,
+   "operator",
+   "mode PATROL (console_e2e)"
+  ],
+  [
+   110.96,
+   "brain",
+   "escape: DNp03, saccade left"
+  ],
+  [
+   112.01,
+   "operator",
+   "illusion left"
+  ],
+  [
+   116.17,
+   "operator",
+   "mode HOLD (console_e2e)"
+  ],
+  [
+   117.22,
+   "operator",
+   "mode LAND (emergency stop)"
+  ],
+  [
+   117.22,
+   "console",
+   "EMERGENCY STOP: LAND (console_e2e)"
+  ],
+  [
+   117.22,
+   "console",
+   "emergency stop confirmed by the FC (LAND)"
+  ],
+  [
+   118.21,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   126.41,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   126.41,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   126.41,
+   "console",
+   "emergency stop reset (console_e2e)"
+  ],
+  [
+   134.76,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   142.9,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   142.9,
+   "operator",
+   "mode LAND (console_e2e)"
+  ],
+  [
+   143.96,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   146.06,
+   "brain",
+   "escape: retreat, saccade right"
+  ],
+  [
+   150.11,
+   "brain",
+   "escape: brake, saccade right"
+  ],
+  [
+   158.36,
+   "brain",
+   "escape: brake, saccade left"
+  ],
+  [
+   164.56,
+   "operator",
+   "mode HOLD (hand-over)"
+  ],
+  [
+   166.66,
+   "brain",
+   "escape: brake, saccade left"
+  ],
+  [
+   166.66,
+   "operator",
+   "mode LAND (emergency stop)"
+  ],
+  [
+   166.66,
+   "console",
+   "EMERGENCY STOP: KILL MOTORS (console_e2e)"
+  ],
+  [
+   167.7,
+   "console",
+   "emergency stop confirmed by the FC (COMMAND_ACK)"
+  ],
+  [
+   167.7,
+   "brain",
+   "escape: MDN"
+  ],
+  [
+   169.81,
+   "brain",
+   "escape: retreat, saccade left"
+  ],
+  [
+   170.86,
+   "operator",
+   "mode HOLD (emergency stop reset)"
+  ],
+  [
+   170.86,
+   "console",
+   "emergency stop reset (console_e2e)"
+  ]
+ ],
+ "ticks": 1713,
+ "tick_hz": 9.9,
+ "companion_msgs": {
+  "brain": 857,
+  "tof": 583,
+  "cam": 0,
+  "map": 85
+ },
+ "pass": true
+}
