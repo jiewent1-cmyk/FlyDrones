@@ -562,7 +562,8 @@ class Operator:
             self._plan_t = now
             self._plan_tag += 1
             alt = tel.alt_m if tel.alt_m is not None else 0.9
-            self.planner.request(self.lmap, alt, self.fence_m, pos, self.route[self.route_i], self._plan_tag)
+            keep = self.plan_path[min(int(getattr(self.pilot, "wp_idx", 0)), len(self.plan_path)):] if self.plan_path else None
+            self.planner.request(self.lmap, alt, self.fence_m, pos, self.route[self.route_i], self._plan_tag, keep=keep or None)
 
     def _take_plan(self, res: dict, now: float) -> None:
         if not res["ok"]:
@@ -579,6 +580,8 @@ class Operator:
                 self.on_event("operator", f"waypoint {self.route_i + 1}: path crosses low boxes (no other way)")
         self._plan_fail_t = None
         self.plan_goal = tuple(res["goal"])
+        if res.get("kept"):
+            return  # the path being flown is still good: leave the pilot alone
         new = [tuple(p) for p in res["path"]]
         old = self.plan_path
         # hand the pilot a new path only when it really changed: set_waypoints restarts the layer (and its post-escape

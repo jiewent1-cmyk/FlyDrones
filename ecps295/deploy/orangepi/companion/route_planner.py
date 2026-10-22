@@ -8,7 +8,10 @@ range shield's map) has seen and hands the pilot a path of intermediate waypoint
   grid     occupied voxels from just above the floor up to the top of the flight band, projected to 2D at plan_res_m;
            cells beyond the geofence (minus fence_margin_m) are blocked too (not inflated: the go-to range stays). Unknown space counts as free: the map only
            knows what the ToF sensors have seen, so the path is re-planned while flying (replan_s) as the map fills in.
-  goal     a waypoint closer than clear_m to an obstacle moves to the nearest cell that is clear (at most move_max_m).
+  goal     a waypoint closer than goal_clear_m to an obstacle moves to the nearest cell that clear (at most move_max_m;
+           else to the nearest cell clear_m away).
+  keep     the path being flown is kept while it is still clear and not much longer than the new one (10-22 smoke test:
+           re-plans flipped between two detours every second and the drone never got there).
   path     A* (8-connected) on cells at least clear_m from obstacles, with an extra cost inside soft_m so the path keeps
            its distance where there is room; then shortened by line of sight (the shortcut must stay clear_m away).
   low      boxes lower than the flight band are avoided as well (flying over a box top makes the downward rangefinder
@@ -29,6 +32,9 @@ import numpy as np
 DEFAULTS = {
     "plan_res_m": 0.10,
     "clear_m": 0.45,  # centre-to-surface: prop tip 0.13 + shield d_safe 0.25 + margin
+    "goal_clear_m": 0.60,  # a waypoint is moved at least this far from obstacles (10-22: at 0.45 the brain kept escaping)
+    "keep_ratio": 1.15,  # keep the current path while it is clear and at most this much (+ keep_slack_m) longer
+    "keep_slack_m": 0.3,
     "soft_m": 0.80,
     "soft_w": 3.0,  # extra cost per metre inside soft_m, at the clear_m edge
     "move_max_m": 1.0,
@@ -52,12 +58,12 @@ class RoutePlanner:
         self.plan_ms: list[float] = []
 
     # ------------------------------------------------------------------ thread interface
-    def request(self, lmap, z: float, fence_m: float, start, goal, tag) -> None:
+    def request(self, lmap, z: float, fence_m: float, start, goal, tag, keep=None) -> None:
         """Plan from start (n, e) to goal (n, e) at flight height z on a snapshot of the map; tag comes back with the
         result. A newer request replaces one that has not started yet."""
         snap = (lmap.L.copy(), lmap.n, lmap.nz, lmap.res, lmap.half, lmap.l_occ, lmap.band)
         with self._lock:
-            self._job = (snap, float(z), float(fence_m), tuple(start), tuple(goal), tag)
+            self._job = (snap, float(z), float(fence_m), tuple(start), tuple(goal), tag, keep)
         self._ev.set()
 
     def result(self):
@@ -78,7 +84,7 @@ class RoutePlanner:
                 continue
             t0 = time.perf_counter()
             try:
-                res = self.plan(*job[:5])
+                res = self.plan(*job[:5], keep=job[6])
             except Exception as e:  # never kill the thread: report and go on
                 res = {"ok": False, "why": f"{type(e).__name__}: {e}", "path": [], "goal": job[4], "moved": 0.0, "strict": True}
             res["tag"] = job[5]
@@ -109,7 +115,7 @@ class RoutePlanner:
         inside = R <= fence_m - self.cfg["fence_margin_m"]
         return A, B, inside, cell, half
 
-    def plan(self, snap, z: float, fence_m: float, start, goal) -> dict:
+    def plan(self, snap, z: float, fence_m: float, start, goal, keep=None) -> dict:
         from scipy.ndimage import distance_transform_edt
 
         strict_grid, band_grid, inside, cell, half = self.grids(snap, z, fence_m)
@@ -124,7 +130,10 @@ class RoutePlanner:
             s, g = idx(start), idx(goal)
             if not (0 <= g[0] < m and 0 <= g[1] < m):
                 return {"ok": False, "why": "goal outside the map", "path": [], "goal": goal, "moved": 0.0, "strict": strict}
-            g2 = self._nearest_free(free, g)
+            gfree = (dist >= self.cfg["goal_clear_m"] + cell / 2) & inside
+            g2 = self._nearest_free(gfree, g)
+            if g2 is None or math.hypot(g2[0] - g[0], g2[1] - g[1]) * cell > self.cfg["move_max_m"]:
+                g2 = self._nearest_free(free, g)
             if g2 is None:
                 last = {"ok": False, "why": "no clear cell near the goal", "path": [], "goal": goal, "moved": 0.0, "strict": strict}
                 continue
@@ -146,9 +155,37 @@ class RoutePlanner:
                 path[-1] = goal2
             else:
                 path = [goal2]
-            return {"ok": True, "why": "", "path": path, "goal": goal2, "moved": moved, "strict": strict,
-                    "length": self._length(start, path)}
+            out = {"ok": True, "why": "", "path": path, "goal": goal2, "moved": moved, "strict": strict,
+                   "length": self._length(start, path), "kept": False}
+            if keep:
+                kp = [tuple(p) for p in keep]
+                if (math.hypot(kp[-1][0] - goal2[0], kp[-1][1] - goal2[1]) < 0.2 and self._path_clear(free, occ, start, kp, cell, half)
+                        and self._length(start, kp) <= out["length"] * self.cfg["keep_ratio"] + self.cfg["keep_slack_m"]):
+                    out.update(path=kp, length=self._length(start, kp), kept=True)
+            return out
         return last
+
+    @staticmethod
+    def _path_clear(free, occ, start, pts, cell: float, half: float, leave_m: float = 0.5) -> bool:
+        """Every point of the polyline start -> pts on clear cells; within leave_m of the start only off obstacles."""
+        m = free.shape[0]
+        p, run = tuple(start), 0.0
+        for q in pts:
+            L = math.hypot(q[0] - p[0], q[1] - p[1])
+            n = max(1, int(L / (cell / 2)))
+            for i in range(n + 1):
+                x, y = p[0] + (q[0] - p[0]) * i / n, p[1] + (q[1] - p[1]) * i / n
+                c = (int((x + half) / cell), int((y + half) / cell))
+                if not (0 <= c[0] < m and 0 <= c[1] < m):
+                    return False
+                if run + L * i / n < leave_m:
+                    if occ[c]:
+                        return False
+                elif not free[c]:
+                    return False
+            run += L
+            p = q
+        return True
 
     @staticmethod
     def _centre(c, cell: float, half: float):
