@@ -493,6 +493,13 @@ def console_session(secs: float) -> None:
     t_end, flights = time.monotonic() + secs, 1
     pil.go = 1
     print(f"console: flight {flights} handed over to the companion", flush=True)
+    try:
+        _console_flights(t_end, flights)
+    except KeyboardInterrupt:  # gzc.sh stop / the verification runner: land and still write run.csv / run.json
+        print("console: session stopped (SIGINT)", flush=True)
+
+
+def _console_flights(t_end: float, flights: int) -> None:
     while time.monotonic() < t_end and not _quiet_soon():
         run_phase("console", 1.0)
         if drone.m.motors_armed():

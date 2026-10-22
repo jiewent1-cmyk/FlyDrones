@@ -18,7 +18,7 @@ CP=$!
 # Gazebo + SITL + scripted pilot
 ( cd $R; INST=$I RUN_TIMEOUT=3600 ECPS_ARM=intact ECPS_TOF_CONE3D=1 ECPS_SIMCLOCK=1 ECPS_PIL=127.0.0.1:$PILP \
     SITL_EXTRA=--serial2=udpclient:127.0.0.1:$SITLP NAV=flow EXTRA_PARM=$V/G_extnav_height.parm,$V/companion_fs.parm,$V/H_terrain_fast.parm \
-    bash gz_g4_mine.sh ecps295_$W.sdf $TAG "--mode console --seconds 3000 --cruise 0.5 --max-forward 0.5 --fence-turn --seed $I --config $M/s7_w2map.yaml --decoder ecps --pilot ecps --retina ecps" ) \
+    bash gz_g4_mine.sh ecps295_$W.sdf $TAG "--mode console --seconds 3000 --cruise 0.5 --max-forward 0.5 --fence-turn --seed $I --config $M/s7_w2map.yaml --decoder ecps --pilot ecps --retina ecps --out run" ) \
   > $G/logs/$TAG/gz.out 2>&1 &
 GP=$!
 sleep 15
