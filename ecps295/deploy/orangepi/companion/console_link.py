@@ -4,10 +4,9 @@ console (deploy/console, "ECPS Console.app") and takes the operator's guidance a
 Off unless enabled (ecps_companion.py --console PORT, or hw config console.port). With it off nothing below runs and
 the companion is unchanged. With it on but no console connected, only the receive thread runs (no telemetry is built).
 
-Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Every datagram is <= 1216 bytes, so it passes a
-1280-byte tunnel MTU (NetBird / WireGuard) without IP fragmentation:
-    header <4sBBHHHI: magic 'ECL1', type, flags (bit 0: zlib payload), msg (u16 counter per sender), chunk, nchunk,
-    stamp (sender monotonic ms); payload <= 1200 bytes; longer messages are split into chunks of one msg
+Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Authenticated datagrams stay <= 1216 bytes:
+    header <4sBBHHHI: magic 'ECL1', type, flags (bit 0: zlib), msg (u16), chunk, nchunk, stamp;
+    payload <= 1152 bytes; then <QQ seq, Unix ms> and HMAC-SHA256 over the complete preceding datagram
   Pi -> console
     TICK 1    JSON every control tick (20 Hz): pose, brain raw / operator / sent command, DN + input rates, decoder,
               shield and map-ring state, timing, sensor ages; target layer (trk, while it runs) and the marker in
@@ -73,6 +72,8 @@ again until estop_reset (FC disarmed, or force from the console).
 from __future__ import annotations
 
 import collections
+import hashlib
+import hmac
 import json
 import math
 import os
@@ -89,8 +90,26 @@ from flydrones.motor.command import FlightCommand
 
 MAGIC = b"ECL1"
 HDR = struct.Struct("<4sBBHHHI")
-MAX_PAYLOAD = 1200
+MAX_PAYLOAD = 1152
+MAX_CHUNKS = 512
+MAX_MESSAGE = MAX_PAYLOAD * MAX_CHUNKS
+MAX_INFLATED = 8 * 1024 * 1024
 F_ZLIB = 1
+F_AUTH = 2
+AUTH_FIELDS = struct.Struct("<QQ")
+REPLAY_WINDOW = 256
+
+
+def _replay_accept(state: tuple[int, int], seq: int) -> tuple[tuple[int, int], bool]:
+    high, seen = state
+    if seq > high:
+        shift = seq - high
+        seen = 1 if shift >= REPLAY_WINDOW else ((seen << shift) | 1) & ((1 << REPLAY_WINDOW) - 1)
+        return (seq, seen), True
+    offset = high - seq
+    if offset >= REPLAY_WINDOW or seen & (1 << offset):
+        return state, False
+    return (high, seen | (1 << offset)), True
 T_TICK, T_BRAIN, T_CAM, T_MAP, T_TOF, T_TOPO, T_ACK, T_STATUS, T_PONG = range(1, 10)
 T_HELLO, T_PING, T_CMD, T_ESTOP, T_TOPO_REQ = 64, 65, 66, 67, 68
 VISION_FEATURES = ("ftb", "btf", "up", "down", "loom", "loom_speed", "blank", "near", "ventral")
@@ -121,7 +140,7 @@ DEFAULTS = {
     "goto_timeout_s": 90.0,
     "goto_fence_margin_m": 0.4,  # goals farther than geofence - margin from the origin are refused
     "manual_scale": {"f": 0.6, "l": 0.6, "y": 0.6, "z": 0.5},
-    "handover": "patrol",  # mode at hand-over until a console chooses (patrol | hold | track)
+    "handover": "hold",  # mode at hand-over until a console operator explicitly chooses otherwise
     "status_hz": 2.0,  # before the first tick
     "outq_max": 24000,  # bytes in the socket send queue above which the bulky messages are skipped
 }
@@ -174,7 +193,7 @@ class Reassembler:
             self.bad += 1
             return None
         magic, typ, flags, msg, chunk, n, stamp = HDR.unpack_from(data)
-        if magic != MAGIC or n == 0 or chunk >= n:
+        if magic != MAGIC or n == 0 or n > MAX_CHUNKS or chunk >= n or len(data) > HDR.size + MAX_PAYLOAD:
             self.bad += 1
             return None
         body = data[HDR.size:]
@@ -185,15 +204,30 @@ class Reassembler:
             if ent is None:
                 for k in [k for k, v in self.parts.items() if now - v[0] > self.timeout_s]:
                     del self.parts[k]
-                ent = self.parts[key] = [now, {}]
-            ent[1][chunk] = body
-            if len(ent[1]) < n:
+                if len(self.parts) >= 64:
+                    self.bad += 1
+                    return None
+                ent = self.parts[key] = [now, n, flags, {}]
+            elif ent[1] != n or ent[2] != flags:
+                del self.parts[key]
+                self.bad += 1
                 return None
-            body = b"".join(ent[1][i] for i in range(n))
+            ent[3][chunk] = body
+            if sum(map(len, ent[3].values())) > MAX_MESSAGE:
+                del self.parts[key]
+                self.bad += 1
+                return None
+            if len(ent[3]) < n:
+                return None
+            body = b"".join(ent[3][i] for i in range(n))
             del self.parts[key]
         if flags & F_ZLIB:
             try:
-                body = zlib.decompress(body)
+                dec = zlib.decompressobj()
+                body = dec.decompress(body, MAX_INFLATED + 1)
+                if len(body) > MAX_INFLATED or dec.unconsumed_tail or not dec.eof:
+                    self.bad += 1
+                    return None
             except zlib.error:
                 self.bad += 1
                 return None
@@ -361,7 +395,13 @@ class Operator:
         return ""
 
     def set_stick(self, f: float, l_: float, y: float, z: float) -> None:
-        c = lambda v: max(-1.0, min(1.0, float(v)))  # noqa: E731
+        def c(v):
+            try:
+                value = float(v)
+            except (TypeError, ValueError):
+                value = 0.0
+            return max(-1.0, min(1.0, value)) if math.isfinite(value) else 0.0
+
         with self.lock:
             self.stick = (c(f), c(l_), c(y), c(z))
             self.stick_t = time.monotonic()
@@ -497,6 +537,18 @@ class ConsoleLink:
     def __init__(self, port: int, *, pilot, drone, cam, tofs: dict, cfg: dict, console_cfg: dict, run_info: dict,
                  log=print):
         self.cfg = {**DEFAULTS, **(console_cfg or {})}
+        self.auth_key = b""
+        if port != 0:
+            key_path = Path(self.cfg.get("key_file", "/opt/ecps295/config/console.key"))
+            try:
+                key_stat = key_path.stat()
+                if key_stat.st_mode & 0o077:
+                    raise PermissionError(f"{key_path} must have mode 0600")
+                self.auth_key = key_path.read_bytes()
+            except OSError as e:
+                raise RuntimeError(f"ECL1 disabled: secure authentication key unavailable ({e})") from e
+            if len(self.auth_key) != 32:
+                raise RuntimeError("ECL1 disabled: console.key must contain exactly 32 random bytes")
         self.port = port
         self.pilot, self.drone, self.cam, self.tofs = pilot, drone, cam, tofs
         self.run_info = run_info
@@ -508,6 +560,9 @@ class ConsoleLink:
         self.sock.settimeout(0.2)
         self.pk = Packer()
         self.clients: dict = {}
+        self._tx_seq = 0
+        self._tx_lock = threading.Lock()
+        self._rx_seq: dict[tuple, int] = {}
         self.had_console = False
         self.estop = 0
         self.estop_t = 0.0
@@ -679,8 +734,15 @@ class ConsoleLink:
             if i:
                 time.sleep(0.001)  # pace the chunks of one message: bursts make the AIC8800 stall sooner
             try:
-                self.sock.sendto(g, addr)
-                self.tx_bytes += len(g)
+                with self._tx_lock:
+                    self._tx_seq += 1
+                    seq = self._tx_seq
+                head = bytearray(g)
+                head[5] |= F_AUTH
+                signed = bytes(head) + AUTH_FIELDS.pack(seq, int(time.time() * 1000))
+                signed += hmac.new(self.auth_key, signed, hashlib.sha256).digest()
+                self.sock.sendto(signed, addr)
+                self.tx_bytes += len(signed)
             except OSError:
                 self.tx_err += 1
 
@@ -698,10 +760,29 @@ class ConsoleLink:
         self._send(c.addr, self.pk.json(T_ACK, {"id": cid, "op": op, "ok": ok, "msg": msg}))
 
     def _handle(self, data: bytes, addr) -> None:
+        if len(data) < HDR.size + AUTH_FIELDS.size + 32 or len(data) > HDR.size + MAX_PAYLOAD + AUTH_FIELDS.size + 32:
+            return
+        magic, _typ, flags, _msg, chunk, n, _stamp = HDR.unpack_from(data)
+        if magic != MAGIC or not (flags & F_AUTH) or n == 0 or n > MAX_CHUNKS or chunk >= n:
+            return
+        seq, sent_ms = AUTH_FIELDS.unpack_from(data, len(data) - 32 - AUTH_FIELDS.size)
+        if abs(int(time.time() * 1000) - sent_ms) > 30_000:
+            return
+        signed, tag = data[:-32], data[-32:]
+        expected = hmac.new(self.auth_key, signed, hashlib.sha256).digest()
+        state, fresh = _replay_accept(self._rx_seq.get(addr, (0, 0)), seq)
+        if seq == 0 or not hmac.compare_digest(expected, tag) or not fresh:
+            return
+        active = next(iter(self.clients.values()), None)
+        if active is not None and active.addr != addr and time.monotonic() - active.last < float(self.cfg["link_timeout_s"]):
+            return
+        self._rx_seq[addr] = state
+        data = bytearray(data[:HDR.size] + data[HDR.size:-AUTH_FIELDS.size-32])
+        data[5] &= ~F_AUTH
+        data = bytes(data)
         c = self.clients.get(addr)
         if c is None:
-            if len(self.clients) >= 8:  # forget the stalest
-                del self.clients[min(self.clients, key=lambda a: self.clients[a].last)]
+            self.clients.clear()
             c = self.clients[addr] = Client(addr)
         r = c.rx.push(data)
         if r is None:
@@ -815,9 +896,10 @@ class ConsoleLink:
                 self.pilot.gestures = self.gestures
                 self.event("operator", f"illusion {name}")
         elif op == "estop_reset":
+            fresh = getattr(self.drone, "fc_hb_age_s", lambda: float("inf"))() <= 2.0
             armed = self._armed()
-            if armed and not m.get("force"):
-                return False, "FC still armed: confirm with force"
+            if not fresh or (armed and not m.get("force")):
+                return False, "FC state is stale or still armed; reset is refused"
             with self.lock:
                 self.estop = 0
                 self.estop_done = False
@@ -830,9 +912,11 @@ class ConsoleLink:
     # ------------------------------------------------------------------ emergency stop: our own path to the FC
     def _armed(self) -> bool:
         try:
+            if getattr(self.drone, "fc_hb_age_s", lambda: float("inf"))() > 2.0:
+                return True
             return bool(self.drone.armed())
         except Exception:
-            return False
+            return True
 
     def _fc_acked(self, commands: tuple[int, ...]) -> bool:
         """An accepted COMMAND_ACK from the FC for one of these commands since our first send for this press (pymavlink

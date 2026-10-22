@@ -5,9 +5,29 @@
 # The SITL/Gazebo variant ecps295/sitl/variants/companion_fs.parm keeps HI 255 (the sims take off with 255 RC overrides).
 MAV_GCS_SYSID    254
 MAV_GCS_SYSID_HI 254
-# 5 = Land
+# 5 = Land; companion heartbeat is independent of the control loop.
 FS_GCS_ENABLE    5
-FS_GCS_TIMEOUT   2
+FS_GCS_TIMEOUT   5
+# ExternalNav height + low GPS-free indoor ceiling and cylinder (FENCE_TYPE bit 0 altitude + bit 1 cylinder).
+EK3_SRC1_POSZ    6
+EK3_RNG_USE_HGT  -1
+VISO_TYPE        1
+VISO_POS_M_NSE   0.1
+FENCE_ENABLE     1
+FENCE_TYPE       3
+FENCE_ACTION     2
+FENCE_ALT_MAX    1.3
+FENCE_RADIUS     3
+# Loss of RC pilot link: LAND. Battery voltage threshold must be calibrated for the installed pack.
+FS_THR_ENABLE    3
+FS_THR_VALUE     975
+FS_EKF_ACTION    1
+BATT_CAPACITY    2200
+BATT_LOW_VOLT    7.0
+BATT_CRT_VOLT    6.8
+BATT_FS_LOW_ACT  1
+BATT_FS_CRT_ACT  1
+ARMING_CHECK     1
 # Route-B height delay with the companion requesting RANGEFINDER at 20 Hz (Pi SITL 10-16: ~30 ms + sensor delay);
 # check against VISP vs RFND in the first flight log
 VISO_DELAY_MS    40

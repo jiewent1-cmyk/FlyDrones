@@ -16,7 +16,7 @@ Full test report: `项目文档/07_机载部署/ECPS295_OrangePi部署与性能�
 | `drivers/vl53l7cx/` | ST ULD（stm32duino/VL53L7CX，BSD-3，未改动）+ Linux i2c-dev 平台层 → `linux/libvl53l7cx.so` |
 | `config/companion.yaml` | 硬件配置：模型、MAVLink、相机、两块 ToF（总线、方向翻转） |
 | `config/mavlink-router.conf` | → `/etc/mavlink-router/main.conf` |
-| `config/fc_flight.parm` | 飞控飞行参数：只认机载程序 sysid 254 为地面站，失联 2 s LAND / FC flight params: companion-loss failsafe (`MAV_GCS_SYSID_HI 254`) |
+| `config/fc_flight.parm` | Guided 启动校验清单：GCS 失联、外部高度、围栏、RC/EKF/电池 failsafe；需由飞手在地面读写飞控后核对 |
 | `systemd/ecps-companion.service` | → `/etc/systemd/system/`（已安装，**未设开机启动**） |
 | `scripts/` | `install_pi.sh`、`profile_matrix.sh`、`sil_equiv.py`、`sitl_hil_test.py`、`tof_probe.py`、`cam_probe.py`、`pil_link_test.py`（PIL 报文乱序的离线测试，10-21） |
 | `build/` | mavlink-router 源码与编译、ArduPilot Copter-4.7.0 SITL（测试用） |
@@ -28,6 +28,15 @@ libsystemd-dev pkg-config build-essential；`mavlink-routerd` 装到 `/usr/bin`�
 原有的 `uart0-pb9-pb10` overlay（`/dev/ttyS0`，排针 8/10）和 `/root/opiRasPiUartTest` 未改动。
 
 ## 常用命令 / Commands
+
+重新部署前给控制台 Mac 固定一个专用 AP 地址，并以该地址放行 MAVLink / ECL1：
+`ECPS_GCS_IP=<Mac 静态 IPv4> deploy/orangepi/scripts/deploy_to_pi.sh ...`。安装会关闭 TCP 5760，启用 nftables，
+只允许该地址访问 UDP 14550 / 14700；Pi 将生成 `/opt/ecps295/config/console.key`（32 字节，权限 600）。
+通过受信任的 SSH 连接将 key 安全复制到 Mac；在应用连接设置中粘贴 `base64 -i console.key` 输出，应用保存在钥匙串。
+ECL1 报文使用 HMAC-SHA256、30 秒时间窗和递增序号；更换控制 Mac 或重装前应安全备份 key。不能通过 NetBird 做飞控连接。
+
+首次 Guided 启动会读回并比对 `fc_flight.parm` 中每个参数；不符或未响应时拒绝 Guided。参数文件暂列 2S 低压阈值 7.0/6.8 V，
+这不是已校准的电池配置：真机使用前须按实际电池确认阈值，并先征得 TA 同意启用低电压降落；更换电池规格后重新校准。参数文件不会由安装脚本自动写入飞控。FS_GCS_TIMEOUT 为 5 秒；应先无桨验证所有 failsafe 和围栏动作。
 
 ```sh
 R=/opt/ecps295; PY=$R/venv/bin/python

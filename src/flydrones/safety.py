@@ -44,6 +44,13 @@ class SafetyGovernor:
         self.land_requested = False
         self.kill = False
         self.events: list[str] = []
+        self.invalid_commands = 0
+        self.invalid_limit = max(1, int(s.get("invalid_command_land_count", 5)))
+
+    def hover(self, reason: str) -> FlightCommand:
+        """An immediate stop also resets slew history for a controlled recovery."""
+        self._prev = FlightCommand.hover(reason)
+        return self._prev
 
     def _event(self, msg: str) -> None:
         if not self.events or self.events[-1] != msg:
@@ -55,10 +62,18 @@ class SafetyGovernor:
             self._start = now
         notes = []
         if self.kill:
-            return FlightCommand.hover("KILL")
+            return self.hover("KILL")
+        if not all(math.isfinite(getattr(cmd, a)) for a in AXES) or not math.isfinite(dt) or dt <= 0:
+            self.invalid_commands += 1
+            self._event("non-finite command or invalid dt -> hover")
+            if self.invalid_commands >= self.invalid_limit:
+                self.land_requested = True
+                self._event("repeated invalid commands -> land")
+            return self.hover("invalid command -> hover")
+        self.invalid_commands = 0
         if brain_age_s > self.brain_timeout:
-            cmd = FlightCommand.hover("brain timeout -> hover")
             self._event("brain timeout")
+            return self.hover("brain timeout -> hover")
         out = {a: max(-self.max[a], min(self.max[a], getattr(cmd, a))) for a in AXES}
 
         if tel.alt_m is not None:
@@ -84,13 +99,13 @@ class SafetyGovernor:
             notes.append("max flight time -> land")
 
         # slew-rate limit, but always allow moving toward zero instantly
-        max_step = self.slew * max(dt, 1e-3)
+        max_step = self.slew * min(dt, 0.1)
         for a in AXES:
             prev = getattr(self._prev, a)
             v = out[a]
             if abs(v) > abs(prev) or v * prev < 0:  # copysign(1, 0.0) == +1 made negative -> 0 a "sign change" (slow)
                 v = max(prev - max_step, min(prev + max_step, v))
-            out[a] = v
+            out[a] = max(-self.max[a], min(self.max[a], v)) if math.isfinite(v) else 0.0
         safe = FlightCommand(**out, escape=cmd.escape, note="; ".join([cmd.note] + notes).strip("; "))
         for n in notes:
             self._event(n)

@@ -11,7 +11,7 @@ export class EyesView {
     this.c = canvas; this.g = canvas.getContext("2d");
     this.info = info;
     this.bmp = null; this.kind = 0; this.w = 0; this.h = 0;
-    this.frames = []; this.grids = null;
+    this.frames = []; this.lastFrameT = 0; this.grids = null;
     this.mode = "brain";
     this.decoding = false;
   }
@@ -22,7 +22,7 @@ export class EyesView {
     createImageBitmap(new Blob([m.jpeg], { type: "image/jpeg" })).then((b) => {
       if (this.bmp) this.bmp.close();
       this.bmp = b; this.kind = m.kind; this.w = m.w; this.h = m.h;
-      this.frames.push(performance.now());
+      this.lastFrameT = performance.now(); this.frames.push(this.lastFrameT);
     }).catch(() => {}).finally(() => { this.decoding = false; });
   }
 
@@ -50,7 +50,7 @@ export class EyesView {
       g.globalCompositeOperation = "source-over"; g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, 0, W, H);
     }
     const age = tick && tick.age ? tick.age[0] : null;
-    const stale = now - this.frames[this.frames.length - 1] > 1500;
+    const stale = !this.lastFrameT || now - this.lastFrameT > 1500;
     this.info.textContent = `${this.kind === 0 ? L("大脑视角", "Brain view") : L("彩色", "Color")} ${this.w}×${this.h} · ${(this.frames.length / 2).toFixed(0)} fps`
       + (age != null ? L(` · 机载帧龄 ${age.toFixed(0)} ms`, ` · onboard age ${age.toFixed(0)} ms`) : "") + (stale ? L(" · ▲ 画面中断", " · ▲ stalled") : "");
     if (this.kind === 0 && this.grids) this.overlay();

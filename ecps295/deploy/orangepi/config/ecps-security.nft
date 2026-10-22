@@ -1,0 +1,9 @@
+table inet ecps_security {
+    chain input {
+        type filter hook input priority -10; policy accept;
+        iifname "lo" accept
+        ip saddr ECPS_GCS_IP_REQUIRED udp dport { 14550, 14700 } accept
+        udp dport { 14550, 14700 } drop
+        tcp dport 5760 drop
+    }
+}

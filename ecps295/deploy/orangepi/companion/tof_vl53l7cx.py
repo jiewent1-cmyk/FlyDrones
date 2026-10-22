@@ -68,6 +68,7 @@ class _Base:
         self.frame: np.ndarray | None = None  # (n*n,) metres, NaN = no valid target
         self.stamp = 0.0  # time.monotonic() of the last frame
         self.frames = 0
+        self.valid_zones = 0
         self.errors = 0
         self.read_ms: list[float] = []  # I2C transfer time per frame (bounded)
         self.status = "init"
@@ -88,6 +89,7 @@ class _Base:
             self._th.join(timeout=2)
 
     def _publish(self, arr: np.ndarray, ms: float) -> None:
+        self.valid_zones = int(np.count_nonzero(np.isfinite(arr) & (arr > 0)))
         self.frame = arr  # new object every frame: consumers detect new frames by identity
         self.stamp = time.monotonic()
         self.frames += 1
@@ -171,6 +173,7 @@ class ToFSensor(_Base):
                 c0 = time.perf_counter()
                 if lib.vl7_read(h, dist, stat, nz, ctypes.byref(temp)):
                     self.errors += 1
+                    self._stop.wait(0.01)
                     continue
                 ms = (time.perf_counter() - c0) * 1000
                 d = np.frombuffer(dist, np.int16).astype(np.float64) / 1000.0

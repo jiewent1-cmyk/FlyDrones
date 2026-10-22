@@ -27,7 +27,11 @@ export class FlightView {
   }
 
   static status(level, label, text) {
-    return `<div title="${label}"><span class="st ${level}">${ICON[level]}</span><span class="t">${label}${text ? " · " + text : ""}</span></div>`;
+    const d = document.createElement("div"); d.title = String(label);
+    const icon = document.createElement("span"); icon.className = `st ${level}`; icon.textContent = ICON[level] || "●";
+    const value = document.createElement("span"); value.className = "t"; value.textContent = `${label}${text ? " · " + text : ""}`;
+    d.append(icon, value);
+    return d;
   }
 
   static ekfAlt(fc, tick) {
@@ -91,7 +95,7 @@ export class FlightView {
     if (vib) H.push(S(Math.max(vib[0], vib[1], vib[2]) < 30 ? "good" : Math.max(vib[0], vib[1], vib[2]) < 60 ? "warn" : "critical", L("振动", "Vibration"), `${L("削顶", "clipping")} ${vib[3] + vib[4] + vib[5]}`));
     if (app && app.lag_ms != null) H.push(S(app.lag_ms < 100 ? "good" : app.lag_ms < 500 ? "warn" : "critical", L("控制台处理", "Console processing"), `${L("延迟", "lag")} ${f(app.lag_ms, 0)} ms`));
     if (fc.link) H.push(S(fc.link.loss_pct == null ? "off" : fc.link.loss_pct < 2 ? "good" : fc.link.loss_pct < 10 ? "warn" : "serious", L("MAVLink 丢包", "MAVLink loss"), fc.link.loss_pct != null ? `${fc.link.loss_pct}%` : "—"));
-    this.health.innerHTML = H.join("");
+    this.health.replaceChildren(...H);
   }
 
   drawADI(roll, pitch, yaw) {

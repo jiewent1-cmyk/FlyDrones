@@ -36,7 +36,8 @@
     <button class="ekill" id="bKill" title="按住 1.5 秒：强制上锁，电机立即停转（无人机会掉落）" data-en-title="Hold for 1.5 s: force disarm, the motors stop at once (the drone falls)"><span class="ring" id="killRing"></span><span data-en="KILL">停桨</span><small data-en="hold 1.5 s">按住 1.5 s</small></button>
   </div>
 </header>
-<div class="estopBar" id="estopBar"></div>
+<div class="estopBar" id="estopBar"><span id="estopText"></span><button class="icon" id="bStopSend"></button><button class="icon" id="bReset"></button></div>
+<div class="freezeBar" id="freezeBar"></div>
 
 <main class="grid">
   <section class="col left">
@@ -125,6 +126,7 @@
   <div class="panel box">
     <div class="ph"><span><b data-en="Connection settings">连接设置</b></span><button class="link" id="bSetClose" data-en="Close">关闭</button></div>
     <label><span data-en="Orange Pi address">Orange Pi 地址</span><input id="sHost" placeholder="192.168.86.20" spellcheck="false"></label>
+    <label><span data-en="ECL1 shared key (base64, 32 bytes; saved in macOS Keychain)">ECL1 共享密钥（32 字节的 base64；保存到 macOS 钥匙串）</span><input id="sEclKey" type="password" autocomplete="new-password" placeholder=""></label>
     <div class="row2">
       <label><span data-en="Companion telemetry port (ECPS)">机载遥测端口（ECPS）</span><input id="sEcl" type="number" min="1" max="65535"></label>
       <label><span data-en="MAVLink port (mavlink-router GCS)">MAVLink 端口（mavlink-router GCS）</span><input id="sMav" type="number" min="1" max="65535"></label>

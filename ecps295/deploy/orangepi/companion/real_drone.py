@@ -20,6 +20,7 @@ BenchDrone  no flight controller: fixed hover telemetry, commands recorded only 
 from __future__ import annotations
 
 import math
+import threading
 import time
 
 import numpy as np
@@ -75,7 +76,7 @@ class _Sensors:
         f = None if s is None else s.frame
         key = tuple(beams)
         if f is None:
-            return [2.0] * len(beams)
+            return [0.0] * len(beams)
         if self._rng_cache[0] == key and self._rng_cache[1] is f:
             return self._rng_cache[2]
         g = f.reshape(self.tof_n, self.tof_n)
@@ -85,7 +86,7 @@ class _Sensors:
             c = int(round((b + self.tof_hfov / 2) / pitch - 0.5))
             col = g[:, min(self.tof_n - 1, max(0, c))]
             d = np.nanmin(col) if np.isfinite(col).any() else np.inf
-            out.append(2.0 if not np.isfinite(d) else max(0.0, min(2.0, float(d) - 0.06)))
+            out.append(0.0 if not np.isfinite(d) else max(0.0, min(2.0, float(d) - 0.06)))
         self._rng_cache = (key, f, out)
         return out
 
@@ -106,6 +107,8 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         self.rangefinder_hz = rangefinder_hz  # set before the base __init__, which connects and requests the streams
         Ecps295MavlinkDrone.__init__(self, url, nav="flow", ext_height=ext_height, origin=tuple(ekf_origin), **kw)
         self._origin_t = 0.0
+        self._hb_stop = threading.Event()
+        self._hb_thread: threading.Thread | None = None
         self.origin_sent = 0
         self._init_sensors(cam, tofs)
         self.allow_cmd = allow_cmd  # --mode guided
@@ -120,6 +123,9 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         g = guard or {}
         self.tof_stale_s = float(g.get("tof_stale_s", 0.3))  # 15 Hz sensors: ~4 missed frames
         self.tof_land_s = float(g.get("tof_land_s", 2.0))
+        self.tof_min_valid = int(g.get("tof_min_valid_zones", 8))
+        self.required_tofs = set(g.get("required_tof_bearings", [0, 180]))
+        self._tof_invalid_since = {}
         self.cam_ready_s = float(g.get("camera_ready_s", 0.3))
         self.max_flight_s = float(max_flight_s)
         self.stop_check = stop_check
@@ -184,6 +190,53 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
                 t0 = time.time()
         print(f"MAVLink heartbeat from system {self.m.target_system}", flush=True)
         self._request_streams()
+        self._hb_stop.clear()
+        self._hb_thread = threading.Thread(target=self._heartbeat_loop, name="fc-heartbeat", daemon=True)
+        self._hb_thread.start()
+
+    def _heartbeat_loop(self) -> None:
+        deadline = time.monotonic()
+        while not self._hb_stop.is_set():
+            try:
+                if not self.mute:
+                    self._heartbeat()
+                    self.send_ext_height()
+            except Exception as e:
+                print(f"[mavlink watchdog] {type(e).__name__}: {e}", flush=True)
+            deadline += 0.05
+            self._hb_stop.wait(max(0.0, deadline - time.monotonic()))
+            if time.monotonic() - deadline > 0.2:
+                deadline = time.monotonic()
+
+    def stop_heartbeat(self) -> None:
+        self._hb_stop.set()
+        if self._hb_thread is not None:
+            self._hb_thread.join(timeout=1.0)
+
+    def verify_flight_parameters(self, path: str) -> None:
+        """Refuse guided mode unless the FC reports every reviewed flight parameter."""
+        expected = {}
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                row = line.partition("#")[0].split()
+                if len(row) >= 2:
+                    expected[row[0]] = float(row[1])
+        wanted = set(expected)
+        values = {}
+        self.m.mav.param_request_list_send(self.m.target_system, self.m.target_component)
+        deadline = time.monotonic() + 20.0
+        while wanted - values.keys() and time.monotonic() < deadline:
+            msg = self.m.recv_match(type="PARAM_VALUE", blocking=True, timeout=0.25)
+            if msg is None:
+                continue
+            name = msg.param_id.decode(errors="ignore").rstrip("\0") if isinstance(msg.param_id, bytes) else str(msg.param_id).rstrip("\0")
+            if name in wanted:
+                values[name] = float(msg.param_value)
+        missing = sorted(wanted - values.keys())
+        wrong = sorted((name, expected[name], values[name]) for name in wanted & values.keys()
+                       if not math.isclose(expected[name], values[name], abs_tol=0.01))
+        if missing or wrong:
+            raise RuntimeError(f"refusing guided: flight parameters missing={missing}, mismatched={wrong}")
 
     # ---------------------------------------------------------------- sensor guard + time hold (2026-10-16)
     # EcpsPilot watches the camera and the route-B height, but nothing watched the two VL53L7CX: a sensor that never
@@ -196,18 +249,37 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
     #              governor's descend-in-place LAND (PIL: once landed on a box edge); the pilot takes over with the
     #              mode switch. Battery-low and the other watchdog LANDs are unchanged.
     def tof_stale(self) -> str:
-        for s in self.tofs.values():
+        if not self.required_tofs.issubset(self.tofs):
+            return "required ToF missing"
+        now = time.monotonic()
+        for bearing, s in self.tofs.items():
             if s.age_s() > self.tof_stale_s:
                 return f"ToF {s.name} stale ({s.status})"
+            frame = s.frame
+            valid = 0 if frame is None else int(np.count_nonzero(np.isfinite(frame) & (frame > 0)))
+            if valid < self.tof_min_valid:
+                since = self._tof_invalid_since.setdefault(bearing, now)
+                if not self._latched or now - since >= self.tof_stale_s:
+                    return f"ToF {s.name} invalid ({valid} zones)"
+            else:
+                self._tof_invalid_since.pop(bearing, None)
         return ""
 
     def sensors_ready(self) -> str:
         """'' when the camera and all ToF sensors are fresh and the FC streams its EKF position, otherwise the reason."""
         if self.cam is not None and self.frame_age_s() > self.cam_ready_s:
             return f"camera stale ({getattr(self.cam, 'status', '?')})"
-        if self._fresh("LOCAL_POSITION_NED") is None:  # map, fence turn and waypoints all work in the EKF frame
-            return "no EKF position"
+        why = self.pose_stale()
+        if why:
+            return why
         return self.tof_stale()
+
+    def pose_stale(self) -> str:
+        for name, fields in (("LOCAL_POSITION_NED", ("x", "y", "z", "vz")), ("ATTITUDE", ("roll", "pitch", "yaw", "yawspeed"))):
+            msg = self._fresh(name)
+            if msg is None or not all(math.isfinite(getattr(msg, f)) for f in fields):
+                return f"{name} stale or invalid"
+        return ""
 
     # ---------------------------------------------------------------- EKF origin (2026-10-17)
     # Without GPS the FC streams no LOCAL_POSITION_NED until an EKF origin is set (mavlink_twin._takeoff_flow does it in
@@ -238,7 +310,7 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
     def _guard(self, cmd):
         """Applied to every command while in control; returns the command to send, or None for LAND."""
         now = time.monotonic()
-        bad = self.tof_stale()
+        bad = self.tof_stale() or self.pose_stale()
         if bad:
             if self._bad_since is None:
                 self._bad_since = now

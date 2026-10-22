@@ -200,9 +200,9 @@ export class MapView {
     this.limKey = key;
     this.limits = lim;
     for (const o of [this.fence, this.gotoLim, this.ceiling]) if (o) this.scene.remove(o);
-    this.fence = this.circle(lim.fence_m || 2, 0.006, 0xd03b3b, false); this.scene.add(this.fence);
-    this.gotoLim = this.circle(lim.goto_limit_m || 1.6, 0.006, 0x8a98a8, true); this.scene.add(this.gotoLim);
-    this.ceiling = this.circle(lim.fence_m || 2, lim.max_alt_m || 1.0, 0xd03b3b, true); this.scene.add(this.ceiling);
+    this.fence = this.circle(lim.fence_m ?? 2, 0.006, 0xd03b3b, false); this.scene.add(this.fence);
+    this.gotoLim = this.circle(lim.goto_limit_m ?? 1.6, 0.006, 0x8a98a8, true); this.scene.add(this.gotoLim);
+    this.ceiling = this.circle(lim.fence_m ?? 2, lim.max_alt_m ?? 1.0, 0xd03b3b, true); this.scene.add(this.ceiling);
     this.drawLegend();
   }
 
@@ -256,6 +256,7 @@ export class MapView {
     if (x == null || y == null || yaw == null) { this.drone.visible = false; this.pose = null; return; }
     const u = alt == null ? 0 : alt;
     this.pose = { n: x, e: y, u, yaw: rad(yaw) };
+    this.poseAt = performance.now();
     this.drone.visible = true;
     this.drone.position.copy(V(x, y, u));
     this.drone.rotation.set(0, -rad(yaw), 0);

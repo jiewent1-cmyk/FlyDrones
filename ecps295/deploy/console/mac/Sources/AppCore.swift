@@ -28,6 +28,7 @@ final class AppCore {
     init(webRoot: URL) {
         fc = FCLink(queue: net)
         ecl = ECLLink(queue: net)
+        ecl.setAuthKey(loadECLKey())
         safety = Safety(fc: fc, ecl: ecl)
         web = WebServer(root: webRoot)
         if defaults.object(forKey: "extraStreams") != nil { fc.extraStreams = defaults.bool(forKey: "extraStreams") }
@@ -88,7 +89,7 @@ final class AppCore {
             "app": ["lag_ms": jnum(lag.max(), 1)],
             "settings": ["host": host, "ecl": Int(eclPort), "mav": Int(mavPort), "streams": fc.extraStreams,
                          "cam": ecl.prefs["cam"] ?? "brain", "cam_hz": ecl.prefs["cam_hz"] ?? 5, "rec_auto": rec.auto,
-                         "bw": ecl.userLevel ?? -1, "lang": Lang.current],
+                         "bw": ecl.userLevel ?? -1, "lang": Lang.current, "eclKeySet": ecl.authenticatedKeyReady],
         ]
     }
 
@@ -127,11 +128,21 @@ final class AppCore {
         let c = (obj["c"] as? String) ?? ""
         switch c {
         case "connect":
+            guard loadECLKey()?.count == 32 || (obj["eclKey"] as? String)?.isEmpty == false else {
+                return reply(obj, false, "Enter the companion's 32-byte ECL1 key first")
+            }
+            if let encoded = obj["eclKey"] as? String, !encoded.isEmpty {
+                guard let key = Data(base64Encoded: encoded.trimmingCharacters(in: .whitespacesAndNewlines)), key.count == 32,
+                      saveECLKey(key) else { return reply(obj, false, "ECL1 key must be valid base64 for 32 bytes and save to Keychain") }
+                ecl.setAuthKey(key)
+            }
+            guard loadECLKey()?.count == 32 else { return reply(obj, false, "Enter the companion's 32-byte ECL1 key (base64) first") }
             if let h = obj["host"] as? String, !h.trimmingCharacters(in: .whitespaces).isEmpty {
                 defaults.set(h.trimmingCharacters(in: .whitespaces), forKey: "host")
             }
             if let p = obj["ecl"] as? Int, p > 0, p < 65536 { defaults.set(p, forKey: "eclPort") }
             if let p = obj["mav"] as? Int, p > 0, p < 65536 { defaults.set(p, forKey: "mavPort") }
+            guard ecl.authenticatedKeyReady else { return reply(obj, false, "Enter the companion's 32-byte ECL1 key first") }
             fc.connect(host: host, port: mavPort)
             ecl.connect(host: host, port: eclPort)
             rec.event("console", L("连接 \(host) ECPS \(eclPort) / MAVLink \(mavPort)", "connect \(host) ECPS \(eclPort) / MAVLink \(mavPort)"))

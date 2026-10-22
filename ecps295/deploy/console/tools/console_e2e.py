@@ -80,6 +80,7 @@ ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDe
 ap.add_argument("--pi", default="192.168.86.20")
 ap.add_argument("--mav", type=int, default=14651)
 ap.add_argument("--ecl", type=int, default=14701)
+ap.add_argument("--key-file", required=True, help="secure copy of the Pi's 32-byte console.key")
 ap.add_argument("--scenario", default="auto", choices=["auto", "app", "app_kill", "app_full", "track", "app_track"])
 ap.add_argument("--app-log", default="", help="app_full: the app's stdout (with its 'UI http://...' line)")
 ap.add_argument("--app-pid", type=int, default=0, help="app_full: the app's PID (SIGSTOP / SIGCONT, SIGUSR1 snapshots)")
@@ -118,7 +119,7 @@ class AppUI:
 
 
 g = mavutil.mavlink_connection(f"udpout:{a.pi}:{a.mav}", source_system=255, source_component=190)
-L = Link(a.pi, a.ecl, name="console_e2e", cam="off", cam_hz=0)
+L = Link(a.pi, a.ecl, name="console_e2e", cam="off", cam_hz=0, key=Path(a.key_file).read_bytes())
 UI = AppUI(a.app_log) if a.scenario in ("app_full", "app_track") else None
 TRACKING = a.scenario in ("track", "app_track")
 T0 = time.monotonic()
