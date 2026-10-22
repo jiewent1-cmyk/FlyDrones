@@ -1338,6 +1338,11 @@ class ConsoleLink:
             return b""
         return struct.pack("<B", len(out)) + b"".join(out)
 
+    def _planner_stats(self) -> dict:
+        ms = sorted(self.ops.planner.plan_ms[-2000:])
+        q = lambda f: ms[min(len(ms) - 1, int(f * len(ms)))] if ms else None  # noqa: E731
+        return {"plans": self.ops.planner.plans, "ms_p50": q(0.5), "ms_p99": q(0.99), "ms_max": ms[-1] if ms else None}
+
     def _cam_jpeg(self, c: Client) -> bytes:
         import cv2
 
@@ -1412,6 +1417,7 @@ class ConsoleLink:
                       "confirmed": self.estop_done},
             "lost": round(time.monotonic() - self.lost_since, 1) if self.lost_since else None,
             "map": None if self.map is None else {"res": self.map.res, "half": self.map.half, "frames": self.map.frames},
+            "planner": None if self.ops.planner is None else self._planner_stats(),
             "marker": self._marker_json(),
         }
 
