@@ -226,7 +226,8 @@ function tickText() {
   const controlled = T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK" && op !== "RTL";
   const title = controlled ? modeName(op) : b.name;
   const detail = controlled ? L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")
-    : T.ctl ? (op === "GOTO" ? L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias")
+    : T.ctl ? (op === "GOTO" ? (T.route ? L(`航线：航点 ${(T.ri || 0) + 1} / ${T.route.length}（航点层：大脑 + 目标偏置）`, `route: waypoint ${(T.ri || 0) + 1} of ${T.route.length} (brain + waypoint bias)`)
+      : L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias"))
     : op === "TRACK" ? L("跟踪目标（目标层：搜索、接近、面向标记，大脑的逃逸仍优先）", "tracking: search, approach, face the marker (the brain's escapes still win)")
     : op === "RTL" ? L("返航（航点层飞回起飞点，到达后悬停再降落）", "returning: waypoint layer to the take-off point, hover, then land")
     : L("大脑驾驶", "brain flying")) : L("未接管：仅显示大脑会怎么做", "not in control: what the brain would do");
@@ -263,21 +264,43 @@ $("bHome").onclick = () => cmd("goto", { x: 0, y: 0 });
 $("bManual").onclick = () => cmd("manual", { on: !(T && T.opm === "MANUAL") });
 $("bTrack").onclick = () => cmd("track");
 $("bRtl").onclick = () => cmd("rtl");
-let picking = false;
+let picking = false, pickPts = [];
+const ROUTE_MAX = 20;
 $("bPick").onclick = () => setPicking(!picking);
 function setPicking(on) {
   picking = on; map.setPicking(on);
   $("bPick").classList.toggle("on", on); $("pickHint").classList.toggle("on", on);
+  pickPts = [];
   if (!on) $("goalChip").classList.remove("on");
+}
+// 2026-10-21 multi-waypoint route: every click adds a waypoint; one point = goto, several = route (flown in order)
+function routeChip(warn) {
+  const chipEl = $("goalChip");
+  chipEl.classList.add("on");
+  let len = 0, prev = map.pose ? [map.pose.n, map.pose.e] : [0, 0];
+  for (const p of pickPts) { len += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+  const w = warn ? `<span style="color:#ec835a">${warn}</span> ` : "";
+  if (!pickPts.length) { chipEl.innerHTML = w || L("点击地面添加航点", "Click the ground to add waypoints"); return; }
+  const last = pickPts[pickPts.length - 1];
+  const what = pickPts.length === 1 ? `${L("目标", "Goal")} N ${last[0].toFixed(2)} · E ${last[1].toFixed(2)}`
+    : `${L("航线", "Route")} ${pickPts.length} ${L("个航点", "waypoints")} · ${len.toFixed(1)} m`;
+  chipEl.innerHTML = `${w}${what} <button class="g" id="bGo">${L("✓ 出发", "✓ Go")}</button><button class="icon" id="bUndo" title="${L("撤销上一个航点", "Remove the last waypoint")}">↶</button><button class="icon" id="bNo">✕</button>`;
+  $("bGo").onclick = () => {
+    if (pickPts.length === 1) cmd("goto", { x: pickPts[0][0], y: pickPts[0][1] });
+    else cmd("route", { pts: pickPts.map((p) => [p[0], p[1]]) });
+    setPicking(false);
+  };
+  $("bUndo").onclick = () => { pickPts.pop(); map.setPickPoints(pickPts); routeChip(); };
+  $("bNo").onclick = () => setPicking(false);
 }
 function onPick(n, e) {
   const lim = (ST && ST.limits && ST.limits.goto_limit_m) || 1.6;
-  const r = Math.hypot(n, e), chipEl = $("goalChip");
-  chipEl.classList.add("on");
-  if (r > lim) { chipEl.innerHTML = `<span style="color:#ec835a">${L(`■ 超出目标点范围（${r.toFixed(2)} m > ${lim} m）`, `■ Outside the goal range (${r.toFixed(2)} m > ${lim} m)`)}</span>`; return; }
-  chipEl.innerHTML = `${L("目标", "Goal")} N ${n.toFixed(2)} · E ${e.toFixed(2)} <button class="g" id="bGo">${L("✓ 前往", "✓ Go")}</button><button class="icon" id="bNo">✕</button>`;
-  $("bGo").onclick = () => { cmd("goto", { x: +n.toFixed(2), y: +e.toFixed(2) }); setPicking(false); };
-  $("bNo").onclick = () => setPicking(false);
+  const r = Math.hypot(n, e);
+  if (r > lim) { routeChip(L(`■ 超出目标点范围（${r.toFixed(2)} m > ${lim} m）`, `■ Outside the goal range (${r.toFixed(2)} m > ${lim} m)`)); return; }
+  if (pickPts.length >= ROUTE_MAX) { routeChip(L(`■ 最多 ${ROUTE_MAX} 个航点`, `■ At most ${ROUTE_MAX} waypoints`)); return; }
+  pickPts.push([+n.toFixed(2), +e.toFixed(2)]);
+  map.setPickPoints(pickPts);
+  routeChip();
 }
 document.querySelectorAll("[data-ho]").forEach((b) => (b.onclick = () => {
   wantHandover = b.dataset.ho; localStorage.setItem("ecps.handover", wantHandover); sendHandover(wantHandover);
@@ -471,6 +494,8 @@ const ZH = [
   [/^waypoints: done -> hover$/, () => "航点完成 → 悬停"],
   [/^goal (reached|skipped|done) \(EKF distance (.*) m\)$/, (m) => `目标${{ reached: "已到达", skipped: "未能到达（已跳过）", done: "完成" }[m[1]]}（EKF 距离 ${m[2]} m）`],
   [/^goal ([-+\d.]+), ([-+\d.]+)( via the waypoint layer)?$/, (m) => `目标 N ${m[1]} · E ${m[2]}${m[3] ? "（航点层）" : ""}`],
+  [/^route (\d+) waypoints to ([-+\d.]+), ([-+\d.]+)( via the waypoint layer)?$/, (m) => `航线 ${m[1]} 个航点，终点 N ${m[2]} · E ${m[3]}${m[4] ? "（航点层）" : ""}`],
+  [/^waypoint (\d+) of (\d+) reached$/, (m) => `到达航点 ${m[1]} / ${m[2]}`],
   [/^goto timeout$/, () => "前往超时"], [/^arrived \((.*)\)$/, (m) => `到达（${m[1]}）`],
   [/^illusion (\w+)$/, (m) => `错觉刺激：${{ palm: "手掌（爬升）", drop: "放下（下降）", left: "左转", right: "右转", rush: "逼近", fist: "静止" }[m[1]] || m[1]}`],
   [/^fence: turning back$/, () => "围栏：掉头"],

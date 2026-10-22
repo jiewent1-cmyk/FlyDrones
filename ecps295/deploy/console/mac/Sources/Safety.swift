@@ -49,7 +49,8 @@ final class Safety {
             self.source = source
             onEvent?("critical", L("紧急降落（\(source)）：向飞控和机载程序同时发送 LAND", "Emergency land (\(source)): LAND sent to the FC and the companion"))
         }
-        ecl.forceLevel(0, seconds: 15)  // free the Wi-Fi for the stop and its confirmation
+        // 2026-10-21: no forced drop to level 0 any more: the video must never stop (user), and since the Wi-Fi fix
+        // (he_on=0) the link has room; the stop itself is re-sent until the FC confirms it
         lastLandSend = 0
         tick()
     }
@@ -64,7 +65,6 @@ final class Safety {
             self.source = source
             onEvent?("critical", L("停桨（\(source)）：强制上锁，电机立即停转", "Kill (\(source)): force disarm, the motors stop at once"))
         }
-        ecl.forceLevel(0, seconds: 15)
         lastKillSend = 0
         tick()
     }

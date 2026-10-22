@@ -9,8 +9,8 @@
 // Commands carry an id and are re-sent until the companion acknowledges them (8 tries, 300 ms apart).
 // Bandwidth: the Pi's Wi-Fi stalls for seconds above ~40 kB/s, so the console asks for a level 0-3 (HELLO "lvl") and
 // adapts it from the PING round trips (4 Hz): down at once when a reply takes > 400 ms or several are lost, up again
-// after 6 s of a clean link. An emergency stop drops to level 0 for 15 s to free the air for the stop and its
-// confirmation. The link is marked as interactive voice (WMM AC_VO) so the AP queues it ahead of bulk traffic.
+// after 6 s of a clean link. (Until 2026-10-21 an emergency stop dropped to level 0 for 15 s, which stopped the video;
+// the stop no longer touches the level, and every level carries the camera.) The link is marked as interactive voice (WMM AC_VO) so the AP queues it ahead of bulk traffic.
 
 import Foundation
 import Network

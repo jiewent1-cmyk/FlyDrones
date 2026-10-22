@@ -30,7 +30,7 @@ import numpy as np
 
 MAGIC = b"EPL1"
 HDR = struct.Struct("<4sBBHId")
-CAM, TOF, CTL, CAM_JPG = 1, 2, 3, 4
+CAM, TOF, CTL, CAM_JPG, CHASE_JPG = 1, 2, 3, 4, 5  # 5 = console-session chase view (hover session test copy, 2026-10-21)
 REWIND = 1000  # a seq this far below the newest of its stream is a restarted sender, not a late datagram
 
 
@@ -161,6 +161,11 @@ class PilLink:
                 c.stamp, c.status = now, "pil"
                 c.frames += 1
                 self.rx["cam"] += 1
+            elif kind == CHASE_JPG:  # 2026-10-21 console session: Gazebo chase camera -> the console colour view
+                img = cv2.imdecode(np.frombuffer(body, np.uint8), cv2.IMREAD_COLOR)
+                if img is not None:
+                    self.cam.last_bgr = img
+                    self.rx["chase"] = self.rx.get("chase", 0) + 1
             elif kind == TOF:
                 s = self.tofs.get(aux % 360)
                 if s is not None:
@@ -171,7 +176,7 @@ class PilLink:
             elif kind == CTL:
                 if go != self._go:
                     self.go_changes.append((round(now, 3), go))
-                    if self._go and not go:
+                    if self._go and not go and not aux & 1:  # aux bit 0 = console session (ROG run_g4 --mode console)
                         self.finished = True  # patrol over: the companion exits (no remote kill needed)
                 self._go, self._ctl_t, self.ctl_seq = go, now, seq
                 self.rx["ctl"] += 1

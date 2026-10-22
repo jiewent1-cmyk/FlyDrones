@@ -114,6 +114,15 @@ export class MapView {
     // goal and pick preview
     this.goal = this.pin(0x39ff88); this.goal.visible = false; scene.add(this.goal);
     this.preview = this.pin(0xffffff); this.preview.visible = false; scene.add(this.preview);
+    // multi-waypoint route (2026-10-21): the picked points (white) and the route being flown (green, done ones grey)
+    this.routeMax = 20;
+    this.routeGeo = new THREE.BufferGeometry();
+    this.routeGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array((this.routeMax + 1) * 3), 3));
+    this.routeLine = new THREE.Line(this.routeGeo, new THREE.LineDashedMaterial({ color: 0x39ff88, dashSize: 0.08, gapSize: 0.05 }));
+    this.routeLine.frustumCulled = false; this.routeLine.visible = false; scene.add(this.routeLine);
+    this.routePins = [];
+    for (let i = 0; i < this.routeMax; i++) { const p = this.pin(0x39ff88); p.scale.set(0.7, 0.45, 0.7); p.visible = false; scene.add(p); this.routePins.push(p); }
+    this.pickPts = null;
 
     // target tracking: marker (solid: the tracker's estimate; faint: a sighting while not tracking), goal, line of sight
     this.mk = this.markerSprite(); this.mk.visible = false; scene.add(this.mk);
@@ -274,6 +283,7 @@ export class MapView {
       this.trailGeo.attributes.position.needsUpdate = true;
     }
     if (t.goal) { this.goal.visible = true; this.goal.position.copy(V(t.goal[0], t.goal[1], 0)); } else this.goal.visible = false;
+    if (!this.pickPts) this.drawRoute(t.route, t.ri, [x, y]);
     this.target(t);
     // shield constraints: body-frame sector angle (deg, + right) and distance to the obstacle surface (cm)
     const rp = this.ringGeo.attributes.position.array, rc = this.ringGeo.attributes.color.array;
@@ -350,9 +360,40 @@ export class MapView {
     if (v === "orbit") { this.camera.position.set(3.2, 4.2, 4.6); this.controls.target.set(0, 0.5, 0); }
   }
 
+  /** pts [[n, e], ...]; idx = current waypoint (earlier ones grey); from = start of the line ([n, e]) or null */
+  drawRoute(pts, idx, from, color = 0x39ff88) {
+    const n = pts ? Math.min(pts.length, this.routeMax) : 0;
+    this.routePins.forEach((p, i) => {
+      p.visible = i < n;
+      if (i < n) {
+        p.position.copy(V(pts[i][0], pts[i][1], 0));
+        const c = idx != null && i < idx ? 0x5c6773 : color;
+        p.children.forEach((m) => m.material.color.setHex(c));
+      }
+    });
+    const a = this.routeGeo.attributes.position.array;
+    let k = 0;
+    const put = (q) => { const v = V(q[0], q[1], 0.02); a[k++] = v.x; a[k++] = v.y; a[k++] = v.z; };
+    if (n && from) put(from);  // the line runs from the drone through the waypoints still ahead
+    for (let i = idx != null ? Math.min(idx, n - 1) : 0; i < n; i++) put(pts[i]);
+    this.routeGeo.setDrawRange(0, k / 3);
+    this.routeGeo.attributes.position.needsUpdate = true;
+    this.routeLine.material.color.setHex(color);
+    this.routeLine.computeLineDistances();
+    this.routeLine.visible = k / 3 >= 2;
+  }
+
+  /** the route being picked (null = picking ended: the flown route shows again) */
+  setPickPoints(pts) {
+    this.pickPts = pts && pts.length ? pts : null;
+    if (this.pickPts) this.drawRoute(this.pickPts, null, this.pose ? [this.pose.n, this.pose.e] : null, 0xffffff);
+    else this.drawRoute(null);
+  }
+
   setPicking(on) {
     this.picking = on;
     this.preview.visible = false;
+    if (!on) this.setPickPoints(null);
     this.canvas.style.cursor = on ? "crosshair" : "";
   }
 
