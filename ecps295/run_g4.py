@@ -441,6 +441,49 @@ def _quiet_soon() -> bool:
     return 55 <= lt.tm_hour * 60 + lt.tm_min < 420
 
 
+def _wait_estop_reset(t_end: float) -> bool:
+    """A kill or E-stop latches the console; the sim pilot only takes off again once the operator reset it (the Pi
+    status carries the latch), else the scripted re-arm made the reset fail ('FC still armed', 10-21 test)."""
+    said = False
+    while time.monotonic() < t_end and not _quiet_soon():
+        if int((pil.status or {}).get("es", 0)) == 0:
+            return True
+        if not said:
+            print("console: E-stop latched, waiting for the reset on the console", flush=True)
+            said = True
+        drone.telemetry()
+        time.sleep(0.2)
+    return False
+
+
+def _upright() -> None:
+    """After a kill in the air the airframe lies on its side ('Arm: Leaning'): the sim pilot sets it back upright
+    where it lies (Gazebo set_pose, same x / y / yaw), as a pilot would pick it up."""
+    import subprocess
+
+    att = drone.m.messages.get("ATTITUDE")
+    if att is None or max(abs(att.roll), abs(att.pitch)) < math.radians(12):
+        return
+    model, world = os.environ.get("ECPS_GZ_MODEL", "ecps295_quad_monitor"), Path(a.layout).name.replace(".layout.json", "")
+    out = subprocess.run(["gz", "model", "-m", model, "-p"], capture_output=True, text=True, timeout=10).stdout
+    rows = [r.strip().strip("[]").split() for r in out.splitlines() if r.strip().startswith("[") and len(r.split()) == 3]
+    if len(rows) < 2:
+        print(f"console: upright: no pose for {model}", flush=True)
+        return
+    x, y = float(rows[0][0]), float(rows[0][1])
+    yaw = float(rows[1][2])
+    req = (f'name: "{model}" position {{x: {x} y: {y} z: 0.06}} '
+           f"orientation {{x: 0 y: 0 z: {math.sin(yaw / 2)} w: {math.cos(yaw / 2)}}}")
+    r = subprocess.run(["gz", "service", "-s", f"/world/{world}/set_pose", "--reqtype", "gz.msgs.Pose", "--reptype",
+                        "gz.msgs.Boolean", "--timeout", "3000", "--req", req], capture_output=True, text=True, timeout=10)
+    print(f"console: airframe set upright at {x:+.2f}, {y:+.2f} (tilt was {math.degrees(max(abs(att.roll), abs(att.pitch))):.0f} deg): "
+          f"{r.stdout.strip() or r.stderr.strip()}", flush=True)
+    t1 = time.monotonic()
+    while time.monotonic() - t1 < 4:  # let the attitude estimate settle before arming
+        drone.telemetry()
+        time.sleep(0.1)
+
+
 def console_session(secs: float) -> None:
     """2026-10-21 Gazebo ground-console session: this script plays the RC pilot. After each take-off it hands over
     (pil.go = 1, as the pilot's switch to GUIDED); the operator flies with the console app through the Pi companion.
@@ -459,8 +502,9 @@ def console_session(secs: float) -> None:
         while time.monotonic() - t1 < RETAKEOFF_S:
             drone.telemetry()
             time.sleep(0.1)
-        if time.monotonic() >= t_end or _quiet_soon():
+        if not _wait_estop_reset(t_end) or time.monotonic() >= t_end or _quiet_soon():
             break
+        _upright()
         try:
             drone.takeoff()
         except Exception as e:  # noqa: BLE001 - keep the session alive, try again after the pause

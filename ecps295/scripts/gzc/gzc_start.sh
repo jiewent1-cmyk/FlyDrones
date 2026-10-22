@@ -29,6 +29,6 @@ R
 setsid nohup taskset -c 4 mavlink-routerd -c gzc_router.conf > logs/gzc/router.log 2>&1 < /dev/null &
 echo $! > gzc.pids
 T=$(date +%Y%m%d_%H%M%S)
-setsid nohup env ECPS_ROOT=/root/pil_hover ECPS_HOLD=pos ECPS_HOLD_YAW_DPS=30 bash -c "while true; do nice -n -10 /opt/ecps295/venv/bin/python -u companion/ecps_companion.py --mode guided --pil 14600 --url udpin:127.0.0.1:14563 --set safety.max_flight_s=1800 --seconds 0 --affinity 6,7 --tag gzc_$T --log-dir /root/pil_hover/logs/gzc; rc=\$?; echo \"companion exit \$rc \$(date +%T)\"; [ \$rc -eq 1 ] || [ -f gzc.restart ] || break; sleep 2; done" > logs/gzc/companion_$T.out 2>&1 < /dev/null &
+setsid nohup env ECPS_ROOT=/root/pil_hover ECPS_HOLD=pos ECPS_HOLD_YAW_DPS=30 bash -c "while true; do nice -n -10 /opt/ecps295/venv/bin/python -u companion/ecps_companion.py --mode guided --pil 14600 --url udpin:127.0.0.1:14563 --set safety.max_flight_s=1800 --set safety.geofence_radius_m=${GZC_FENCE:-2.7} --seconds 0 --affinity 6,7 --tag gzc_$T --log-dir /root/pil_hover/logs/gzc; rc=\$?; echo \"companion exit \$rc \$(date +%T)\"; [ \$rc -eq 1 ] || [ -f gzc.restart ] || break; sleep 2; done" > logs/gzc/companion_$T.out 2>&1 < /dev/null &
 echo $! >> gzc.pids
 echo "started router + companion ($(tr "\n" " " < gzc.pids)), log logs/gzc/companion_$T.out"
