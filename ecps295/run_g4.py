@@ -35,7 +35,7 @@ from flydrones.motor.command import FlightCommand
 from flydrones.runtime import Pilot
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--mode", choices=["probe", "hover", "approach", "patrol"], required=True)
+ap.add_argument("--mode", choices=["probe", "hover", "approach", "patrol", "hovertest"], required=True)
 ap.add_argument("--url", default="tcp:127.0.0.1:5760")
 ap.add_argument("--seconds", type=float, default=40)
 ap.add_argument("--cruise", type=float, default=0.5, help="approach: decoder.cruise (x safety max_forward x v_max)")
@@ -102,7 +102,7 @@ dyn = {k: ECPS295_DYN[k] for k in ("v_max", "vz_max", "yaw_rate_max_dps")}
 dyn.update(cfg.get("ecps_drone", {}) or {})  # e.g. a faster yaw limit for saccades
 drone = GazeboCameraMavlinkDrone(
     a.url,
-    passive=(a.mode == "probe"),
+    passive=(a.mode in ("probe", "hovertest")),
     takeoff_alt=TAKEOFF_ALT_M,
     nav=a.nav,
     shm=a.shm,
@@ -147,6 +147,12 @@ if PIL:
 
     _sh = getattr(getattr(pilot, "struct", None), "shield", None)
     pil = PilRog(PIL, drone, a.shm, list(getattr(_sh, "map_sensors", None) or []), jpeg=os.environ.get("ECPS_PIL_RAW") != "1")
+
+HT = None  # 2026-10-18 hover-precision test (hover_test.py): scripted setpoints, ECPS_HOLD=vel|pos
+if a.mode == "hovertest":
+    from hover_test import PLAN as HT_PLAN, HoverTest
+
+    HT = HoverTest(drone, os.environ.get("ECPS_HOLD", "vel"))
 
 PROP_TIP_R = 0.13  # body centre to prop tip: 0.08 m arm diagonal + 0.0508 m prop radius
 
@@ -283,6 +289,8 @@ def tick(t: float, dt: float, phase: str):
             pilot.track_start(t)
             TRK.started, TRK.t_start = True, round(t, 2)
         TRK.step(t, drone)
+    if HT is not None:
+        HT.step()
     c0 = time.perf_counter()
     info = pilot.tick(t, dt) if pil is None else pil.info(drone.telemetry())
     compute_ms = (time.perf_counter() - c0) * 1000
@@ -315,6 +323,7 @@ def tick(t: float, dt: float, phase: str):
             "mute": int(drone.mute),
             "ventral": round(getattr(pilot.retina, "ventral", None).level, 2) if hasattr(pilot.retina, "ventral") else 0.0,
             "box_under": int(box_under(tn, te, ta)),
+            "hold": int(getattr(drone, "hold_anchor", None) is not None),
             "tof": round(max(getattr(pilot.retina, "last_tof", {"L": 0.0}).values()), 2),  # S5 retina input
             "h_est": None if getattr(pilot, "last_height_est", None) is None else round(pilot.last_height_est, 3),
             "fc_mode": getattr(drone.m.messages.get("HEARTBEAT"), "custom_mode", -1),
@@ -468,6 +477,12 @@ try:
             print("phase", p[0], flush=True)
             if not run_phase(p[0], p[1], *p[2:]):
                 break
+    elif HT is not None:
+        for name, secs, kind, arg in HT_PLAN:
+            print("phase", name, flush=True)
+            HT.begin(name, kind, arg)
+            if not run_phase(name, secs):
+                break
     else:
         if pil is not None:
             pil.go = 1
@@ -616,6 +631,11 @@ summary["drift_dir_deg"] = round(math.degrees(getattr(drone, "drift_dir", 0.0)),
 summary["shield_drift_ticks"] = getattr(getattr(getattr(pilot, "struct", None), "shield", None), "drift_ticks", 0)
 if pil is not None:
     summary.update(pil.summary())
+if HT is not None:
+    summary["hold"] = HT.hold
+    summary["hold_sent"] = HT.sent
+summary["hold_mode"] = getattr(drone, "hold", "vel")  # 2026-10-20 ECPS_HOLD=pos hover hold
+summary["hold_ticks"] = getattr(drone, "hold_ticks", 0)
 summary["simclock"] = SIMCLOCK  # 2026-10-15: brain paced by simulated time
 summary["sim_s"], summary["wall_s"] = round(pace["sim_s"], 1), round(pace["wall_s"], 1)
 summary["tof_cone3d"] = os.environ.get("ECPS_TOF_CONE3D") == "1"  # N1b: Gazebo ToF emulation = full cone (else planar fan)
