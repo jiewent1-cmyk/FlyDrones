@@ -123,6 +123,11 @@ export class MapView {
     this.routePins = [];
     for (let i = 0; i < this.routeMax; i++) { const p = this.pin(0x39ff88); p.scale.set(0.7, 0.45, 0.7); p.visible = false; scene.add(p); this.routePins.push(p); }
     this.pickPts = null;
+    // planned path around obstacles (2026-10-22, console_link planner): what the pilot flies now, cyan
+    this.planGeo = new THREE.BufferGeometry();
+    this.planGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(64 * 3), 3));
+    this.planLine = new THREE.Line(this.planGeo, new THREE.LineBasicMaterial({ color: 0x4cc9f0 }));
+    this.planLine.frustumCulled = false; this.planLine.visible = false; scene.add(this.planLine);
 
     // target tracking: marker (solid: the tracker's estimate; faint: a sighting while not tracking), goal, line of sight
     this.mk = this.markerSprite(); this.mk.visible = false; scene.add(this.mk);
@@ -223,7 +228,8 @@ export class MapView {
       <div class="row"><span class="sw" style="background:#4cc9f0"></span>${L("ToF 射线 / 命中（前、后 8×8）", "ToF rays / hits (front, rear 8×8)")}</div>
       <div class="row"><span class="sw" style="background:#ec835a"></span>${L("■ 安全盾约束（地图最近障碍） · 橙圈", "■ Shield constraints (nearest mapped obstacle) · orange ring")} d<sub>safe</sub></div>
       <div class="row"><span class="sw" style="background:#d03b3b"></span>${L(`围栏 ${fence} m · 虚线 = 目标点范围`, `Geofence ${fence} m · dashed = goal range`)}</div>
-      <div class="row"><span class="sw" style="background:#39ff88"></span>${L("航迹 / 目标点", "Track / goal")}</div>` + (this.hasTrack ? `
+      <div class="row"><span class="sw" style="background:#39ff88"></span>${L("航迹 / 目标点 / 航线", "Track / goal / route")}</div>
+      <div class="row"><span class="sw" style="background:#4cc9f0"></span>${L("绕障规划路径", "Path planned around obstacles")}</div>` + (this.hasTrack ? `
       <div class="row"><span class="sw" style="background:#b388ff"></span>${L("ArUco 标记 / 跟踪目标点（浅色 = 看到但未跟踪）", "ArUco marker / tracking goal (faint = seen, not tracking)")}</div>` : "");
   }
 
@@ -284,6 +290,14 @@ export class MapView {
     }
     if (t.goal) { this.goal.visible = true; this.goal.position.copy(V(t.goal[0], t.goal[1], 0)); } else this.goal.visible = false;
     if (!this.pickPts) this.drawRoute(t.route, t.ri, [x, y]);
+    const pl = t.plan || [];
+    if (pl.length) {
+      const a = this.planGeo.attributes.position.array;
+      let k = 0;
+      for (const q of [[x, y], ...pl].slice(0, 64)) { const v = V(q[0], q[1], 0.04); a[k++] = v.x; a[k++] = v.y; a[k++] = v.z; }
+      this.planGeo.setDrawRange(0, k / 3); this.planGeo.attributes.position.needsUpdate = true;
+    }
+    this.planLine.visible = pl.length > 0;
     this.target(t);
     // shield constraints: body-frame sector angle (deg, + right) and distance to the obstacle surface (cm)
     const rp = this.ringGeo.attributes.position.array, rc = this.ringGeo.attributes.color.array;

@@ -150,6 +150,8 @@ DEFAULTS = {
     "goto_timeout_s": 90.0,
     "goto_fence_margin_m": 0.4,  # goals farther than geofence - margin from the origin are refused
     "route_max_points": 20,  # 2026-10-21 multi-waypoint route (op route); goto_timeout_s applies per waypoint
+    "planner": {},  # 2026-10-22 obstacle-aware paths for GOTO / route (route_planner.py DEFAULTS); {"enabled": false} = off
+    "plan_stuck_s": 30.0,  # planned GOTO: no progress toward the current waypoint this long -> skip it
     "manual_scale": {"f": 0.6, "l": 0.6, "y": 0.6, "z": 0.5},
     "handover": "hold",  # mode at hand-over until a console operator explicitly chooses otherwise
     "status_hz": 2.0,  # before the first tick
@@ -346,7 +348,17 @@ class Operator:
             self.handover = "PATROL"
         self.goal: tuple[float, float] | None = None  # the route's current waypoint (the last one once done)
         self.route: list[tuple[float, float]] = []  # GOTO waypoints (one for goto, several for route)
-        self.route_i = 0  # current waypoint (fallback controller; the waypoint layer keeps its own wp_idx)
+        self.route_i = 0  # current waypoint (fallback controller and planned GOTO; else the waypoint layer's wp_idx)
+        # 2026-10-22 planned GOTO (route_planner.py): the console flies each route waypoint through a path around what
+        # the local 3D map has seen; the pilot's waypoint layer gets the path, re-planned every replan_s
+        self.planner = None
+        self.lmap = None
+        self.plan_path: list[tuple[float, float]] = []  # what the pilot flies now (control thread)
+        self.plan_goal: tuple[float, float] | None = None  # the current waypoint, moved clear of obstacles
+        self._plan_tag = 0
+        self._plan_t = 0.0
+        self._plan_fail_t: float | None = None
+        self._prog_best, self._prog_t = math.inf, 0.0
         self.goal_t0 = 0.0
         self.stick = (0.0, 0.0, 0.0, 0.0)
         self.stick_t = 0.0
@@ -356,6 +368,14 @@ class Operator:
         self.out = None
         self.changes = 0
         self.on_event = lambda src, text: None
+
+    def attach_planner(self, lmap, cfg: dict | None) -> None:
+        cfg = dict(cfg or {})
+        if lmap is None or not self.wp or not cfg.pop("enabled", True):
+            return
+        from route_planner import RoutePlanner
+
+        self.lmap, self.planner = lmap, RoutePlanner(cfg)
 
     def track_ready(self) -> str:
         """Why TRACK cannot start here ("" = it can)."""
@@ -416,18 +436,22 @@ class Operator:
             self.goal_t0 = time.monotonic()
             if self.trk:  # one waypoint layer: the target layer lets go of it first
                 self._calls.append(("track", False))
-            if self.wp:
+            if self.planner is not None:  # planned: the control thread asks for a path to the first waypoint
+                self._calls.append(("drop",))
+                self._calls.append(("plan_start",))
+            elif self.wp:
                 self._goal_gen += 1
                 self._calls.append(("goal", list(pts), self._goal_gen))
             self.mode = "PATROL" if self.mode == "GOTO" else self.mode  # a new goal while in GOTO: log it again
         x, y = pts[-1]
         what = f"goal {x:+.2f}, {y:+.2f}" if len(pts) == 1 else f"route {len(pts)} waypoints to {x:+.2f}, {y:+.2f}"
-        self.set_mode("GOTO", what + (" via the waypoint layer" if self.wp else ""))
+        how = " around obstacles" if self.planner is not None else " via the waypoint layer" if self.wp else ""
+        self.set_mode("GOTO", what + how)
         return ""
 
     def route_index(self) -> int:
         """Current waypoint of the console's route (the waypoint layer's own index when it flies it)."""
-        if self.wp and self.wp_goal:
+        if self.wp and self.wp_goal and self.planner is None:
             return min(int(getattr(self.pilot, "wp_idx", 0)), max(0, len(self.route) - 1))
         return self.route_i
 
@@ -456,7 +480,9 @@ class Operator:
         rs = getattr(self.pilot, "rtl_state", "OFF")
         if inc and self.rtl and rs != "OFF" and self.mode != "RTL":  # the pilot started it (battery): follow
             self.set_mode("RTL", f"pilot: {getattr(self.pilot, 'rtl_why', '')}")
-        if self.mode == "GOTO":
+        if self.mode == "GOTO" and self.planner is not None:
+            self._plan_progress()
+        elif self.mode == "GOTO":
             self._goto_progress()
         self.gate_waypoints()
 
@@ -479,6 +505,10 @@ class Operator:
                         p.rtl_stop()
                     elif p.rtl_state == "OFF" and not p.rtl_start(c[2]):
                         self.set_mode("HOLD", "return home is off (rtl.enabled)")
+                elif c[0] == "plan_start":
+                    self.route_i, self.plan_path, self.plan_goal = 0, [], None
+                    self._plan_t, self._plan_fail_t = 0.0, None
+                    self._prog_best, self._prog_t = math.inf, time.monotonic()
                 elif c[0] == "track":
                     if p.target.active:
                         p.track_stop()  # also wp_on = False: only when it runs, so a goal queued before stays
@@ -505,6 +535,76 @@ class Operator:
             self.set_mode("HOLD", f"goal {what} (EKF distance {d:.2f} m)")
         elif self.inc and time.monotonic() - t0 > float(self.cfg.get("goto_timeout_s", 90.0)) * max(1, len(self.route)):
             self.set_mode("HOLD", "goto timeout")
+
+    def _plan_progress(self) -> None:
+        """Planned GOTO, control thread: take finished plans, re-plan every replan_s, advance through the route."""
+        tel = getattr(self.drone, "_tel", None)
+        if not self.route or tel is None or tel.x_m is None or tel.y_m is None:
+            return
+        now = time.monotonic()
+        pos = (tel.x_m, tel.y_m)
+        target = self.plan_goal or self.route[self.route_i]
+        d = math.hypot(target[0] - pos[0], target[1] - pos[1])
+        if d < float(getattr(self.pilot, "wp_radius", 0.35)):
+            self.on_event("operator", f"waypoint {self.route_i + 1} of {len(self.route)} reached ({d:.2f} m)")
+            return self._next_waypoint(now)
+        if d < self._prog_best - float(self.cfg.get("goto_progress_m", 0.25)):
+            self._prog_best, self._prog_t = d, now
+        elif now - self._prog_t > float(self.cfg.get("plan_stuck_s", 30.0)):
+            self.on_event("operator", f"waypoint {self.route_i + 1} of {len(self.route)} skipped (no progress, {d:.2f} m)")
+            return self._next_waypoint(now)
+        if self.plan_path and getattr(self.pilot, "wp_done_t", None) is not None:
+            self.plan_path = []  # the pilot finished (or skipped) the path short of the waypoint: take the next plan as new
+        res = self.planner.result()
+        if res is not None and res.get("tag") == self._plan_tag:
+            self._take_plan(res, now)
+        if now - self._plan_t >= float(self.planner.cfg["replan_s"]) and self.inc:
+            self._plan_t = now
+            self._plan_tag += 1
+            alt = tel.alt_m if tel.alt_m is not None else 0.9
+            self.planner.request(self.lmap, alt, self.fence_m, pos, self.route[self.route_i], self._plan_tag)
+
+    def _take_plan(self, res: dict, now: float) -> None:
+        if not res["ok"]:
+            if self._plan_fail_t is None:
+                self._plan_fail_t = now
+                self.on_event("operator", f"waypoint {self.route_i + 1}: no path yet ({res['why']}), flying straight")
+                if not self.plan_path:  # nothing planned yet: fly straight at it, the shield and the brain still act
+                    self._set_path([self.route[self.route_i]])
+            return
+        if self._plan_fail_t is not None or not self.plan_path:
+            if res["moved"] > 0.05:
+                self.on_event("operator", f"waypoint {self.route_i + 1} moved {res['moved']:.2f} m clear of an obstacle")
+            if not res["strict"]:
+                self.on_event("operator", f"waypoint {self.route_i + 1}: path crosses low boxes (no other way)")
+        self._plan_fail_t = None
+        self.plan_goal = tuple(res["goal"])
+        new = [tuple(p) for p in res["path"]]
+        old = self.plan_path
+        # hand the pilot a new path only when it really changed: set_waypoints restarts the layer (and its post-escape
+        # pause), so re-sending the same path every second would let it steer back during an escape
+        if len(new) != len(old) or any(math.hypot(a[0] - b[0], a[1] - b[1]) > 0.2 for a, b in zip(new, old)):
+            if old and len(new) > 1:
+                self.on_event("operator", f"waypoint {self.route_i + 1}: new path, {len(new) - 1} detour point(s), {res.get('length', 0):.1f} m")
+            self._set_path(new)
+
+    def _set_path(self, path) -> None:
+        self.plan_path = list(path)
+        self.pilot.set_waypoints(self.plan_path)
+        self.wp_goal = True
+
+    def _next_waypoint(self, now: float) -> None:
+        self.route_i += 1
+        self.plan_path, self.plan_goal, self._plan_fail_t = [], None, None
+        self._prog_best, self._prog_t, self._plan_t = math.inf, now, 0.0
+        self._plan_tag += 1  # a plan still in flight is for the old waypoint
+        if self.route_i >= len(self.route):
+            self.route_i = len(self.route) - 1
+            self.set_mode("HOLD", "route done" if len(self.route) > 1 else "goal reached")
+        else:
+            with self.lock:
+                self.goal = self.route[self.route_i]
+            self.pilot.wp_on = False  # hold course until the next plan arrives (a tick or two)
 
     def effective(self) -> str:
         return self.mode if self.inc else self.handover
@@ -534,8 +634,10 @@ class Operator:
 
     def _goto(self, raw):
         with self.lock:
-            if self.wp and self.wp_goal and self.route:  # follow the waypoint layer's index for the display
+            if self.wp and self.wp_goal and self.route and self.planner is None:  # the waypoint layer's index
                 self.goal = self.route[self.route_index()]
+            elif self.planner is not None and self.route:
+                self.goal = self.plan_goal or self.route[self.route_i]
             goal = self.goal
         tel = getattr(self.drone, "_tel", None)
         if goal is None or tel is None or tel.x_m is None or tel.y_m is None or tel.yaw_deg is None:
@@ -546,6 +648,8 @@ class Operator:
         err = math.atan2(dy, dx) - math.radians(tel.yaw_deg)
         err = math.atan2(math.sin(err), math.cos(err))
         self.note = f"goto {dist:.2f} m, heading error {math.degrees(err):+.0f} deg"
+        if self.planner is not None and not self.plan_path:
+            return FlightCommand.hover("console: planning")  # until the first path for this waypoint arrives
         if self.wp:  # the pilot's waypoint layer steers the brain's own command toward the goal
             return raw
         # fallback (runtime without EcpsPilot.set_waypoints): heading controller outside the brain's escapes
@@ -662,6 +766,7 @@ class ConsoleLink:
         }
         self.shield = getattr(getattr(pilot, "struct", None), "shield", None)
         self.map = getattr(self.shield, "map", None)
+        self.ops.attach_planner(self.map, self.cfg.get("planner"))
 
     # ------------------------------------------------------------------ wiring
     def install(self) -> "ConsoleLink":
@@ -1152,6 +1257,7 @@ class ConsoleLink:
             "goal": list(self.ops.goal) if self.ops.goal else None,
             "route": [[_r(x), _r(y)] for x, y in self.ops.route] if self.ops.effective() == "GOTO" and len(self.ops.route) > 1 else None,
             "ri": self.ops.route_index() if self.ops.effective() == "GOTO" else None,
+            "plan": [[_r(x), _r(y)] for x, y in self.ops.plan_path] if self.ops.effective() == "GOTO" and self.ops.planner else None,
             "gnote": self.ops.note if self.ops.effective() == "GOTO" else "",
             "ill": self.gestures.name if self.pilot.gestures is self.gestures else "none",
             "illm": self.pilot.illusion.mode if self.pilot.gestures is not None else "",

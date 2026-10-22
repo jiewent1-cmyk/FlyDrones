@@ -226,7 +226,8 @@ function tickText() {
   const controlled = T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK" && op !== "RTL";
   const title = controlled ? modeName(op) : b.name;
   const detail = controlled ? L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")
-    : T.ctl ? (op === "GOTO" ? (T.route ? L(`航线：航点 ${(T.ri || 0) + 1} / ${T.route.length}（航点层：大脑 + 目标偏置）`, `route: waypoint ${(T.ri || 0) + 1} of ${T.route.length} (brain + waypoint bias)`)
+    : T.ctl ? (op === "GOTO" ? (T.route ? L(`航线：航点 ${(T.ri || 0) + 1} / ${T.route.length}${T.plan ? "（绕障规划 + 大脑避障）" : "（航点层：大脑 + 目标偏置）"}`, `route: waypoint ${(T.ri || 0) + 1} of ${T.route.length}${T.plan ? " (planned around obstacles)" : " (brain + waypoint bias)"}`)
+      : T.plan ? L("前往目标（绕障规划 + 大脑避障）", "to the goal: planned around obstacles")
       : L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias"))
     : op === "TRACK" ? L("跟踪目标（目标层：搜索、接近、面向标记，大脑的逃逸仍优先）", "tracking: search, approach, face the marker (the brain's escapes still win)")
     : op === "RTL" ? L("返航（航点层飞回起飞点，到达后悬停再降落）", "returning: waypoint layer to the take-off point, hover, then land")
@@ -494,8 +495,15 @@ const ZH = [
   [/^waypoints: done -> hover$/, () => "航点完成 → 悬停"],
   [/^goal (reached|skipped|done) \(EKF distance (.*) m\)$/, (m) => `目标${{ reached: "已到达", skipped: "未能到达（已跳过）", done: "完成" }[m[1]]}（EKF 距离 ${m[2]} m）`],
   [/^goal ([-+\d.]+), ([-+\d.]+)( via the waypoint layer)?$/, (m) => `目标 N ${m[1]} · E ${m[2]}${m[3] ? "（航点层）" : ""}`],
-  [/^route (\d+) waypoints to ([-+\d.]+), ([-+\d.]+)( via the waypoint layer)?$/, (m) => `航线 ${m[1]} 个航点，终点 N ${m[2]} · E ${m[3]}${m[4] ? "（航点层）" : ""}`],
-  [/^waypoint (\d+) of (\d+) reached$/, (m) => `到达航点 ${m[1]} / ${m[2]}`],
+  [/^route (\d+) waypoints to ([-+\d.]+), ([-+\d.]+)( via the waypoint layer| around obstacles)?$/, (m) => `航线 ${m[1]} 个航点，终点 N ${m[2]} · E ${m[3]}${m[4] ? (m[4].includes("around") ? "（绕障规划）" : "（航点层）") : ""}`],
+  [/^goal ([-+\d.]+), ([-+\d.]+) around obstacles$/, (m) => `目标 N ${m[1]} · E ${m[2]}（绕障规划）`],
+  [/^waypoint (\d+) of (\d+) reached(?: \(([\d.]+) m\))?$/, (m) => `到达航点 ${m[1]} / ${m[2]}${m[3] ? `（${m[3]} m）` : ""}`],
+  [/^waypoint (\d+) of (\d+) skipped \(no progress, ([\d.]+) m\)$/, (m) => `航点 ${m[1]} / ${m[2]} 已跳过（长时间没有进展，还差 ${m[3]} m）`],
+  [/^waypoint (\d+) moved ([\d.]+) m clear of an obstacle$/, (m) => `航点 ${m[1]} 离障碍太近，已挪开 ${m[2]} m`],
+  [/^waypoint (\d+): no path yet \((.*)\), flying straight$/, (m) => `航点 ${m[1]}：暂时规划不出路径（${m[2]}），先直飞`],
+  [/^waypoint (\d+): path crosses low boxes \(no other way\)$/, (m) => `航点 ${m[1]}：没有别的路，路径要从低矮箱子上方经过`],
+  [/^waypoint (\d+): new path, (\d+) detour point\(s\), ([\d.]+) m$/, (m) => `航点 ${m[1]}：发现障碍，重新规划（${m[2]} 个绕行点，${m[3]} m）`],
+  [/^route done$/, () => "航线完成"], [/^goal reached$/, () => "已到达目标点"], [/^console: planning$/, () => "控制台：规划路径中"],
   [/^goto timeout$/, () => "前往超时"], [/^arrived \((.*)\)$/, (m) => `到达（${m[1]}）`],
   [/^illusion (\w+)$/, (m) => `错觉刺激：${{ palm: "手掌（爬升）", drop: "放下（下降）", left: "左转", right: "右转", rush: "逼近", fist: "静止" }[m[1]] || m[1]}`],
   [/^fence: turning back$/, () => "围栏：掉头"],
