@@ -20,6 +20,7 @@ BenchDrone  no flight controller: fixed hover telemetry, commands recorded only 
 from __future__ import annotations
 
 import math
+import os
 import threading
 import time
 
@@ -28,6 +29,11 @@ import numpy as np
 from flydrones.motor.command import FlightCommand
 from flydrones.safety import Telemetry
 from mavlink_twin import Ecps295MavlinkDrone
+
+
+# FC heartbeat older than this: not in control. 2 s on the drone; Gazebo PIL runs below real time and SITL beats once
+# per SIMULATED second, so at RTF ~0.6 the gap passed 2 s and control flickered (verification 10-22): PIL tests raise it
+FC_HB_TIMEOUT_S = float(os.environ.get("ECPS_FC_HB_TIMEOUT_S", "2.0"))
 
 
 class _Sensors:
@@ -358,7 +364,7 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         Hand-over latch (SITL test 2026-10-15): control is only TAKEN while the FC reports >= handover_alt_m (the pilot
         has taken off); once taken it is kept while GUIDED + armed. Arming in GUIDED on the ground therefore never hands
         the motors to the brain (in SITL the companion's setpoints had overridden the GCS take-off)."""
-        ok = (self.allow_cmd and not self.mute and self.fc_hb_age_s() < 2.0 and self.fc_mode() == self.GUIDED
+        ok = (self.allow_cmd and not self.mute and self.fc_hb_age_s() < FC_HB_TIMEOUT_S and self.fc_mode() == self.GUIDED
               and self.armed())
         if not ok:
             if self._latched:
