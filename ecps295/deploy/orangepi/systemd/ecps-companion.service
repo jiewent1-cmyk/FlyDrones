@@ -8,6 +8,10 @@ Type=simple
 # shadow: heartbeat + route-B height, NO velocity commands. Change to --mode guided only after the ground tests
 # in the deployment report (FLIGHT_TEST_PLAN R0/R1). Override with: systemctl edit ecps-companion
 Environment=ECPS_MODE=shadow
+# hover hold (2026-10-22, mavlink_twin.py; Gazebo patrol + PIL results in ecps295/scripts/hover): a command without
+# horizontal motion becomes a LOCAL_NED position target at the point where the drone stopped (brake to < 0.1 m/s first),
+# turns in place capped at 30 deg/s. ECPS_HOLD=vel = the old velocity-0 hover.
+Environment=ECPS_HOLD=pos ECPS_HOLD_YAW_DPS=30 ECPS_HOLD_BRAKE_MPS=0.1
 # A76 cluster (policy6 = cpu6-7) at full clock while the companion runs: tick p50 32 -> 22 ms (report P1 vs P5)
 ExecStartPre=/bin/sh -c 'echo performance > /sys/devices/system/cpu/cpufreq/policy6/scaling_governor'
 ExecStopPost=/bin/sh -c 'echo schedutil > /sys/devices/system/cpu/cpufreq/policy6/scaling_governor'
