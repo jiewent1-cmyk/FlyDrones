@@ -51,6 +51,10 @@ for run in sorted(root.glob(prefix + "*")):
         pairs.setdefault(key, {})[mode] = r
 both = {k: v for k, v in pairs.items() if "on" in v and "off" in v}
 print(f"{len(both)} pairs (of {len(pairs)} keys)")
+if not both:
+    for k, v in sorted(pairs.items()):
+        print(f"  {k:18s}", {m: {x: round(y, 3) for x, y in r.items()} for m, r in v.items()})
+    sys.exit()
 for m in ("max", "rms", "end", "ekf_err"):
     off = [v["off"][m] for v in both.values()]
     on = [v["on"][m] for v in both.values()]
