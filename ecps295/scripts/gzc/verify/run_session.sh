@@ -1,7 +1,7 @@
 #!/bin/bash
 # One planner-verification session on ROG (2026-10-22): Gazebo + SITL (gz_g4_mine.sh INST n, run_g4 --mode console =
 # scripted pilot), the companion from ~/sim/gzc (same code as the Pi test copy, run locally: PIL over 127.0.0.1) with
-# the console link, and verify_client.py playing the plan. Truth: ~/sim/runs/<tag>/run.csv; client log: client.json.
+# the console link, and verify_client.py playing the plan. FC heartbeat timeout 4 s: SITL beats per simulated second. Truth: ~/sim/runs/<tag>/run.csv; client log: client.json.
 #   run_session.sh <world> <plan|noplan> <inst 5-7> <plan.json> <tag>
 W=$1; COND=$2; I=$3; PLAN=$4; TAG=$5
 G=~/sim/gzc; R=~/sim/rl_h2; V=$R/ecps295/sitl/variants; M=$R/ecps295/minifly
@@ -15,7 +15,7 @@ for i in $(seq 1 20); do ss -lun | grep -qE ":($PILP|$SITLP|$ECLP) " || break; s
 ss -lun | grep -qE ":($PILP|$SITLP|$ECLP) " && { echo "$TAG ports $PILP/$SITLP/$ECLP still busy, skipped"; exit 1; }
 source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
 # companion (restarted while it exits 1 = no FC heartbeat yet; a session end exits 0)
-( cd $G; while true; do ECPS_ROOT=$G ECPS_HOLD=pos ECPS_HOLD_YAW_DPS=30 python -u companion/ecps_companion.py --mode guided \
+( cd $G; while true; do ECPS_FC_HB_TIMEOUT_S=4 ECPS_ROOT=$G ECPS_HOLD=pos ECPS_HOLD_YAW_DPS=30 python -u companion/ecps_companion.py --mode guided \
     --pil $PILP --url udpin:127.0.0.1:$SITLP --console $ECLP --hw config/hw_$COND.yaml --set safety.max_flight_s=3600 \
     --set safety.geofence_radius_m=$FENCE --seconds 0 --tag $TAG --log-dir $G/logs/$TAG; rc=$?; [ $rc -eq 1 ] || break; sleep 2; done ) \
   > $G/logs/$TAG/companion.out 2>&1 &

@@ -119,7 +119,14 @@ def fly_route(pts, rec: dict, step: dict) -> None:
                 t_start, limit = time.time(), 45.0 * len(step["after_pts"]) + 30.0
                 pump(5.0, lambda: tick("op") == "GOTO")
             continue
-        if tick("op") != "GOTO" or tick("ctl") != 1:
+        if tick("ctl") != 1:  # control dropped (10-22: a sim heartbeat gap): the hand-over resets the console mode
+            rec["ctl_drops"] = rec.get("ctl_drops", 0) + 1
+            pump(15.0, lambda: tick("ctl") == 1)
+            if tick("op") != "GOTO":
+                rec["interrupted"] = True
+                break
+            continue
+        if tick("op") != "GOTO":
             break
     rec["timeout"] = tick("op") == "GOTO"
 
