@@ -78,3 +78,11 @@ marker:                       # ArUco target tracking (ecps295/ecps_target.py, 2
   pitch_deg: 12.0             # camera nose-down mount
   hz: 10                      # ~26 ms per 640x480 frame on one A55 core (2026-10-18)
   cpus: "0-5"                 # A55; the brain keeps the A76 cores
+
+landmark:                     # 2026-10-22 position fix from fixed ArUco markers (ecps295/ecps_landmark.py); needs marker.enabled
+  enabled: false              # BENCH: print the markers at marker.size_m, fix them to walls / boxes, then turn on
+  ids: all                    # or a list; the tracking target (marker.marker_id) only if it stays put
+  positions: {}               # surveyed {id: [north, east]} from the take-off point; others are learnt when first seen
+  auto_register: true
+  max_range_m: 3.0            # fixes farther than this, or more than max_bearing_deg off the nose, are not used
+  max_bearing_deg: 30

@@ -13,7 +13,7 @@ const eyes = new EyesView($("eyes"), $("camInfo"));
 const flight = new FlightView($("adi"), $("tiles"), $("health"), $("chAlt"), $("chTick"));
 const map = new MapView($("map3d"), $("mapwrap"), $("mapLegend"), onPick);
 
-const MODES = { PATROL: ["大脑巡逻", "Brain patrol"], HOLD: ["悬停", "Hold"], GOTO: ["前往目标", "Go to goal"], MANUAL: ["手动", "Manual"], TRACK: ["跟踪目标", "Track target"], LAND: ["降落", "Land"] };
+const MODES = { PATROL: ["大脑巡逻", "Brain patrol"], HOLD: ["悬停", "Hold"], GOTO: ["前往目标", "Go to goal"], MANUAL: ["手动", "Manual"], TRACK: ["跟踪目标", "Track target"], RTL: ["返航降落", "Return & land"], LAND: ["降落", "Land"] };
 // target tracking (2026-10-18): the pilot's target layer states, and how the TICK reports them (trk, mk)
 const TRK = { SEARCH: ["搜索中", "Searching"], APPROACH: ["接近中", "Approaching"], ARRIVED: ["已到达", "Arrived"], LOST: ["丢失", "Lost"], FAILED: ["没找到", "Not found"] };
 const escapeHTML = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
@@ -223,11 +223,12 @@ function onTick() {
 function tickText() {
   const b = behaviour(T);
   const op = T.op;
-  const controlled = T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK";
+  const controlled = T.ctl && op !== "PATROL" && op !== "GOTO" && op !== "TRACK" && op !== "RTL";
   const title = controlled ? modeName(op) : b.name;
   const detail = controlled ? L("控制台指令替换了大脑的输出（大脑仍在运行）", "the console overrides the brain (still running)")
     : T.ctl ? (op === "GOTO" ? L("前往目标（航点层：大脑 + 目标偏置）", "to the goal: brain + waypoint bias")
     : op === "TRACK" ? L("跟踪目标（目标层：搜索、接近、面向标记，大脑的逃逸仍优先）", "tracking: search, approach, face the marker (the brain's escapes still win)")
+    : op === "RTL" ? L("返航（航点层飞回起飞点，到达后悬停再降落）", "returning: waypoint layer to the take-off point, hover, then land")
     : L("大脑驾驶", "brain flying")) : L("未接管：仅显示大脑会怎么做", "not in control: what the brain would do");
   const name = document.createElement("span"); name.textContent = title;
   const small = document.createElement("small"); small.textContent = detail;
@@ -236,7 +237,7 @@ function tickText() {
   $("tclock").textContent = `t ${T.t != null ? T.t.toFixed(1) : "—"} s`;
 }
 
-const SRC = { target: ["跟踪", "Tracking"], watchdog: ["看门狗", "Watchdog"], guard: ["传感器守护", "Sensor guard"], governor: ["安全调速", "Governor"], brain: ["大脑", "Brain"], operator: ["指引", "Guidance"], console: ["链路", "Link"] };
+const SRC = { target: ["跟踪", "Tracking"], rtl: ["返航", "Return"], watchdog: ["看门狗", "Watchdog"], guard: ["传感器守护", "Sensor guard"], governor: ["安全调速", "Governor"], brain: ["大脑", "Brain"], operator: ["指引", "Guidance"], console: ["链路", "Link"] };
 function onStatus() {
   if (ST.limits) map.setLimits(ST.limits);
   map.setTrack(!!ST.marker);
@@ -261,6 +262,7 @@ $("bEland").onclick = () => link.send({ c: "estop", level: 1 });
 $("bHome").onclick = () => cmd("goto", { x: 0, y: 0 });
 $("bManual").onclick = () => cmd("manual", { on: !(T && T.opm === "MANUAL") });
 $("bTrack").onclick = () => cmd("track");
+$("bRtl").onclick = () => cmd("rtl");
 let picking = false;
 $("bPick").onclick = () => setPicking(!picking);
 function setPicking(on) {
@@ -339,6 +341,7 @@ window.addEventListener("keydown", (e) => {
   else if (k === "b") cmd("goto", { x: 0, y: 0 });
   else if (k === "m") $("bManual").onclick();
   else if (k === "t") cmd("track");
+  else if (k === "u") cmd("rtl");
   else if (k === "l") link.send({ c: "land" });
 });
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
@@ -370,6 +373,8 @@ function dockState() {
   document.querySelectorAll("[data-op]").forEach((b) => b.classList.toggle("on", ctl && opm === b.dataset.op.toUpperCase()));
   $("bManual").classList.toggle("on", ctl && opm === "MANUAL");
   $("bTrack").classList.toggle("on", ctl && opm === "TRACK");
+  $("bRtl").classList.toggle("on", ctl && opm === "RTL");
+  $("bRtl").disabled = !on || !ctl || !pose;
   $("bPick").classList.toggle("on", picking || (ctl && opm === "GOTO"));
   document.querySelectorAll("[data-ho]").forEach((b) => b.classList.toggle("on", t && (t.ho || "").toLowerCase() === b.dataset.ho));
   const ho = t ? modeName((t.ho || "").toUpperCase(), t.ho) : "";
@@ -473,6 +478,16 @@ const ZH = [
   [/^target: holding$/, () => "面向目标并保持距离"], [/^target: escape ignored$/, () => "忽略逃逸：前方逼近的是目标标记"],
   [/^target: (\w+)(?: \((.*)\))?$/, (m) => `目标跟踪：${{ search: "搜索", approach: "接近", arrived: "已到达", lost: "丢失", failed: "没找到", off: "停止" }[m[1]] || m[1]}${m[2] ? `（${trkWhy(m[2])}）` : ""}`],
   [/^tracking did not start$/, () => "跟踪没能启动"],
+  [/^rtl: returning home(?: \((.*)\))?$/, (m) => `返航：飞回起飞点${m[1] ? `（${rtlWhy(m[1])}）` : ""}`],
+  [/^rtl: home \(([\d.]+) m\), settling$/, (m) => `返航：已到起飞点（${m[1]} m），悬停稳定`],
+  [/^rtl: landing \(([\d.]+) m from home\)$/, (m) => `返航：降落（离起飞点 ${m[1]} m）`],
+  [/^rtl: home not reached \(([\d.]+) m\) -> landing here$/, (m) => `返航：回不到起飞点（还差 ${m[1]} m）→ 就地降落`],
+  [/^rtl: timeout (\d+) s \(([\d.]+) m from home\) -> landing here$/, (m) => `返航超时 ${m[1]} s（离起飞点 ${m[2]} m）→ 就地降落`],
+  [/^console lost (\d+) s$/, (m) => `控制台断联 ${m[1]} s`], [/^pilot: (.+)$/, (m) => `机载触发：${rtlWhy(m[1])}`],
+  [/^rtl: cancelled$/, () => "返航已取消"], [/^rtl: (settle|land)$/, (m) => m[1] === "settle" ? "返航：悬停稳定" : "返航：降落中"],
+  [/^return home is off \(rtl\.enabled\)$/, () => "机载程序未启用返航（rtl.enabled）"],
+  [/^no return-home layer in this runtime/, () => "机载程序没有返航层"],
+  [/^companion not in control \(the pilot hands over in GUIDED first\)$/, () => "机载程序未接管：飞手先拨到 GUIDED"],
   [/^brain stalled (.*) -> hover$/, (m) => `大脑停顿 ${m[1]} → 悬停`],
   [/^console: (\w+)/, (m) => `控制台：${{ hold: "悬停", land: "降落", manual: "手动", goto: "前往", arrived: "到达" }[m[1]] || m[1]}`],
   [/^ceiling$/, () => "高度上限"], [/^floor$/, () => "高度下限"], [/^geofence$/, () => "围栏"],
@@ -486,6 +501,13 @@ function trkWhy(w) {
   if ((m = w.match(/^nothing in (\d+) s -> hover$/))) return `${m[1]} s 内都没看到 → 悬停`;
   return { "marker moved": "标记移动了", "flying on to the last goal": "飞向最后的目标点", "last goal reached": "已到最后的目标点",
     "not seen at the last fix": "最后位置没看到标记", "out of view": "标记离开视野" }[w] || w;
+}
+function rtlWhy(w) {
+  let m;
+  if ((m = w.match(/^battery (\d+) %$/))) return `电量 ${m[1]} %`;
+  if ((m = w.match(/^console lost (\d+) s$/))) return `控制台断联 ${m[1]} s`;
+  if ((m = w.match(/^pilot: (.*)$/))) return `机载触发：${rtlWhy(m[1])}`;
+  return w;
 }
 function zh(text) {
   if (lang === "en") return text;

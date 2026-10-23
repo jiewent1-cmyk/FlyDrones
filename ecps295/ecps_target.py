@@ -121,9 +121,12 @@ class MarkerDetector:
 class MarkerThread:
     """Detector on its own thread: latest() -> (Detection or None, stamp of the frame it came from)."""
 
-    def __init__(self, grab, detector: MarkerDetector, hz: float = 10.0, cpus: str = ""):
+    def __init__(self, grab, detector: MarkerDetector, hz: float = 10.0, cpus: str = "", target_id: int | None = None):
         self.grab, self.detector, self.hz, self.cpus = grab, detector, float(hz), cpus
+        # 2026-10-22 landmarks: the detector may report every id; latest() keeps to the tracking target's id
+        self.target_id = None if target_id is None else int(target_id)
         self.det: Detection | None = None
+        self.dets: list[Detection] = []  # every marker of the last processed frame (latest_all)
         self.stamp = 0.0  # frame stamp of the last processed frame (with or without a detection)
         self.frames = 0
         self.hits = 0
@@ -136,6 +139,9 @@ class MarkerThread:
 
     def latest(self):
         return self.det, self.stamp
+
+    def latest_all(self):
+        return self.dets, self.stamp
 
     def start(self) -> "MarkerThread":
         self._th = threading.Thread(target=self._run, name="marker", daemon=True)
@@ -181,9 +187,11 @@ class MarkerThread:
             if len(self.det_ms) < 50000:
                 self.det_ms.append((time.perf_counter() - c0) * 1000)
             self.frames += 1
-            if dets:
+            self.dets = dets
+            mine = [d for d in dets if self.target_id is None or d.marker_id == self.target_id]
+            if mine:
                 self.hits += 1
-                self.det = dets[0]
+                self.det = mine[0]
             self.stamp = stamp
 
 

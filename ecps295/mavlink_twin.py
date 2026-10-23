@@ -546,13 +546,17 @@ class Ecps295MavlinkDrone(MavlinkDrone):
             if math.hypot(lp.vx, lp.vy) >= self.hold_brake and now - self._brake_t0 < 1.5:
                 return False  # still braking: velocity 0
         vz = -cmd.throttle * self.vz_max
+        # 2026-10-22 landmarks (ecps_landmark.py): the anchor lives in the world frame; the EKF target moves with the
+        # drift the markers measure (pos_offset = EKF - world, set by EcpsPilot every tick; (0, 0) without landmarks)
+        off = getattr(self, "pos_offset", (0.0, 0.0))
         if self.hold_anchor is None:
-            self.hold_anchor = [lp.x, lp.y, lp.z]
+            self.hold_anchor = [lp.x - off[0], lp.y - off[1], lp.z]
         else:  # a climb / descent while hovering moves the height target with it
             self.hold_anchor[2] += vz * min(0.25, now - self._hold_t)
         self._hold_t = now
         yr = max(-self.hold_yr_max, min(self.hold_yr_max, cmd.yaw * self.yr_max))
         n, e, z = self.hold_anchor
+        n, e = n + off[0], e + off[1]
         # LOCAL_NED position + velocity (z feed-forward) + yaw rate; acceleration and yaw ignored
         self.m.mav.set_position_target_local_ned_send(
             0, self.m.target_system, self.m.target_component, self.mavutil.mavlink.MAV_FRAME_LOCAL_NED,

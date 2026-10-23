@@ -172,6 +172,13 @@ vision:
     fov_deg: 7.5
     rate_hz: 15.0
 ecps_pilot:
+  rtl:  # 2026-10-22 return home and land (ecps_pilot.py rtl): console RTL, console lost, battery below battery_pct
+    enabled: true
+    radius_m: 0.25
+    settle_s: 2.0
+    timeout_s: 90.0
+    land_far_m: 0.6
+    battery_pct: 30  # the governor's min_battery_pct (20) still lands at once
   height_source:
     enabled: true
     stale_s: 0.5

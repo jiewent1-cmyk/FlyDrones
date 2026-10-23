@@ -25,7 +25,7 @@ Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Authenticate
   console -> Pi
     HELLO 64  JSON {name, cam: brain|color|off, cam_hz <= 20, color_w, color_q, lvl: 0-3}; 5 Hz, also the heartbeat
     PING 65   8 bytes, echoed in a PONG
-    CMD 66    JSON {id, op, ...}: hold | patrol | goto {x, y} | track | manual {on} | stick {f, l, y, z} (no ACK) |
+    CMD 66    JSON {id, op, ...}: hold | patrol | goto {x, y} | track | rtl | manual {on} | stick {f, l, y, z} (no ACK) |
               land | gesture {name} | handover {mode: hold | patrol | track} | estop_reset {force}
     ESTOP 67  JSON {id, level: 1 land | 2 kill}; the console repeats it until the FC reports LAND / disarmed
     TOPO_REQ 68
@@ -51,12 +51,18 @@ governor, so everything downstream still applies: governor limits, ceiling, floo
           waypoint layer to standoff_m in front of the ArUco marker, hover facing it. Needs the runtime's target
           layer and a marker detector (hw config marker.enabled). The command again starts a fresh search; any
           other guidance command (GOTO included: one waypoint layer) stops the tracker
+  RTL     (2026-10-22) return to the take-off point and land (EcpsPilot.rtl_start): the brain's command, which the
+          pilot's rtl and waypoint layers steer home; there it hovers settle_s and requests LAND. Started from the
+          console, or by the pilot itself (battery below rtl.battery_pct: the console follows into RTL). Any other
+          guidance command cancels the return
   LAND    hover command (the FC is in LAND)
 At every hand-over (the pilot switches to GUIDED and the companion latches control) the mode is reset to the
 console's hand-over choice (default PATROL, i.e. as without a console; the console UI preselects HOLD; TRACK starts a
 fresh search).
-Console link lost (no HELLO for link_timeout_s): GOTO / MANUAL / TRACK -> HOLD; still lost after lost_land_s while the
-companion is in control and holding -> LAND (watchdog path). PATROL continues, as without a console.
+Console link lost (no HELLO for link_timeout_s): GOTO / MANUAL / TRACK -> HOLD; still lost after lost_rtl_s while the
+companion is in control and holding -> RTL (2026-10-22: home, then LAND); without the pilot's rtl layer, or with
+lost_rtl_s 0, still lost and holding after lost_land_s -> LAND where it is (watchdog path). PATROL continues, as
+without a console.
 The pilot's waypoint and target layers are only changed on the control loop's thread, between two ticks (the target
 layer runs inside pilot.tick): commands from the receive thread are queued and Operator.on_control runs them.
 Emergency stop: ESTOP land latches; the companion releases control at once (in_control gate) and sends LAND to the FC
@@ -125,13 +131,14 @@ LEVELS = {
     0: {"tick": 4, "brain": 0, "tof_hz": 0.0, "map_hz": 0.1, "status_hz": 0.5, "cam_max": 0.0},
 }
 CAM_EARLY_S = 0.025  # half a control tick: a camera frame due this much later still goes out on this tick (see _tx)
-MODES = ("PATROL", "HOLD", "GOTO", "MANUAL", "TRACK", "LAND")
+MODES = ("PATROL", "HOLD", "GOTO", "MANUAL", "TRACK", "RTL", "LAND")
 ESTOP_NAMES = {0: "", 1: "land", 2: "kill"}
 
 DEFAULTS = {
     "port": 0,
     "link_timeout_s": 1.5,  # no HELLO for this long: console lost
-    "lost_land_s": 20.0,  # console lost and holding this long while in control: LAND (0 = never)
+    "lost_rtl_s": 5.0,  # console lost and holding this long while in control: return home and land (0 = never)
+    "lost_land_s": 20.0,  # ... without the rtl layer (or lost_rtl_s 0): LAND where it is (0 = never)
     "stick_timeout_s": 0.5,
     "goto_speed": 0.5,  # forward command (x v_max, then the governor's max_forward)
     "goto_arrive_m": 0.25,
@@ -323,6 +330,7 @@ class Operator:
         self.drone = drone
         self.wp = hasattr(pilot, "set_waypoints")  # waypoint layer in EcpsPilot
         self.trk = hasattr(pilot, "track_start") and getattr(pilot, "target", None) is not None  # target layer
+        self.rtl = hasattr(pilot, "rtl_start") and getattr(pilot, "rtl_on", False)  # return-home layer
         self.wp_goal = False  # the console replaced the pilot's mission with its goal (control thread only)
         self.lock = threading.Lock()
         self._calls: list[tuple] = []  # pilot changes waiting for the control thread
@@ -362,6 +370,8 @@ class Operator:
                 self._calls.append(("drop",))
             if self.trk and (mode == "TRACK" or prev == "TRACK"):
                 self._calls.append(("track", mode == "TRACK"))
+            if self.rtl and (mode == "RTL" or prev == "RTL"):
+                self._calls.append(("rtl", mode == "RTL", why))
         self.on_event("operator", f"mode {mode}" + (f" ({why})" if why else ""))
 
     def _drop_goal(self) -> None:
@@ -416,6 +426,9 @@ class Operator:
             self.set_mode(self.handover, "hand-over", again=self.handover == "TRACK")
         self.inc = inc
         self._run_calls()
+        rs = getattr(self.pilot, "rtl_state", "OFF")
+        if inc and self.rtl and rs != "OFF" and self.mode != "RTL":  # the pilot started it (battery): follow
+            self.set_mode("RTL", f"pilot: {getattr(self.pilot, 'rtl_why', '')}")
         if self.mode == "GOTO":
             self._goto_progress()
         self.gate_waypoints()
@@ -434,6 +447,11 @@ class Operator:
                     p.set_waypoints([c[1]])
                     self.wp_goal = True
                     self._goal_set = c[2]
+                elif c[0] == "rtl":
+                    if not c[1]:
+                        p.rtl_stop()
+                    elif p.rtl_state == "OFF" and not p.rtl_start(c[2]):
+                        self.set_mode("HOLD", "return home is off (rtl.enabled)")
                 elif c[0] == "track":
                     if p.target.active:
                         p.track_stop()  # also wp_on = False: only when it runs, so a goal queued before stays
@@ -445,9 +463,9 @@ class Operator:
                     self.set_mode("HOLD", "tracking did not start")
 
     def gate_waypoints(self) -> None:
-        """The pilot's waypoint layer only steers in PATROL (a configured mission), GOTO (the console's goal) and TRACK
-        (the target layer's goal)."""
-        if self.wp and getattr(self.pilot, "wp_active", False) and self.effective() not in ("PATROL", "GOTO", "TRACK"):
+        """The pilot's waypoint layer only steers in PATROL (a configured mission), GOTO (the console's goal), TRACK
+        (the target layer's goal) and RTL (home)."""
+        if self.wp and getattr(self.pilot, "wp_active", False) and self.effective() not in ("PATROL", "GOTO", "TRACK", "RTL"):
             self.pilot.wp_active = False
 
     def _goto_progress(self) -> None:
@@ -675,7 +693,8 @@ class ConsoleLink:
             if n > n0:
                 for e in list(lst[n0:n])[-20:]:
                     text = fmt(e)
-                    self.event("target" if name == "watchdog" and text.startswith("target") else name, text)
+                    src = "target" if text.startswith("target") else "rtl" if text.startswith("rtl") else name
+                    self.event(src if name == "watchdog" else name, text)
                 self._seen[name] = n
 
     # ------------------------------------------------------------------ main-loop hook (cheap: reference hand-off)
@@ -688,6 +707,9 @@ class ConsoleLink:
                 self.event("console", "link lost")
             if self.ops.mode in ("GOTO", "MANUAL", "TRACK"):
                 self.ops.set_mode("HOLD", "console link lost")
+            lr = float(self.cfg.get("lost_rtl_s", 5.0))
+            if lr > 0 and self.ops.rtl and inc and self.ops.mode == "HOLD" and now - self.lost_since > lr:
+                self.ops.set_mode("RTL", f"console lost {now - self.lost_since:.0f} s")
             ll = float(self.cfg.get("lost_land_s", 20.0))
             if ll > 0 and inc and self.ops.mode == "HOLD" and now - self.lost_since > ll and not self.pilot.safety.land_requested:
                 self.pilot.safety.land_requested = True
@@ -848,7 +870,7 @@ class ConsoleLink:
     def _command(self, op: str, m: dict, c: Client) -> tuple[bool, str]:
         if self.estop and op not in ("estop_reset", "handover", "gesture"):
             return False, "emergency stop latched: reset it first"
-        if op in ("hold", "patrol", "manual", "land"):
+        if op in ("hold", "patrol", "manual", "land", "rtl"):
             self.ops.stop_target()  # any other guidance ends tracking (GOTO: in set_goal)
         if op == "hold":
             self.ops.set_mode("HOLD", c.name)
@@ -864,6 +886,12 @@ class ConsoleLink:
             if why:
                 return False, why
             self.ops.set_mode("TRACK", c.name, again=True)
+        elif op == "rtl":
+            if not self.ops.rtl:
+                return False, "no return-home layer in this runtime (rtl.enabled)"
+            if not self.ops.inc:  # a hand-over resets the mode to the hand-over choice: nothing to keep for later
+                return False, "companion not in control (the pilot hands over in GUIDED first)"
+            self.ops.set_mode("RTL", c.name)
         elif op == "manual":
             if m.get("on", True):
                 self.ops.set_stick(0, 0, 0, 0)

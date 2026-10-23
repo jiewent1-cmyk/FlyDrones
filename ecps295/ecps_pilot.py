@@ -25,12 +25,21 @@ waypoints  (optional, 2026-10-17) goal bias for waypoint flight: points are loca
 target  (2026-10-18) ArUco target tracking (ecps_target.TargetTrack): off until track_start() (ground console TRACK);
         it searches on the spot, sets the waypoint goal standoff_m short of the marker and keeps moving it with the
         marker, then hovers facing it. It runs before the waypoint layer, so everything after it still applies.
+rtl     (2026-10-22, optional `rtl:`) return to the take-off point and land: rtl_start() (ground console RTL, console
+        link lost, or the battery below rtl.battery_pct) flies home through the waypoint layer (brain escapes, fence
+        turn and range shield still apply), hovers settle_s on the point, then requests LAND from the FC (the FC lands
+        and disarms). Home not reached (the waypoint layer skipped it as stuck, or timeout_s) and farther than
+        land_far_m from it: lands where it is. The governor's own min_battery_pct still lands at once.
+landmark (2026-10-22, optional `landmark:`, ecps_landmark.LandmarkFix) fixed ArUco markers measure the flow EKF's drift;
+        every layer here sees the corrected pose (EKF - offset) and the drone gets the offset (pos_offset) for its
+        hover-hold target. Off unless enabled and a marker detector is attached (landmark.source).
 
 Same sequence as flydrones.runtime.Pilot.tick otherwise (upstream left untouched).
 """
 
 from __future__ import annotations
 
+import copy
 import math
 import time
 
@@ -53,6 +62,8 @@ class EcpsPilot(Pilot):
         struct: dict | None = None,
         waypoints: dict | None = None,
         target: dict | None = None,
+        rtl: dict | None = None,
+        landmark: dict | None = None,
         **kw,
     ):
         super().__init__(*args, **kw)
@@ -96,6 +107,7 @@ class EcpsPilot(Pilot):
         self.land_after_s = land_after_s
         self._last_tick_end: float | None = None
         self._t = 0.0  # time of the last tick (track_start / track_stop called between ticks)
+        self._t_prev = 0.0
         self._last_yaw_dps = 0.0
         self._last_fwd = 0.0
         self.watchdog_events: list[tuple[float, str]] = []
@@ -103,6 +115,22 @@ class EcpsPilot(Pilot):
 
         self.target = TargetTrack(target)  # OFF until track_start(); the companion attaches its MarkerThread as source
         self.target.on_event = self._event
+        rc = rtl or {}
+        self.rtl_on = bool(rc.get("enabled", True))
+        self.rtl_home = tuple(float(v) for v in rc.get("home", (0.0, 0.0)))
+        self.rtl_radius = float(rc.get("radius_m", 0.25))
+        self.rtl_settle_s = float(rc.get("settle_s", 2.0))
+        self.rtl_timeout_s = float(rc.get("timeout_s", 90.0))
+        self.rtl_land_far = float(rc.get("land_far_m", 0.6))
+        self.rtl_battery = float(rc.get("battery_pct", 0.0))  # 0 = no battery trigger
+        self.rtl_state = "OFF"  # OFF / RETURN / SETTLE / LAND
+        self.rtl_why = ""
+        self._rtl_t = 0.0
+        self._rtl_radius0: float | None = None
+        self._rtl_batt_done = False
+        from ecps_landmark import LandmarkFix
+
+        self.landmark = LandmarkFix(landmark)  # off unless landmark.enabled; the companion attaches the MarkerThread
         sg = StructGuard(struct)  # 2026-10-13 blind-side fixes (ecps_struct.py), off unless configured
         self.struct = sg if sg.enabled else None
 
@@ -153,6 +181,72 @@ class EcpsPilot(Pilot):
     def track_stop(self, t: float | None = None) -> None:
         self.target.stop(self._t if t is None else t, self)
         self.wp_on = False
+
+    def rtl_start(self, why: str = "", t: float | None = None) -> bool:
+        """Return home and land (replaces tracking and any waypoint mission). False when the layer is off."""
+        if not self.rtl_on:
+            return False
+        t = self._t if t is None else t
+        if self.target.active:
+            self.target.stop(t, self)
+        if self._rtl_radius0 is None:
+            self._rtl_radius0 = self.wp_radius
+        self.wp_radius = self.rtl_radius
+        self.set_waypoints([self.rtl_home])
+        self.rtl_state, self.rtl_why, self._rtl_t = "RETURN", why, t
+        self._event(t, "rtl: returning home" + (f" ({why})" if why else ""))
+        return True
+
+    def rtl_stop(self, t: float | None = None) -> None:
+        """Cancel the return (the pilot or the console takes over); a LAND already requested stays requested."""
+        if self.rtl_state == "OFF":
+            return
+        if self.rtl_state in ("RETURN", "SETTLE"):
+            self.wp_on = False
+        if self._rtl_radius0 is not None:
+            self.wp_radius, self._rtl_radius0 = self._rtl_radius0, None
+        self.rtl_state = "OFF"
+        self._event(self._t if t is None else t, "rtl: cancelled")
+
+    def _rtl_land(self, t: float, what: str) -> None:
+        self.rtl_state, self._rtl_t = "LAND", t
+        self.wp_on = False
+        self.safety.land_requested = True
+        self._event(t, what)
+
+    def _rtl(self, cmd: FlightCommand, tel, t: float) -> FlightCommand:
+        if not self.wp_active:  # the pilot flies (or the console holds): the timers wait
+            self._rtl_t = t if self.rtl_state == "SETTLE" else self._rtl_t + (t - self._t_prev)
+            return cmd
+        d = math.hypot(self.rtl_home[0] - tel.x_m, self.rtl_home[1] - tel.y_m)
+        if self.rtl_state == "RETURN":
+            if self.wp_done_t is not None:
+                if d <= self.rtl_land_far:
+                    self.rtl_state, self._rtl_t = "SETTLE", t
+                    self.wp_on = False
+                    self._event(t, f"rtl: home ({d:.2f} m), settling")
+                else:
+                    self._rtl_land(t, f"rtl: home not reached ({d:.2f} m) -> landing here")
+            elif t - self._rtl_t > self.rtl_timeout_s:
+                self._rtl_land(t, f"rtl: timeout {self.rtl_timeout_s:.0f} s ({d:.2f} m from home) -> landing here")
+        elif self.rtl_state == "SETTLE" and t - self._rtl_t > self.rtl_settle_s:
+            self._rtl_land(t, f"rtl: landing ({d:.2f} m from home)")
+        if self.rtl_state in ("SETTLE", "LAND") and not cmd.escape:  # hover on the point (position hold in the FC link)
+            return FlightCommand(throttle=0.0, yaw=0.0, forward=0.0, note=f"rtl: {self.rtl_state.lower()}")
+        return cmd
+
+    def _rtl_watch(self, tel, t: float) -> None:
+        """Per tick: a landed / disarmed drone resets the layer; the battery below rtl.battery_pct starts the return."""
+        if getattr(tel, "flying", None) is False and self.rtl_state in ("OFF", "LAND"):  # landed / disarmed: the next flight starts clean
+            if self.rtl_state == "LAND":
+                self.rtl_state = "OFF"
+                if self._rtl_radius0 is not None:
+                    self.wp_radius, self._rtl_radius0 = self._rtl_radius0, None
+            self._rtl_batt_done = False
+        if (self.rtl_on and self.rtl_battery > 0 and not self._rtl_batt_done and getattr(tel, "battery_pct", None) is not None
+                and tel.battery_pct < self.rtl_battery and getattr(tel, "flying", True) and self.rtl_state == "OFF"):
+            self._rtl_batt_done = True  # once per flight: the operator / pilot may cancel it
+            self.rtl_start(f"battery {tel.battery_pct:.0f} %", t)
 
     def _waypoint(self, cmd: FlightCommand, tel, t: float) -> FlightCommand:
         if not self.wp_active:
@@ -210,6 +304,13 @@ class EcpsPilot(Pilot):
             g = self.gestures.read(t, cam)
             vision = self.illusion.apply(vision, g, t)
         tel = self.drone.telemetry()
+        if self.landmark.enabled and tel.x_m is not None and tel.y_m is not None:
+            now_m = tel.t if getattr(tel, "t", None) is not None else time.monotonic()
+            self.landmark.update(now_m, tel.x_m, tel.y_m, tel.yaw_deg, t, self._event)
+            if self.landmark.fixes:
+                tel = copy.copy(tel)  # the drone keeps its raw EKF telemetry
+                tel.x_m, tel.y_m = self.landmark.correct(tel.x_m, tel.y_m)
+            self.drone.pos_offset = self.landmark.offset
         self._last_yaw_dps = tel.yaw_rate_dps or 0.0
         inputs = self.encoder.encode(vision, tel.yaw_rate_dps)
         rates = self.brain.tick(inputs, ms=dt * 1000.0)
@@ -246,7 +347,10 @@ class EcpsPilot(Pilot):
                 cmd = FlightCommand(throttle=thr, yaw=cmd.yaw, forward=cmd.forward, escape=cmd.escape, note="height guard: low")
                 self.hg_ticks += 1
                 self._event(t, "height guard: too low")
-        self._t = t
+        self._rtl_watch(tel, t)
+        self._t_prev, self._t = self._t, t
+        if self.rtl_state != "OFF" and tel.x_m is not None and tel.y_m is not None:
+            cmd = self._rtl(cmd, tel, t)
         if self.target.active and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:
             cmd = self.target.update(self, cmd, tel, t)
         if self.wp_on and tel.x_m is not None and tel.y_m is not None and tel.yaw_deg is not None:

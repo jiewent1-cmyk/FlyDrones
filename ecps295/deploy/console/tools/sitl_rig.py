@@ -123,9 +123,9 @@ def main() -> None:
     sim_io = ["--camera", cam, "--tof", f"sitl:{W / a.layout}", "--log-dir", str(W / "logs"), "--set", "safety.max_flight_s=900"]
     if a.deployed:  # as ecps-companion.service (CPUAffinity 6 7, Nice -10, default --hw / --url / console port) but guided
         cmd, env = (["nice", "-n", "-10", "taskset", "-c", "6,7", str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"),
-                     "--mode", "guided", "--tag", "console_lan_e2e", *sim_io], None)
+                     "--mode", "guided", "--sitl", "--tag", "console_lan_e2e", *sim_io], None)
     else:
-        cmd, env = ([str(R / "venv/bin/python"), "-u", str(W / "companion/ecps_companion.py"), "--mode", "guided",
+        cmd, env = ([str(R / "venv/bin/python"), "-u", str(W / "companion/ecps_companion.py"), "--mode", "guided", "--sitl",
                      "--url", "udpin:127.0.0.1:14563", "--console", str(a.console_port), "--affinity", "6,7",
                      "--hw", str(W / "config/companion.yaml"), "--tag", "console_sitl", *sim_io], dict(os.environ, ECPS_ROOT=str(R)))
     comp = start(cmd, "companion.log", env=env)
