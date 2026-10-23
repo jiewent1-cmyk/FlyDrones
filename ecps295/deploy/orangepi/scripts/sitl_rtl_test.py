@@ -9,6 +9,8 @@ the A76 cores (simulated camera and ToF), MAVLink through a second mavlink-route
       home by itself, hovers, requests LAND; the FC lands and disarms. Nobody touches the mode switch.
 Pass: the return started away from home (> 0.5 m), "rtl: landing" (not "landing here"), FC LAND within the rtl timeout,
 disarmed within 40 s of LAND, landed within 0.4 m of home (EKF) and 0.5 m (SITL truth, SIM_STATE).
+--scenario console_lost: no timer; a console (ecl_client.py, a fresh test key) connects before the hand-over, sends GOTO
+(1.0, 0.6) after it and then goes silent: the companion must HOLD (link lost) and start RTL lost_rtl_s (5 s) later.
 The environment passes through to the companion (ECPS_HOLD=pos ... : the hover hold while it settles and in LAND).
 
     python sitl_rtl_test.py --root /root/ecps_rtl_test --out /root/ecps_rtl_test/logs/sitl_rtl.json
@@ -35,6 +37,9 @@ ap.add_argument("--out", default="")
 ap.add_argument("--work", default="")
 ap.add_argument("--config", default="", help="default: <root>/ecps295/minifly/s7_w2map_wp.yaml")
 ap.add_argument("--rtl-after", type=float, default=25.0)
+ap.add_argument("--scenario", choices=["timer", "console_lost"], default="timer")
+ap.add_argument("--ecl-client", default="", help="console_lost: path of deploy/console/tools/ecl_client.py")
+ap.add_argument("--silent-after", type=float, default=12.0, help="console_lost: the console goes silent this long after GOTO")
 a = ap.parse_args()
 R = Path(a.root)
 a.out = a.out or str(R / "logs/sitl_rtl.json")
@@ -77,6 +82,7 @@ assert g.wait_heartbeat(timeout=60) is not None, "no SITL heartbeat through the 
 g.target_system, g.target_component = 1, 1
 
 obs = {"lpn": [], "modes": [], "text": [], "truth": []}
+ecl_state = {"client": None, "live": False, "hello": 0.0}
 rc = {"thr": None, "last": 0.0, "hb": 0.0, "req": 0.0}
 LAT0, LON0 = 33.6430, -117.8420
 K = 111319.49 * 1e-7
@@ -101,6 +107,14 @@ def pump(sec: float) -> None:
             for mid, hz in ((32, 10), (193, 2), (108, 10)):
                 g.mav.command_long_send(1, 1, 511, 0, mid, 1e6 / hz, 0, 0, 0, 0, 0)
             rc["req"] = now
+        if ecl_state["client"] is not None and ecl_state["live"] and now - ecl_state["hello"] > 0.2:
+            ecl_state["client"].hello_tick()
+            ecl_state["hello"] = now
+            try:
+                while ecl_state["client"].recv() is not None:
+                    pass
+            except (BlockingIOError, OSError):
+                pass
         m = g.recv_match(blocking=True, timeout=0.05)
         if m is None:
             continue
@@ -137,17 +151,35 @@ try:
     # ---------------------------------------------------------------- R0: companion, EKF origin
     pump(15.0)
     hw_cfg = yaml.safe_load((R / "config/companion.yaml").read_text())
-    hw_cfg.setdefault("console", {})["port"] = 0  # no console here (its link needs the ECL key): the companion returns by itself
+    ecl = None
+    if a.scenario == "console_lost":
+        import importlib.util
+        import secrets
+
+        key = W / "console.key"
+        key.write_bytes(secrets.token_bytes(32))
+        key.chmod(0o600)
+        hw_cfg.setdefault("console", {}).update(port=14705, key_file=str(key), handover="hold", lost_rtl_s=5.0)
+        spec = importlib.util.spec_from_file_location("ecl_client", a.ecl_client)
+        ecl_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ecl_mod)
+    else:
+        hw_cfg.setdefault("console", {})["port"] = 0  # no console: the companion returns by itself (--rtl-after)
     hw_yaml = W / "companion_hw.yaml"
     hw_yaml.write_text(yaml.safe_dump(hw_cfg))
     t1 = time.monotonic()
     start([str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--url",
            "udpin:127.0.0.1:14564", "--camera", "sim", "--tof", "sim", "--affinity", "6,7", "--tag", "sitl_rtl",
-           "--config", a.config, "--hw", str(hw_yaml), "--rtl-after", str(a.rtl_after), "--sitl", "--set", "safety.max_flight_s=240"],
+           "--config", a.config, "--hw", str(hw_yaml), "--sitl", "--set", "safety.max_flight_s=240",
+           *(["--rtl-after", str(a.rtl_after)] if a.scenario == "timer" else [])],
           "companion.log", env=dict(os.environ, ECPS_ROOT=str(R)))
     while time.monotonic() - t1 < 40 and not obs["lpn"]:
         pump(1.0)
     rep["phases"]["R0_position"] = {"lpn_msgs": len(obs["lpn"]), "pass": bool(obs["lpn"])}
+    if a.scenario == "console_lost":
+        c = ecl_mod.Link("127.0.0.1", 14705, name="sitl_rtl_test", cam="off", key=(W / "console.key").read_bytes())
+        c.sock.setblocking(False)
+        ecl_state.update(client=c, live=True)
     pump(10.0)
     # ---------------------------------------------------------------- R1: take-off, hand-over, mission, return, land
     g.set_mode("ALT_HOLD")
@@ -168,6 +200,13 @@ try:
     g.set_mode("GUIDED")
     t_g = time.monotonic()
     t_land = t_disarm = None
+    t_silent = None
+    if a.scenario == "console_lost":
+        pump(3.0)
+        ecl_state["client"].cmd("goto", x=1.0, y=0.6)
+        pump(a.silent_after)
+        ecl_state["live"] = False  # the console goes silent (no HELLO): link lost after link_timeout_s
+        t_silent = time.monotonic()
     while time.monotonic() - t_g < a.rtl_after + 120:
         pump(0.5)
         if t_land is None and mode_now() == "LAND":
@@ -177,6 +216,10 @@ try:
             break
     pump(3.0)
     rtl_txt = [(round(t - t_g, 1), x) for t, x in ecps("rtl")]
+    if t_silent is not None:
+        t_r = next((t for t, x in ecps("rtl: returning home")), None)
+        rep["console_silent_to_rtl_s"] = round(t_r - t_silent, 1) if t_r else None
+        rep["console_lost_reason_ok"] = any("console lost" in x for _, x in rtl_txt)
     t_rtl = next((t for t, x in ecps("rtl: returning home")), None)
     comp_log = (W / "companion.log").read_text(errors="replace")
     ctl = [ln for ln in comp_log.splitlines() if "IN CONTROL" in ln or "control released" in ln]
@@ -217,6 +260,8 @@ finally:
         except ProcessLookupError:
             pass
 rep["pass"] = all(p["pass"] for p in rep["phases"].values())
+if a.scenario == "console_lost":  # link_timeout 1.5 s + lost_rtl_s 5 s
+    rep["pass"] = rep["pass"] and bool(rep.get("console_lost_reason_ok")) and 5.0 <= (rep.get("console_silent_to_rtl_s") or 0) <= 9.0
 print(json.dumps(rep, indent=1))
 json.dump(rep, open(a.out, "w"), indent=1)
 print("PASS" if rep["pass"] else "FAIL", "->", a.out)
