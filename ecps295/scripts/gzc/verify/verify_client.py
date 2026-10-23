@@ -31,6 +31,7 @@ ap.add_argument("--plan", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--timeout", type=float, default=2400)
 ap.add_argument("--control-timeout", type=float, default=300)
+ap.add_argument("--tag", default="", help="the session tag: the companion must report it (STATUS run.tag), else abort")
 a = ap.parse_args()
 
 plan = json.load(open(a.plan))
@@ -142,6 +143,12 @@ def estop_cycle() -> dict:
 
 result = {"plan": plan, "steps": [], "t0": T0}
 try:
+    if a.tag:  # never test the wrong companion (10-22: a leftover one answered on the port)
+        pump(120.0, lambda: st["status"] is not None)
+        got = ((st["status"] or {}).get("run") or {}).get("tag")
+        result["companion_tag"] = got
+        if got != a.tag:
+            raise TimeoutError(f"wrong companion on the port: tag {got!r}, expected {a.tag!r}")
     result["control"] = wait_control(a.control_timeout)
     result["t_control"] = round(time.time(), 3)
     if result["control"]:

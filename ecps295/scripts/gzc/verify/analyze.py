@@ -83,6 +83,9 @@ def main() -> None:
             continue
         c, rows, summ = x
         tag = os.path.basename(d)
+        if c.get("companion_tag") != tag:  # 10-22: only sessions whose own companion answered (see run_session.sh)
+            print(f"skip {tag}: companion tag {c.get('companion_tag')!r}")
+            continue
         cond = "plan" if "_plan__" in tag else "noplan"
         world = tag.split("__", 1)[1]
         pl = (c.get("status") or {}).get("planner") or {}
