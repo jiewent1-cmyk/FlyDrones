@@ -223,6 +223,12 @@ class TargetTrack:
         self.hold_gain = float(c.get("hold_gain", 1.0))  # ARRIVED: forward per metre of range error (position hold)
         self.hold_max = float(c.get("hold_max", 0.3))
         self.cruise = float(c.get("cruise", 0.5))  # forward handed to the waypoint layer when an escape is ignored
+        # 2026-10-23 (Gazebo lm1: the range servo kept sending velocity, so the FC's position hold - and the landmark
+        # fix that moves its target - never took over): inside hold_deadband_m of the wanted range, forward 0 (the
+        # hover hold in the FC link holds the point); the servo comes back beyond hold_resume_m
+        self.hold_deadband = float(c.get("hold_deadband_m", 0.08))
+        self.hold_resume = float(c.get("hold_resume_m", 0.15))
+        self._holding_still = False
         self.escapes_ignored = 0
         # 2026-10-20 (Gazebo trk2 cage10_k2: started 0.6 m from the marker and 0.3 m above it, a full turn never had it
         # in the frame): after turn_deg of search without a fix, relocate toward the fence centre and search again
@@ -448,7 +454,12 @@ class TargetTrack:
             rng = d.range_m if seen else math.hypot(self.est[0] - x, self.est[1] - y)
             # hold the goal's range to the marker: the standoff, or more where the goal was pulled inside the fence
             want = max(self.standoff, math.hypot(self.est[0] - self.goal[0], self.est[1] - self.goal[1])) if self.goal else self.standoff
-            fwd = max(-self.hold_max, min(self.hold_max, self.hold_gain * (rng - want)))
+            err_r = rng - want
+            if self._holding_still and abs(err_r) > self.hold_resume:
+                self._holding_still = False
+            elif not self._holding_still and abs(err_r) < self.hold_deadband:
+                self._holding_still = True
+            fwd = 0.0 if self._holding_still else max(-self.hold_max, min(self.hold_max, self.hold_gain * err_r))
             return FlightCommand(throttle=cmd.throttle, yaw=yaw, forward=fwd, note="target: holding")
         return cmd  # APPROACH / LOST: the waypoint layer steers to self.goal
 
