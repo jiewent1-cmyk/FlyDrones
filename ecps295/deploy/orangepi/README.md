@@ -22,10 +22,11 @@ Full test report: `项目文档/07_机载部署/ECPS295_OrangePi部署与性能�
 | `build/` | mavlink-router 源码与编译、ArduPilot Copter-4.7.0 SITL（测试用） |
 | `logs/` | 每次运行一个目录：`ticks.csv`、`system.csv`、`run.json` |
 
-系统改动 / system changes: `/boot/armbianEnv.txt` 加 `overlays=i2c0 i2c1`（备份 `/root/ecps_backup/armbianEnv.txt.pre_ecps`）
+系统改动 / system changes: `/boot/armbianEnv.txt` 加 `overlays=i2c0 i2c1 uart2`（备份 `/root/ecps_backup/armbianEnv.txt.pre_ecps`；uart2 于 2026-10-31 加入，备份 `/root/ecps295_backups/20261031_uart2/`）
 → `/dev/i2c-0`（TWI0，PB2/PB3，排针 3/5）、`/dev/i2c-1`（TWI1，PB7/PB8，排针 38/40）；apt: i2c-tools meson ninja-build
 libsystemd-dev pkg-config build-essential；`mavlink-routerd` 装到 `/usr/bin`，`mavlink-router.service` 开机启动。
-原有的 `uart0-pb9-pb10` overlay（`/dev/ttyS0`，排针 8/10）和 `/root/opiRasPiUartTest` 未改动。
+飞控串口 = UART2 `/dev/ttyS2`（PB0 TX 排针 11 → 飞控 RX3，PB1 RX 排针 13 ← 飞控 TX3，GND 排针 6）。**不要接排针 8/10（UART0）**：那是 U-Boot 控制台，飞控上电后持续发送的数据会打断自动启动，Pi 开不了机（2026-10-31）。
+原有的 `uart0-pb9-pb10` overlay（`/dev/ttyS0`）和 `/root/opiRasPiUartTest` 未改动。
 
 ## 常用命令 / Commands
 
