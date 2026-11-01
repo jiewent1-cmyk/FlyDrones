@@ -23,12 +23,16 @@ try:
 except Exception as e:
     print(f"{tag} FAILED {e!r}"); sys.exit()
 keys = ["contact_episodes", "near_miss_episodes", "min_clearance_m", "path_m", "coverage", "fence_turn_s", "escapes",
-        "nav", "ekf_err_xy_max_m", "radius_true_max_m", "trk_pass", "trk_final_state", "trk_t_start", "trk_t_approach", "trk_t_arrived", "trk_end_dist_m", "trk_end_facing_err_deg", "trk_est_err_m", "trk_range_err_med_m", "trk_bearing_err_med_deg", "trk_hits", "trk_frames", "trk_escapes_ignored"]
+        "nav", "ekf_err_xy_max_m", "radius_true_max_m", "trk_pass", "trk_final_state", "trk_t_start", "trk_t_approach", "trk_t_arrived", "trk_end_dist_m", "trk_end_facing_err_deg", "trk_est_err_m", "trk_range_err_med_m", "trk_bearing_err_med_deg", "trk_hits", "trk_frames", "trk_escapes_ignored",
+        "rtl_started", "rtl_from_m", "rtl_return_s", "rtl_landed_dist_m"]
 rtf = None  # whole-run "RTF run X over N s" (gz_g4.sh); the 40-sample window mean was too noisy to judge a run
 for line in open(path.replace("run.json", "rtf.log")) if os.path.exists(path.replace("run.json", "rtf.log")) else []:
     if line.startswith("RTF run"):
         rtf = line.split()[2]
-print(tag, " ".join(f"{k}={j.get(k)}" for k in keys), f"rtf_run={rtf}", "saccades=" + ",".join(("L" if e[2] < 0 else "R") for e in j["escape_log"]))
+lm = j.get("landmark") or {}  # 2026-10-22 return home / landmark fix
+rl = (j.get("rtl_log") or [[None, None]])[-1][1]
+print(tag, " ".join(f"{k}={j.get(k)}" for k in keys), "rtl_end=" + str(rl).replace(" ", "_"), f"lm_fixes={lm.get('fixes')}",
+      "lm_offset=" + ",".join(map(str, lm.get("offset") or [])), f"rtf_run={rtf}", "saccades=" + ",".join(("L" if e[2] < 0 else "R") for e in j["escape_log"]))
 PY
 done < "$1"
 echo DONE >> "$2"

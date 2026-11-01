@@ -57,6 +57,10 @@ class GzMarker:
     def latest(self):
         return self._last
 
+    def latest_all(self):  # 2026-10-22 landmark fix (one marker per world)
+        d, stamp = self._last
+        return ([d] if d is not None else []), stamp
+
     # ------------------------------------------------------------------ per tick
     def _truth(self, drone):
         tru = drone.truth_ned()

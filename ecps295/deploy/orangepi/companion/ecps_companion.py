@@ -67,6 +67,10 @@ ap.add_argument("--pil", type=int, default=0, metavar="PORT",
                      " the simulation PC sets go")
 ap.add_argument("--set", action="append", default=[], metavar="KEY.PATH=VALUE", help="config override (YAML value)")
 ap.add_argument("--track", action="store_true", help="tests: start target tracking at every hand-over (needs hw marker.enabled)")
+ap.add_argument("--sitl", action="store_true",
+                help="tests: allow simulated / SITL sensor sources in guided mode; the FC must prove it is a simulator "
+                     "(SIM_STATE within 15 s of connecting, never sent by a real FC) or the companion exits")
+ap.add_argument("--rtl-after", type=float, default=0.0, help="tests: return home and land this long [s] after each hand-over (0 = off)")
 ap.add_argument("--console", type=int, default=-1, metavar="PORT",
                 help="ground console link on this UDP port (console_link.py); 0 = off (default: hw config console.port)")
 a = ap.parse_args()
@@ -89,8 +93,9 @@ cam_src = a.camera or hw.get("camera", {}).get("source", "uvc")
 tof_src = a.tof or hw.get("tof", {}).get("source", "real")
 url = a.url or hw.get("mavlink", {}).get("url", "udpin:127.0.0.1:14560")
 if a.mode == "guided":
-    if a.pil or cam_src != "uvc" or tof_src != "real":
-        ap.error("guided mode requires physical UVC camera and real ToF; PIL, sim, replay, and SITL sources are disabled")
+    if (a.pil or cam_src != "uvc" or tof_src != "real") and not a.sitl:
+        ap.error("guided mode requires physical UVC camera and real ToF; PIL, sim, replay, and SITL sources are disabled"
+                 " (simulator tests: --sitl)")
     if float(os.environ.get("ECPS_DRIFT_MPS", "0") or 0) != 0:
         ap.error("guided mode refuses the ECPS_DRIFT_MPS test hook")
 
@@ -189,13 +194,24 @@ pilot.retina = EcpsRetina.from_config(cfg)
 pilot.decoder = EcpsDecoder(cfg)
 pilot.wp_active = False  # waypoint mission (if configured) starts when we take control
 marker = None
+if hw.get("landmark") and hasattr(pilot, "landmark"):  # 2026-10-22 landmark position fix: the site's markers live in hw
+    from ecps_landmark import LandmarkFix
+
+    pilot.landmark = LandmarkFix(hw["landmark"])
+lm_on = bool(getattr(getattr(pilot, "landmark", None), "enabled", False))
 if mk_cfg.get("enabled") and cam is not None and hasattr(pilot, "target"):
     from ecps_target import MarkerDetector, MarkerThread
 
-    # full-resolution frame (camera.py keeps it as last_bgr); the detector thread moves itself to the A55 cores
-    marker = MarkerThread(lambda: (cam.last_bgr, cam.stamp), MarkerDetector(**mk_cfg), hz=float(mk_cfg.get("hz", 10)),
-                          cpus=str(mk_cfg.get("cpus", "0-5"))).start()
+    # full-resolution frame (camera.py keeps it as last_bgr); the detector thread moves itself to the A55 cores.
+    # With landmarks the detector reports every id; the target layer still only sees marker_id (MarkerThread.latest)
+    det_cfg = dict(mk_cfg, marker_id=None) if lm_on else mk_cfg
+    marker = MarkerThread(lambda: (cam.last_bgr, cam.stamp), MarkerDetector(**det_cfg), hz=float(mk_cfg.get("hz", 10)),
+                          cpus=str(mk_cfg.get("cpus", "0-5")), target_id=mk_cfg.get("marker_id")).start()
     pilot.target.source = marker
+    if lm_on:
+        pilot.landmark.source = marker
+elif lm_on:
+    print("ecps_companion: landmark.enabled but no marker detector (marker.enabled, camera): no position fix", flush=True)
 HZ = float(cfg["control"]["hz"])
 DT = 1.0 / HZ
 # Brain dt bound (2026-10-16): the brain simulates the wall time since the last tick, so one overrun makes the next tick
@@ -283,7 +299,22 @@ def sysinfo() -> dict:
 print(f"ecps_companion: mode={a.mode} model={Path(model).name} camera={cam_src} tof={tof_src} url={url if a.mode != 'bench' else '-'}"
       f" affinity={sorted(os.sched_getaffinity(0))} log={out}", flush=True)
 drone.connect()
-if a.mode == "guided" and isinstance(drone, RealDrone):
+if a.sitl and isinstance(drone, RealDrone):
+    # 2026-10-22: --sitl lifts the guided-mode source check only against a simulator: SITL streams SIM_STATE when asked,
+    # a real FC never does. No SIM_STATE -> exit before anything is commanded.
+    _fc = int(hw.get("mavlink", {}).get("fc_sysid", 1))
+    _t_end = time.monotonic() + 15.0
+    _req = 0.0
+    while drone.m.messages.get("SIM_STATE") is None and time.monotonic() < _t_end:
+        if time.monotonic() - _req > 1.0:
+            drone.m.mav.command_long_send(_fc, 1, 511, 0, 108, 2e5, 0, 0, 0, 0, 0)  # SET_MESSAGE_INTERVAL SIM_STATE 5 Hz
+            _req = time.monotonic()
+        drone._pump(0.1)
+    if drone.m.messages.get("SIM_STATE") is None:
+        print("ecps_companion: --sitl but the FC sends no SIM_STATE (not a simulator): refusing to run", flush=True)
+        sys.exit(2)
+    print("ecps_companion: --sitl, FC is a simulator (SIM_STATE): simulated sources allowed, FC parameter check skipped", flush=True)
+elif a.mode == "guided" and isinstance(drone, RealDrone):
     drone.verify_flight_parameters(str(ROOT / "config" / "fc_flight.parm"))
 T0 = time.monotonic()
 print("warming up the brain...", flush=True)
@@ -297,6 +328,7 @@ control_s = 0.0
 was_in = False
 wp_seen: list = [0]  # watchdog events already scanned for waypoint / target progress
 was_track = False
+inc_since: float | None = None  # --rtl-after: control time of the current hand-over
 events: list = []
 t_flight = 0.0
 nxt = time.monotonic()
@@ -325,15 +357,20 @@ try:
         if a.track and marker is not None and inc and not was_track:
             pilot.track_start()  # tests: track from every hand-over (the console's TRACK does this otherwise)
         was_track = inc
+        if a.rtl_after > 0:
+            inc_since = (inc_since if inc_since is not None else control_s) if inc else None
+            if inc and inc_since is not None and control_s - inc_since > a.rtl_after and getattr(pilot, "rtl_state", None) == "OFF":
+                pilot.rtl_start(f"test {a.rtl_after:.0f} s after the hand-over")
+                inc_since = float("inf")  # once per hand-over
         if not inc:  # not flying under our control: watchdog land / flight timer start only when we take over
             pilot.safety.land_requested = False
             pilot.safety._start = None
         else:
             control_s += dt
         pilot.wp_active = inc  # waypoints only advance under our control; the pilot's flying pauses the mission
-        if getattr(pilot, "wp_on", False) or (marker is not None and pilot.target.active):
+        if getattr(pilot, "wp_on", False) or (marker is not None and pilot.target.active) or getattr(pilot, "rtl_state", "OFF") != "OFF":
             for ev in pilot.watchdog_events[wp_seen[0]:]:
-                if ev[1].startswith(("waypoint", "target")):  # tell the pilot (Mission Planner / OSD)
+                if ev[1].startswith(("waypoint", "target", "rtl")):  # tell the pilot (Mission Planner / OSD)
                     print(f"[{now - T0:7.1f}] {ev[1]}", flush=True)
                     if hasattr(drone, "_text"):
                         drone._text(f"ECPS: {ev[1]}", 0.0)
@@ -380,6 +417,9 @@ try:
                 "trk_bearing": round(pilot.target.last_det.bearing_deg, 1) if pilot.target.last_det is not None else "",
                 "trk_n": round(pilot.target.est[0], 3) if pilot.target.est is not None else "",
                 "trk_e": round(pilot.target.est[1], 3) if pilot.target.est is not None else ""} if marker is not None else {}),
+            "rtl": getattr(pilot, "rtl_state", ""),
+            **({"lm_dn": round(pilot.landmark.offset[0], 3), "lm_de": round(pilot.landmark.offset[1], 3), "lm_fixes": pilot.landmark.fixes}
+               if lm_on else {}),
             **{k: round(v, 1) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
         }
         if w is None:
@@ -483,6 +523,8 @@ summary = {
     "marker": {"frames": marker.frames, "hits": marker.hits, "errors": marker.errors, "status": marker.status,
                "det_ms": pct(marker.det_ms), "fixes": pilot.target.fixes, "state": pilot.target.state,
                "est": pilot.target.est, "log": pilot.target.log[-100:]} if marker is not None else None,
+    "landmark": pilot.landmark.summary() if lm_on else None,
+    "rtl": [e for e in pilot.watchdog_events if e[1].startswith("rtl")][-50:],
 }
 json.dump({"args": vars(a), "hw": hw, "summary": summary}, open(out / "run.json", "w"), indent=1, default=str)
 print(json.dumps({k: summary[k] for k in ("ticks", "deadline_miss", "compute_ms", "period_ms")}), flush=True)

@@ -161,7 +161,7 @@ rep["rangefinder_hz_requested"] = hw_cfg["mavlink"].get("rangefinder_hz")
 SCENARIO = os.environ.get("SCENARIO", "")
 rep["scenario"] = SCENARIO or "normal"
 extra = ["--set", "safety.max_flight_s=5"] if SCENARIO == "time_hold" else []
-comp = start([str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--url",
+comp = start([str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--sitl", "--url",
               "udpin:127.0.0.1:14561", "--camera", "sim", "--tof", "sim", "--affinity", "6,7", "--tag", "sitl_hil",
               "--no-fence-turn", "--hw", str(hw_yaml), *extra], "companion.log")
 pump(15.0)  # connect + brain warm-up

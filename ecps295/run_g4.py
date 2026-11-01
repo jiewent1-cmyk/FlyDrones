@@ -75,6 +75,9 @@ ap.add_argument("--out", default="g4")
 ap.add_argument("--track", default="", help="2026-10-18 target tracking: <world>_mk.marker.json (trk_gz.py)")
 ap.add_argument("--track-at", type=float, default=6.0, help="flight time [s] of pilot.track_start()")
 ap.add_argument("--track-hold", type=float, default=10.0, help="end the run this long after target: arrived")
+ap.add_argument("--rtl-at", type=float, default=-1.0, help="2026-10-22: pilot.rtl_start() at this flight time [s] (-1 = off)")
+ap.add_argument("--landmark", default="", help="2026-10-22 landmark position fix: JSON config merged over {enabled: true}"
+                " ('{}' = defaults); detections from --track's GzMarker")
 ap.add_argument("--shm-rgb", default="/dev/shm/ecps295_cam_rgb", help="colour drone camera (cam_bridge rgb stream)")
 a = ap.parse_args()
 
@@ -136,6 +139,13 @@ if a.track:
 
     TRK = GzMarker(a.track, a.shm_rgb, cfg.get("marker", {}), out_dir=str(Path(a.out).resolve().parent))
     pilot.target.source = TRK
+if a.landmark:
+    from ecps_landmark import LandmarkFix
+
+    assert TRK is not None, "--landmark needs --track <marker.json> for the detections"
+    pilot.landmark = LandmarkFix({"enabled": True, **json.loads(a.landmark)})
+    pilot.landmark.source = TRK
+RTL_DONE = [False]
 
 if a.layout:
     drone.room = room_from_layout(a.layout)  # read by the dashboard ROOM panel
@@ -289,6 +299,8 @@ def tick(t: float, dt: float, phase: str):
             pilot.track_start(t)
             TRK.started, TRK.t_start = True, round(t, 2)
         TRK.step(t, drone)
+    if a.rtl_at >= 0 and not RTL_DONE[0] and t >= a.rtl_at:
+        RTL_DONE[0] = pilot.rtl_start(f"test at {a.rtl_at:.0f} s", t)
     if HT is not None:
         HT.step()
     c0 = time.perf_counter()
@@ -347,6 +359,9 @@ def tick(t: float, dt: float, phase: str):
             **{k: round(v, 2) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
             **(pil.row() if pil is not None else {}),
             **(TRK.row(pilot) if TRK is not None else {}),
+            "rtl": getattr(pilot, "rtl_state", ""),
+            "lm_dn": round(pilot.landmark.offset[0], 3) if a.landmark else None,
+            "lm_de": round(pilot.landmark.offset[1], 3) if a.landmark else None,
         }
     )
     if a.gif:
@@ -416,6 +431,8 @@ def _run_phase_sim(phase: str, secs: float, s0: float) -> bool:
 
 def _wp_finished(hold_s: float = 3.0) -> bool:
     """2026-10-17 waypoint flight: end the run hold_s after the last point (the drone hovers meanwhile)."""
+    if getattr(pilot, "rtl_state", "OFF") != "OFF":  # returning home: the run ends with its LAND request
+        return False
     if TRK is not None:  # tracking flies through the waypoint layer: its wp_done_t is not the end of the run
         return TRK.done(pilot, clock["t"], a.track_hold)
     done = getattr(pilot, "wp_done_t", None)
@@ -494,9 +511,11 @@ finally:
     drone.send(FlightCommand.hover("stop"))
     drone.passive = False
     drone.land()
+    LANDED = None
     t0 = time.time()
     while time.time() - t0 < 20 and drone.m.motors_armed():
         drone.m.recv_match(type="HEARTBEAT", blocking=True, timeout=1)
+    LANDED = drone.truth_ned()  # 2026-10-22 return-home scoring: where the drone touched down (SIM_STATE)
 
 with open(f"{a.out}.csv", "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
@@ -673,6 +692,17 @@ if getattr(pilot, "wp_on", False):  # 2026-10-17 waypoint flight, scored on trut
     summary["wp_bias_s"] = round(pilot.wp_ticks / HZ, 1)
 if TRK is not None:
     summary.update(TRK.summary(pilot, rows, a.mode))
+if a.rtl_at >= 0:  # 2026-10-22 return home: start point = the truth at the first row
+    r0 = rows[0]
+    summary["rtl_log"] = [e for e in pilot.watchdog_events if e[1].startswith("rtl")]
+    summary["rtl_started"] = RTL_DONE[0]
+    if LANDED is not None and r0.get("north") is not None:
+        summary["rtl_landed_dist_m"] = round(math.hypot(LANDED[0] - r0["north"], LANDED[1] - r0["east"]), 3)
+    st = [r for r in rows if r.get("rtl") == "RETURN"]
+    summary["rtl_from_m"] = round(math.hypot(st[0]["north"] - r0["north"], st[0]["east"] - r0["east"]), 3) if st else None
+    summary["rtl_return_s"] = round(st[-1]["t"] - st[0]["t"], 2) if st else None
+if a.landmark:
+    summary["landmark"] = pilot.landmark.summary()
 json.dump(summary, open(f"{a.out}.json", "w"), indent=1)
 print(json.dumps(summary, indent=1))
 

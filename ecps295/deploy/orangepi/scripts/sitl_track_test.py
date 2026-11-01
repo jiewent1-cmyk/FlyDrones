@@ -134,7 +134,7 @@ try:
     pump(5.0)
     t1 = time.monotonic()
     procs.append(subprocess.Popen(
-        [str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--url",
+        [str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--sitl", "--url",
          "udpin:127.0.0.1:14562", "--camera", "sitl_marker:" + ",".join(str(v) for v in MK), "--tof", "sitl:" + a.layout,
          "--affinity", "6,7", "--tag", "sitl_track", "--config", a.config, "--hw", str(hw_yaml), "--console", "0",
          "--track", "--log-dir", str(R / "logs"), "--set", f"safety.max_flight_s={TRK_S + 60}"],

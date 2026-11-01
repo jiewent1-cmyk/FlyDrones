@@ -124,7 +124,7 @@ try:
     hw_yaml = W / "companion_hw.yaml"
     hw_yaml.write_text(yaml.safe_dump(hw_cfg))
     t1 = time.monotonic()
-    start([str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--url",
+    start([str(R / "venv/bin/python"), "-u", str(R / "companion/ecps_companion.py"), "--mode", "guided", "--sitl", "--url",
            "udpin:127.0.0.1:14561", "--camera", "sim", "--tof", "sim", "--affinity", "6,7", "--tag", "sitl_flow_wp",
            "--config", a.config, "--hw", str(hw_yaml), "--set", f"safety.max_flight_s={WP_S + 30}"], "companion.log")
     while time.monotonic() - t1 < 40 and not obs["lpn"]:
