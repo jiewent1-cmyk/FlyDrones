@@ -75,6 +75,10 @@ cadence. After that confirmation nothing is re-sent: the pilot can still take ov
 (the RC transmitter keeps the last word), and a new press on the console (ESTOP "trig" changes) acts again.
 Heartbeat and route-B height keep going (LAND needs the height). The latch itself keeps the brain from taking control
 again until estop_reset (FC disarmed, or force from the console).
+One console holds the link at a time, but a stop is not the holder's alone (2026-11-04): an authenticated single-datagram
+ESTOP from any other address acts at once and is ACKed to its sender, and the link stays with the holder. Everything
+else from that address is still dropped, estop_reset included, so a second console can stop the drone but not release
+it or fly it, and it gets no telemetry while the holder is live.
 """
 
 from __future__ import annotations
@@ -586,6 +590,7 @@ class ConsoleLink:
         self._tx_seq = 0
         self._tx_lock = threading.Lock()
         self._rx_seq: dict[tuple, int] = {}
+        self._foreign_estops: dict[bytes, float] = {}
         self.had_console = False
         self.estop = 0
         self.estop_t = 0.0
@@ -756,6 +761,18 @@ class ConsoleLink:
                 self.event("console", f"bad message from {addr[0]}: {type(e).__name__}: {e}")
             self._estop_action()
 
+    def _foreign_estop_seen(self, tag: bytes) -> bool:
+        """True for a datagram already taken from another address. Replay state is per address, so without this a stop
+        captured off the air could be sent again from a new address, within the 30 s clock window, to latch again after
+        a reset. The console's own repeats are new datagrams and pass."""
+        now = time.monotonic()
+        for t in [t for t, at in self._foreign_estops.items() if now - at > 60.0]:
+            del self._foreign_estops[t]
+        if tag in self._foreign_estops:
+            return True
+        self._foreign_estops[tag] = now
+        return False
+
     def _send(self, addr, dgrams: list[bytes]) -> None:
         for i, g in enumerate(dgrams):
             if i:
@@ -789,7 +806,7 @@ class ConsoleLink:
     def _handle(self, data: bytes, addr) -> None:
         if len(data) < HDR.size + AUTH_FIELDS.size + 32 or len(data) > HDR.size + MAX_PAYLOAD + AUTH_FIELDS.size + 32:
             return
-        magic, _typ, flags, _msg, chunk, n, _stamp = HDR.unpack_from(data)
+        magic, head_typ, flags, _msg, chunk, n, _stamp = HDR.unpack_from(data)
         if magic != MAGIC or not (flags & F_AUTH) or n == 0 or n > MAX_CHUNKS or chunk >= n:
             return
         seq, sent_ms = AUTH_FIELDS.unpack_from(data, len(data) - 32 - AUTH_FIELDS.size)
@@ -801,14 +818,18 @@ class ConsoleLink:
         if seq == 0 or not hmac.compare_digest(expected, tag) or not fresh:
             return
         active = next(iter(self.clients.values()), None)
-        if active is not None and active.addr != addr and time.monotonic() - active.last < float(self.cfg["link_timeout_s"]):
+        foreign = active is not None and active.addr != addr and time.monotonic() - active.last < float(self.cfg["link_timeout_s"])
+        if foreign and (head_typ != T_ESTOP or n != 1 or self._foreign_estop_seen(tag)):
             return
         self._rx_seq[addr] = state
         data = bytearray(data[:HDR.size] + data[HDR.size:-AUTH_FIELDS.size-32])
         data[5] &= ~F_AUTH
         data = bytes(data)
         c = self.clients.get(addr)
-        if c is None:
+        if foreign:
+            c = Client(addr)  # for this one message: the link stays with the holder
+            c.name = addr[0]
+        elif c is None:
             self.clients.clear()
             c = self.clients[addr] = Client(addr)
         r = c.rx.push(data)

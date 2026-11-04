@@ -20,6 +20,7 @@
 | `tools/sitl_rig.py`、`rig_start.sh`、`rig_stop.sh` | Pi 上的 SITL 测试台（无 GPS 光流导航 SITL + 第二个 mavlink-router + 机载程序 + 由 SITL 真值模拟的 ToF；`--marker` 时相机画面由 SITL 真值渲染并带一个 ArUco 标记） |
 | `tools/console_e2e.py` | 端到端测试（扮演飞手 + 控制台：自动 13 项；经由应用 `app_full`；跟踪 `track` 9 项、`app_track`） |
 | `tools/estop_confirm_test.py` | 机载端急停确认的离线回放测试（假飞控按时间线给出模式和 COMMAND_ACK，不需要 Pi） |
+| `tools/estop_second_console_test.py` | 第二台控制台的急停测试（真 UDP 和 `ecl_client`，不需要 Pi）：别的地址带正确密钥发来的急停立刻生效，链路仍归原控制台，其他消息照旧丢弃 |
 | `tools/track_mode_test.py` | 跟踪模式的离线测试（假飞控程序记录每次调用和所在线程：启停顺序、与选点前往的交接、急停、断链，不需要 Pi） |
 | `tools/cam_rate_test.py` | 相机帧率的离线测试（模拟带抖动、晚醒和漏拍的 20 Hz 控制周期，检查各档位、各帧率设定下实际发出的帧率，不需要 Pi） |
 | `tools/gen_mavmeta.py` | 由 pymavlink 生成 `MavMeta.swift`（报文布局与 CRC_EXTRA） |
