@@ -1,0 +1,8 @@
+{
+  "comment": "VANTAGE site for the Gazebo world ecps295_survey (gen_survey_world.py): survey/sites/synth.json at half scale. Metres; survey frame: tag 1 at the origin, 1->2 is +y. Camera: the drone's nadir survey_cam, 2592x1944, hfov 70 deg.",
+  "boundary": {"1": [0.0, 0.0], "2": [0.0, 0.65], "3": [0.9, 0.65], "4": [0.9, 0.0]},
+  "panel": {"length": 0.20, "width": 0.15, "frame": 0.0075, "low_edge_height": 0.025, "tilt_deg": 20},
+  "panel_overrides": {"13": {"tilt_deg": 15}},
+  "untagged_panel": {"low_edge_height": 0.01, "tilt_deg": 0},
+  "camera": {"focal_35mm": 24.716, "altitude_m": 0.95}
+}
