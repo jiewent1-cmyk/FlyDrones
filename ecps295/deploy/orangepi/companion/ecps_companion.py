@@ -96,6 +96,8 @@ if a.mode == "guided":
     if (a.pil or cam_src != "uvc" or tof_src != "real") and not a.sitl:
         ap.error("guided mode requires physical UVC camera and real ToF; PIL, sim, replay, and SITL sources are disabled"
                  " (simulator tests: --sitl)")
+    if str((hw.get("survey_cam") or {}).get("source", "off")) not in ("off", "uvc") and not a.sitl:
+        ap.error("guided mode requires the physical survey camera (survey_cam.source uvc or off); simulator tests: --sitl")
     if float(os.environ.get("ECPS_DRIFT_MPS", "0") or 0) != 0:
         ap.error("guided mode refuses the ECPS_DRIFT_MPS test hook")
 
@@ -258,8 +260,10 @@ console_port = a.console if a.console >= 0 else int((hw.get("console") or {}).ge
 if console_port:
     import console_link
 
+    # 2026-11-03: the optional nadir survey camera, only for the console's still command (absent section: none)
+    survey_cam = camera_mod.make_survey(hw.get("survey_cam"))
     console = console_link.make(console_port, pilot=pilot, drone=drone, cam=cam, tofs=tofs, cfg=cfg,
-                                console_cfg=hw.get("console") or {},
+                                console_cfg=hw.get("console") or {}, survey_cam=survey_cam,
                                 run_info={"mode": a.mode, "model": Path(model).name, "seed": a.seed, "hz": HZ,
                                           "camera": cam_src, "tof": tof_src, "tag": a.tag})
 

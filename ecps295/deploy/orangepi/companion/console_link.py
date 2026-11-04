@@ -22,11 +22,13 @@ Protocol ECL1 (UDP; the Pi listens on console.port, default 14700). Authenticate
     STATUS 8  JSON 2 Hz: config and limits, event log tail, system (temperatures, clocks, load), counters, marker
               detector
     PONG 9    PING payload echoed
+    STILL 10  (2026-11-03) <IHH id of the still command, w, h> + JPEG of the survey camera's whole frame; chunked
   console -> Pi
     HELLO 64  JSON {name, cam: brain|color|off, cam_hz <= 20, color_w, color_q, lvl: 0-3}; 5 Hz, also the heartbeat
     PING 65   8 bytes, echoed in a PONG
     CMD 66    JSON {id, op, ...}: hold | patrol | goto {x, y} | track | rtl | manual {on} | stick {f, l, y, z} (no ACK) |
-              land | gesture {name} | handover {mode: hold | patrol | track} | estop_reset {force}
+              land | gesture {name} | handover {mode: hold | patrol | track} | estop_reset {force} |
+              still (2026-11-03: ACK ok, then a STILL; ACK not ok without a survey camera, hw config survey_cam)
     ESTOP 67  JSON {id, level: 1 land | 2 kill}; the console repeats it until the FC reports LAND / disarmed
     TOPO_REQ 68
 
@@ -117,6 +119,7 @@ def _replay_accept(state: tuple[int, int], seq: int) -> tuple[tuple[int, int], b
         return state, False
     return (high, seen | (1 << offset)), True
 T_TICK, T_BRAIN, T_CAM, T_MAP, T_TOF, T_TOPO, T_ACK, T_STATUS, T_PONG = range(1, 10)
+T_STILL = 10
 T_HELLO, T_PING, T_CMD, T_ESTOP, T_TOPO_REQ = 64, 65, 66, 67, 68
 VISION_FEATURES = ("ftb", "btf", "up", "down", "loom", "loom_speed", "blank", "near", "ventral")
 # per level: TICK / BRAIN every n control ticks (20 Hz / n; 0 = never), ToF / map / status rates (Hz), camera fps cap.
@@ -553,7 +556,7 @@ class Client:
 
 class ConsoleLink:
     def __init__(self, port: int, *, pilot, drone, cam, tofs: dict, cfg: dict, console_cfg: dict, run_info: dict,
-                 log=print):
+                 log=print, survey_cam=None):
         self.cfg = {**DEFAULTS, **(console_cfg or {})}
         self.auth_key = b""
         if port != 0:
@@ -569,6 +572,8 @@ class ConsoleLink:
                 raise RuntimeError("ECL1 disabled: console.key must contain exactly 32 random bytes")
         self.port = port
         self.pilot, self.drone, self.cam, self.tofs = pilot, drone, cam, tofs
+        self.survey_cam = survey_cam
+        self._still_busy = threading.Event()
         self.run_info = run_info
         self.log = log
         self.lock = threading.Lock()
@@ -923,6 +928,8 @@ class ConsoleLink:
             elif self.pilot.gestures is not self.gestures:
                 self.pilot.gestures = self.gestures
                 self.event("operator", f"illusion {name}")
+        elif op == "still":
+            return self._still(m.get("id"), c)
         elif op == "estop_reset":
             fresh = getattr(self.drone, "fc_hb_age_s", lambda: float("inf"))() <= 2.0
             armed = self._armed()
@@ -935,6 +942,35 @@ class ConsoleLink:
             self.event("console", f"emergency stop reset ({c.name}{', forced while armed' if armed else ''})")
         else:
             return False, f"unknown op {op}"
+        return True, ""
+
+    def _still(self, cid, c: Client) -> tuple[bool, str]:
+        """A whole frame of the survey camera, on its own thread: the capture takes up to a few seconds and the receive
+        thread has to stay free for the emergency stop. The ACK says the still is being taken; the STILL follows."""
+        if self.survey_cam is None:
+            return False, "no survey camera (hw config survey_cam)"
+        if not isinstance(cid, int) or not 0 <= cid <= 0xFFFFFFFF:
+            return False, "still needs an integer id"
+        if self._still_busy.is_set():
+            return False, "a still is being taken"
+        self._still_busy.set()
+
+        def run():
+            try:
+                img = self.survey_cam.still()
+                jpg = self.survey_cam.jpeg(img)
+                if not jpg:
+                    raise RuntimeError(f"{img.shape[1]}x{img.shape[0]} JPEG does not fit {self.survey_cam.max_bytes} bytes")
+                self.survey_cam.stills += 1
+                self._send(c.addr, self.pk.datagrams(T_STILL, struct.pack("<IHH", cid, img.shape[1], img.shape[0]) + jpg))
+                self.event("console", f"still {cid}: {img.shape[1]}x{img.shape[0]}, {len(jpg) / 1024:.0f} kB")
+            except Exception as e:  # the console times out and says so; the companion goes on
+                self.survey_cam.errors += 1
+                self.event("console", f"still {cid} failed: {type(e).__name__}: {e}")
+            finally:
+                self._still_busy.clear()
+
+        threading.Thread(target=run, name="console-still", daemon=True).start()
         return True, ""
 
     # ------------------------------------------------------------------ emergency stop: our own path to the FC
