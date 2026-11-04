@@ -51,7 +51,7 @@ ap.add_argument("--mode", choices=["bench", "shadow", "guided"], default="bench"
 ap.add_argument("--hw", default=str(ROOT / "config" / "companion.yaml"), help="hardware config (camera, ToF, MAVLink)")
 ap.add_argument("--config", default="", help="MiniFly variant YAML (default: hw config 'model')")
 ap.add_argument("--url", default="", help="MAVLink URL (default: hw config mavlink.url)")
-ap.add_argument("--camera", default="", help="uvc | sim | replay:<dir> | off | sitl_marker:<n,e,up,yaw[,id]> (SITL tests; default: hw config)")
+ap.add_argument("--camera", default="", help="uvc | sim | replay:<dir> | shm:<cam_bridge file> | off | sitl_marker:<n,e,up,yaw[,id]> (SITL tests; default: hw config)")
 ap.add_argument("--tof", default="", help="real | sim | off | sitl:<layout.json> (SITL tests; default: hw config)")
 ap.add_argument("--seconds", type=float, default=0, help="stop after this long; 0 = until SIGINT / SIGTERM")
 ap.add_argument("--cruise", type=float, default=0.5)

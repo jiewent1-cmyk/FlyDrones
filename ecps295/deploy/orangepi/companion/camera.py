@@ -136,6 +136,26 @@ class ReplayCamera(_Cam):
     _run = SimCamera._run
 
 
+class ShmCamera(_Cam):
+    """SITL tests on the simulation PC (2026-11-03): the Gazebo drone camera from a gazebo/cam_bridge.py shared-memory
+    stream (rgb, e.g. 640x480), so the brain and the console's colour view see the simulated world."""
+
+    def __init__(self, path: str, **kw):
+        super().__init__(**kw)
+        from shm_frames import ShmFrame  # ecps295/, on the companion's path
+
+        self.shm = ShmFrame(path)
+        self.status = f"shm {path}"
+
+    def _run(self) -> None:
+        while not self._stop.is_set():
+            t0 = time.perf_counter()
+            if self.shm.read() and self.shm.img is not None:
+                img = self.shm.img
+                self._publish_gray(cv2.cvtColor(img, cv2.COLOR_RGB2BGR) if img.ndim == 3 else img, t0)
+            self._stop.wait(1.0 / self.fps)
+
+
 class SurveyCamera:
     """The optional second camera (2026-11-03, hw config survey_cam): a nadir camera for the photo survey, read only when
     the console asks for a still (console_link CMD still), never by the brain.
@@ -213,9 +233,11 @@ def make_survey(cfg: dict | None):
 
 
 def make(source: str, cfg: dict):
-    """source: 'uvc' | 'sim' | 'replay:<dir>' | 'off'."""
+    """source: 'uvc' | 'sim' | 'replay:<dir>' | 'shm:<path>' | 'off'."""
     if source == "off":
         return None
+    if source.startswith("shm:"):
+        return ShmCamera(source.split(":", 1)[1], **{k: cfg[k] for k in ("out_w", "out_h", "fps") if k in cfg})
     common = {k: cfg[k] for k in ("out_w", "out_h", "fps") if k in cfg}
     if source == "sim":
         return SimCamera(**common)
