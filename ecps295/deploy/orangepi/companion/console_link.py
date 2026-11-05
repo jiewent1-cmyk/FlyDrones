@@ -59,7 +59,9 @@ governor, so everything downstream still applies: governor limits, ceiling, floo
   LAND    hover command (the FC is in LAND)
 At every hand-over (the pilot switches to GUIDED and the companion latches control) the mode is reset to the
 console's hand-over choice (default PATROL, i.e. as without a console; the console UI preselects HOLD; TRACK starts a
-fresh search).
+fresh search). Exception (2026-11-04): a route interrupted by a brief control loss resumes at its current waypoint when
+control returns within route_resume_s, provided the FC stayed GUIDED + armed all along (a heartbeat gap; never after the
+pilot's mode switch), no emergency stop was pressed and the console changed nothing in between.
 Console link lost (no HELLO for link_timeout_s): GOTO / MANUAL / TRACK -> HOLD; still lost after lost_rtl_s while the
 companion is in control and holding -> RTL (2026-10-22: home, then LAND); without the pilot's rtl layer, or with
 lost_rtl_s 0, still lost and holding after lost_land_s -> LAND where it is (watchdog path). PATROL continues, as
@@ -154,6 +156,7 @@ DEFAULTS = {
     "plan_stuck_s": 30.0,  # planned GOTO: no progress toward the current waypoint this long -> skip it
     "manual_scale": {"f": 0.6, "l": 0.6, "y": 0.6, "z": 0.5},
     "handover": "hold",  # mode at hand-over until a console operator explicitly chooses otherwise
+    "route_resume_s": 10.0,  # a route resumes after a control loss up to this long (heartbeat gap, see the docstring); 0 = never
     "status_hz": 2.0,  # before the first tick
     "outq_max": 24000,  # bytes in the socket send queue above which the bulky messages are skipped
 }
@@ -363,6 +366,7 @@ class Operator:
         self.stick = (0.0, 0.0, 0.0, 0.0)
         self.stick_t = 0.0
         self.inc = False  # companion in control (previous tick)
+        self._lost_t: float | None = None  # a route may resume: when control was lost (None = hand-over as usual)
         self.note = ""
         self.brain_raw = None
         self.out = None
@@ -392,6 +396,7 @@ class Operator:
                 return
             prev, self.mode = self.mode, mode
             self.changes += 1
+            self._lost_t = None
             if mode not in ("GOTO", "LAND"):
                 self._calls.append(("drop",))
             if self.trk and (mode == "TRACK" or prev == "TRACK"):
@@ -431,6 +436,7 @@ class Operator:
                 what = "goal" if len(pts) == 1 else f"waypoint {i + 1}"
                 return f"{what} {r:.2f} m from the origin is outside the geofence ({lim:.2f} m)"
         with self.lock:
+            self._lost_t = None
             self.route, self.route_i = pts, 0
             self.goal = pts[0]
             self.goal_t0 = time.monotonic()
@@ -467,14 +473,40 @@ class Operator:
             self.stick = (c(f), c(l_), c(y), c(z))
             self.stick_t = time.monotonic()
 
-    def on_control(self, inc: bool) -> None:
+    def _resume_route(self, gap_s: float) -> None:
+        """Back in control after a brief loss: fly on to the current waypoint (the path is planned afresh from here)."""
+        with self.lock:
+            self.goal_t0 = time.monotonic()
+            self._calls.append(("drop",))
+            if self.planner is not None:
+                self._calls.append(("plan_resume",))
+            else:
+                i = self.route_index()
+                self.route, self.route_i = self.route[i:], 0
+                self.goal = self.route[0]
+                self._goal_gen += 1
+                self._calls.append(("goal", list(self.route), self._goal_gen))
+        self.on_event("operator", f"route resumed after {gap_s:.1f} s without control")
+
+    def on_control(self, inc: bool, can_resume: bool = True) -> None:
         """Once per tick on the control loop's thread with the hand-over gate's result: a new hand-over resets the
-        mode to the hand-over choice; then the queued pilot changes run."""
+        mode to the hand-over choice, or resumes a route after a brief loss; then the queued pilot changes run.
+        can_resume False (emergency stop) forgets a route that would have resumed."""
+        now = time.monotonic()
+        if self.inc and not inc and self.mode == "GOTO" and self.route:
+            self._lost_t = now
+        if not inc and self._lost_t is not None and not (
+                can_resume and self.drone.armed() and self.drone.fc_mode() == getattr(self.drone, "GUIDED", "GUIDED")):
+            self._lost_t = None
         if inc and not self.inc:
-            with self.lock:
-                self.goal, self.route = None, []
-            self._drop_goal()
-            self.set_mode(self.handover, "hand-over", again=self.handover == "TRACK")
+            lost_t, self._lost_t = self._lost_t, None
+            if lost_t is not None and now - lost_t <= float(self.cfg.get("route_resume_s", 10.0)):
+                self._resume_route(now - lost_t)
+            else:
+                with self.lock:
+                    self.goal, self.route = None, []
+                self._drop_goal()
+                self.set_mode(self.handover, "hand-over", again=self.handover == "TRACK")
         self.inc = inc
         self._run_calls()
         rs = getattr(self.pilot, "rtl_state", "OFF")
@@ -507,6 +539,10 @@ class Operator:
                         self.set_mode("HOLD", "return home is off (rtl.enabled)")
                 elif c[0] == "plan_start":
                     self.route_i, self.plan_path, self.plan_goal = 0, [], None
+                    self._plan_t, self._plan_fail_t = 0.0, None
+                    self._prog_best, self._prog_t = math.inf, time.monotonic()
+                elif c[0] == "plan_resume":
+                    self.plan_path, self.plan_goal = [], None
                     self._plan_t, self._plan_fail_t = 0.0, None
                     self._prog_best, self._prog_t = math.inf, time.monotonic()
                 elif c[0] == "track":
@@ -842,7 +878,7 @@ class ConsoleLink:
 
     # ------------------------------------------------------------------ main-loop hook (cheap: reference hand-off)
     def on_tick(self, info, row: dict, inc: bool, now: float) -> None:
-        self.ops.on_control(inc)
+        self.ops.on_control(inc, self.estop == 0)
         lost = self.had_console and not self._live(now)
         if lost:
             if self.lost_since is None:
