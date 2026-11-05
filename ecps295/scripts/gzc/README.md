@@ -7,7 +7,7 @@ Fly the Gazebo drone from the ECPS Console app.
 
 The chase camera (480 px JPEG, 15 Hz) reaches the Pi as PIL kind 5 and shows in the console's **colour** camera view.
 
-    gzc.sh start [world] [minutes]   # default cage20 60; refuses 00:55-07:00 PT (ROG quiet hours), run_g4 lands at 00:55
+    gzc.sh start [world] [minutes]   # default cage20 60
     gzc.sh status
     gzc.sh stop                      # run_g4 lands, instance torn down, Pi router/governor restored
 

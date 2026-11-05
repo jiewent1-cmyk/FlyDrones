@@ -2,15 +2,13 @@
 # Gazebo ground-console session (2026-10-21): Gazebo + SITL on ROG (INST 5, *_monitor world with the chase camera,
 # run_g4 --mode console = scripted pilot), the companion + console link on the Pi (/root/pil_hover/gzc_start.sh).
 # The Mac app connects to the Pi with its default ports (ECL 14700, MAVLink 14550).
-#   gzc.sh start [world] [minutes]     default cage20, 60 min (ends by 00:55 PT anyway: ROG quiet hours)
+#   gzc.sh start [world] [minutes]     default cage20, 60 min
 #   gzc.sh stop                         lands (run_g4 ends), stops both sides
 #   gzc.sh status
-PI=root@192.168.86.20; R=ROG-laptop
+PI=root@192.168.86.28; R=ROG-laptop
 cmd=${1:-status}; W=${2:-cage20}; MIN=${3:-60}
 case $cmd in
 start)
-  m=$((10#$(TZ=America/Los_Angeles date +%H) * 60 + 10#$(TZ=America/Los_Angeles date +%M)))
-  [ $m -ge 55 ] && [ $m -lt 420 ] && { echo "ROG quiet hours (01:00-07:00 PT): not starting"; exit 1; }
   ssh $R "pgrep -f '[r]un_g4.py --mode console' >/dev/null" && { echo "a console session already runs on ROG"; exit 1; }
   ssh $PI "pgrep -f '[e]cps_companion' >/dev/null" && { echo "a companion already runs on the Pi (another test?)"; exit 1; }
   ssh $PI /root/pil_hover/gzc_start.sh || exit 1

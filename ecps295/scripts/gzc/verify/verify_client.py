@@ -32,10 +32,11 @@ ap.add_argument("--out", required=True)
 ap.add_argument("--timeout", type=float, default=2400)
 ap.add_argument("--control-timeout", type=float, default=300)
 ap.add_argument("--tag", default="", help="the session tag: the companion must report it (STATUS run.tag), else abort")
+ap.add_argument("--key-file", required=True, help="the ECL1 key (32 bytes, the companion's console.key_file)")
 a = ap.parse_args()
 
 plan = json.load(open(a.plan))
-link = Link(a.host, a.port, name="verify_client", cam="off", lvl=3)
+link = Link(a.host, a.port, name="verify_client", cam="off", lvl=3, key=Path(a.key_file).read_bytes())
 st = {"tick": None, "events": {}, "acks": {}, "ticks": [], "status": None}
 T0 = time.time()
 _last_hello = 0.0

@@ -436,17 +436,11 @@ def run_phase(phase: str, secs: float, vx=0.0, vz_up=0.0, yaw_dps=0.0):
     return True
 
 
-def _quiet_soon() -> bool:
-    """ROG quiet hours (no runs 01:00-07:00 PT): an interactive session lands at 00:55."""
-    lt = time.localtime()
-    return 55 <= lt.tm_hour * 60 + lt.tm_min < 420
-
-
 def _wait_estop_reset(t_end: float) -> bool:
     """A kill or E-stop latches the console; the sim pilot only takes off again once the operator reset it (the Pi
     status carries the latch), else the scripted re-arm made the reset fail ('FC still armed', 10-21 test)."""
     said = False
-    while time.monotonic() < t_end and not _quiet_soon():
+    while time.monotonic() < t_end:
         if int((pil.status or {}).get("es", 0)) == 0:
             return True
         if not said:
@@ -489,7 +483,7 @@ def console_session(secs: float) -> None:
     """2026-10-21 Gazebo ground-console session: this script plays the RC pilot. After each take-off it hands over
     (pil.go = 1, as the pilot's switch to GUIDED); the operator flies with the console app through the Pi companion.
     Once the FC is disarmed (the operator landed, or E-stop) it takes off again RETAKEOFF_S later, until secs of wall
-    clock have passed or the quiet hours begin."""
+    clock have passed."""
     t_end, flights = time.monotonic() + secs, 1
     pil.go = 1
     print(f"console: flight {flights} handed over to the companion", flush=True)
@@ -500,7 +494,7 @@ def console_session(secs: float) -> None:
 
 
 def _console_flights(t_end: float, flights: int) -> None:
-    while time.monotonic() < t_end and not _quiet_soon():
+    while time.monotonic() < t_end:
         run_phase("console", 1.0)
         if drone.m.motors_armed():
             continue
@@ -510,7 +504,7 @@ def _console_flights(t_end: float, flights: int) -> None:
         while time.monotonic() - t1 < RETAKEOFF_S:
             drone.telemetry()
             time.sleep(0.1)
-        if not _wait_estop_reset(t_end) or time.monotonic() >= t_end or _quiet_soon():
+        if not _wait_estop_reset(t_end) or time.monotonic() >= t_end:
             break
         _upright()
         try:
