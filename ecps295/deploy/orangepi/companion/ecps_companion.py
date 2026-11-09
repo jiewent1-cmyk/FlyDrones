@@ -436,6 +436,7 @@ try:
                 "cmd": [row["cmd_forward"], row["cmd_lateral"], row["cmd_yaw"], row["cmd_throttle"], row["escape"]],
                 "raw": [row["raw_forward"], row["raw_yaw"], round(info.raw.throttle, 3)],
                 "rates": {k: round(v, 1) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
+                "es": int(getattr(console, "estop", 0) or 0),  # console E-stop latch: the sim pilot waits for its reset
             })
         if now - last_sys >= 1.0:
             last_sys = now
