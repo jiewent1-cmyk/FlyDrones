@@ -17,7 +17,7 @@ source ~/miniconda3/etc/profile.d/conda.sh; conda activate flydrones
 # companion (restarted while it exits 1 = no FC heartbeat yet; a session end exits 0)
 ( cd $G; while true; do ECPS_FC_HB_TIMEOUT_S=4 ECPS_ROOT=$G ECPS_HOLD=pos ECPS_HOLD_YAW_DPS=30 python -u companion/ecps_companion.py --mode guided --sitl \
     --pil $PILP --url udpin:127.0.0.1:$SITLP --console $ECLP --hw config/hw_$COND.yaml --set safety.max_flight_s=3600 \
-    --set safety.geofence_radius_m=$FENCE --seconds 0 --tag $TAG --log-dir $G/logs/$TAG; rc=$?; [ $rc -eq 1 ] || break; sleep 2; done ) \
+    --set safety.geofence_radius_m=$FENCE --seconds 0 --tag $TAG --log-dir $G/logs/$TAG ${COMP_SET:+--set $COMP_SET}; rc=$?; [ $rc -eq 1 ] || break; sleep 2; done ) \
   > $G/logs/$TAG/companion.out 2>&1 &
 CP=$!
 # Gazebo + SITL + scripted pilot

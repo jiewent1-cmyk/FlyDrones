@@ -22,6 +22,8 @@ waypoints  (optional, 2026-10-17) goal bias for waypoint flight: points are loca
         the bias stays off for post_escape_s so the drone first leaves the obstacle. A point is reached within
         radius_m (EKF), skipped when the distance has not shrunk by stuck_progress_m for stuck_s (e.g. a stack on
         it). When all points are done the cruise stops (hover; the pilot or the test harness takes over).
+        Below min_alt_m (EKF height, default 0.85 m, 0 = off) the brain may not descend, and the layer adds a climb of at
+        most alt_max_climb (2026-11-09: repeated escapes sank the drone to box-top height, Gazebo console contacts).
 target  (2026-10-18) ArUco target tracking (ecps_target.TargetTrack): off until track_start() (ground console TRACK);
         it searches on the spot, sets the waypoint goal standoff_m short of the marker and keeps moving it with the
         marker, then hovers facing it. It runs before the waypoint layer, so everything after it still applies.
@@ -78,6 +80,12 @@ class EcpsPilot(Pilot):
         self.wp_post_escape = float(wp.get("post_escape_s", 2.0))
         self.wp_stuck_s = float(wp.get("stuck_s", 20.0))
         self.wp_stuck_dm = float(wp.get("stuck_progress_m", 0.25))
+        # 2026-11-09 altitude floor while flying to a point: repeated escapes (negative brain throttle) let the drone
+        # sink from ~1.0 to ~0.65 m in about 40 s, level with 0.7 m box tops (Gazebo console contacts lowbox_s21/s22)
+        self.wp_min_alt = float(wp.get("min_alt_m", 0.85))  # 0 = off
+        self.wp_alt_gain = float(wp.get("alt_gain", 1.5))
+        self.wp_alt_max_climb = float(wp.get("alt_max_climb", 0.3))
+        self.wp_alt_ticks = 0
         self.wp_idx = 0
         self.wp_active = True  # the companion clears it while the pilot flies: the mission pauses, then resumes
         self.wp_log: list[tuple[float, int, str, float]] = []  # (time, index, reached/skipped, EKF distance)
@@ -248,6 +256,18 @@ class EcpsPilot(Pilot):
             self._rtl_batt_done = True  # once per flight: the operator / pilot may cancel it
             self.rtl_start(f"battery {tel.battery_pct:.0f} %", t)
 
+    def _wp_alt_floor(self, cmd: FlightCommand, tel) -> FlightCommand:
+        """Below min_alt_m (EKF height) the brain may not descend further; the layer adds a bounded climb."""
+        alt = getattr(tel, "alt_m", None)
+        if self.wp_min_alt <= 0 or alt is None or not math.isfinite(alt) or alt >= self.wp_min_alt:
+            return cmd
+        climb = min(self.wp_alt_max_climb, self.wp_alt_gain * (self.wp_min_alt - alt))
+        if cmd.throttle >= climb:
+            return cmd
+        self.wp_alt_ticks += 1
+        return FlightCommand(throttle=climb, yaw=cmd.yaw, forward=cmd.forward, lateral=cmd.lateral, escape=cmd.escape,
+                             note=(cmd.note + "; " if cmd.note else "") + "waypoint altitude floor")
+
     def _waypoint(self, cmd: FlightCommand, tel, t: float) -> FlightCommand:
         if not self.wp_active:
             self._wp_best = float("inf")  # restart the stuck timer on resume
@@ -268,6 +288,7 @@ class EcpsPilot(Pilot):
             self.wp_idx += 1
             self._wp_best, self._wp_best_t = float("inf"), t
             return self._waypoint(cmd, tel, t)
+        cmd = self._wp_alt_floor(cmd, tel)
         if cmd.escape:
             self._wp_escape_t = t
             return cmd
