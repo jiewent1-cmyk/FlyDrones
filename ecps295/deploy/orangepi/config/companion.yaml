@@ -24,6 +24,7 @@ camera:
   width: 640
   height: 480
   fourcc: MJPG
+  rotate: 180                 # clockwise 0/90/180/270; the real drone's camera is mounted upside down (2026-11-10)
   fps: 30
   out_w: 192                  # as gazebo/cam_bridge.py: gray, area-downsampled
   out_h: 144

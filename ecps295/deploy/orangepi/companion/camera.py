@@ -5,6 +5,9 @@ FlyDrones' Retina then resizes to its own grid. The real camera does the same he
 
   UVCCamera   V4L2 capture thread (OpenCV, MJPEG 640x480 by default; ELP OV7725 or Waveshare OV9281), decode,
               gray, cv2.INTER_AREA to out_w x out_h. Exposure lock and the 12 deg nose-down mount are set on the bench.
+              rotate (0 / 90 / 180 / 270, clockwise) turns the decoded frame before anything else uses it, so the
+              brain view, the console colour view and the marker detector all see it upright (camera mounted
+              upside down on the real drone = 180, found 2026-11-10).
   SimCamera   pre-encoded synthetic MJPEG frames (a textured wall that looms and recedes, plus slow yaw) decoded at
               the camera rate, so the decode cost on the Pi is the same as with a real MJPEG camera.
   ReplayCamera  a directory of JPEG frames (run_g4.py --record-frames), looped at fps.
@@ -61,9 +64,16 @@ class _Cam:
 
 
 class UVCCamera(_Cam):
-    def __init__(self, device: str = "/dev/video0", width: int = 640, height: int = 480, fourcc: str = "MJPG", **kw):
+    _ROT = {0: None, 90: cv2.ROTATE_90_CLOCKWISE, 180: cv2.ROTATE_180, 270: cv2.ROTATE_90_COUNTERCLOCKWISE}
+
+    def __init__(self, device: str = "/dev/video0", width: int = 640, height: int = 480, fourcc: str = "MJPG",
+                 rotate: int = 0, **kw):
         super().__init__(**kw)
         self.device, self.size, self.fourcc = device, (width, height), fourcc
+        if int(rotate) % 360 not in self._ROT:
+            raise ValueError(f"camera.rotate must be 0, 90, 180 or 270, got {rotate}")
+        self.rotate = int(rotate) % 360
+        self._rot = self._ROT[self.rotate]
 
     def _run(self) -> None:
         while not self._stop.is_set():
@@ -90,6 +100,8 @@ class UVCCamera(_Cam):
                 if not ok:
                     self.errors += 1
                     continue
+                if self._rot is not None:
+                    f = cv2.rotate(f, self._rot)
                 self._publish_gray(f, t0)
             cap.release()
             self._stop.wait(0.5)
@@ -145,4 +157,4 @@ def make(source: str, cfg: dict):
         return SimCamera(**common)
     if source.startswith("replay:"):
         return ReplayCamera(source.split(":", 1)[1], **common)
-    return UVCCamera(**{k: cfg[k] for k in ("device", "width", "height", "fourcc") if k in cfg}, **common)
+    return UVCCamera(**{k: cfg[k] for k in ("device", "width", "height", "fourcc", "rotate") if k in cfg}, **common)
