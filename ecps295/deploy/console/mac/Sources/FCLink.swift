@@ -1,5 +1,11 @@
 // ECPS Console - MAVLink link to the flight controller through mavlink-router's ground-station endpoint on the Pi
-// (UDP <pi>:14550, Mode=Server: the router answers whoever sends to it, so we send a 1 Hz heartbeat first).
+// Two ways in, both always on:
+//   - client: UDP to <pi>:14550 for a router endpoint in Mode=Server (SITL / Gazebo rigs): the router answers whoever
+//     sends to it, so we send a 1 Hz heartbeat first;
+//   - listener: UDP on local port 14550 for a router endpoint in Mode=Normal pointed at this Mac (the Pi's production
+//     config since the 10-31 security change: Address = ECPS_GCS_IP, Port = 14550, no server port open on the Pi).
+//     Only flows from the configured host are accepted; replies go back on that flow (the router's own source port).
+// Sends go to whichever path delivered FC frames most recently (the client path until then).
 //
 // The console is a ground station with sysid 250: outside MAV_GCS_SYSID..MAV_GCS_SYSID_HI (254 on the drone, 254-255
 // in SITL), so its heartbeat never keeps the FC's companion-loss failsafe (FS_GCS) quiet. It never requests the streams
@@ -11,7 +17,11 @@ import Network
 
 final class FCLink {
     let q: DispatchQueue
-    private var conn: NWConnection?
+    private var conn: NWConnection?         // client path (router Mode=Server)
+    private var listener: NWListener?       // listener path (router Mode=Normal -> this Mac)
+    private var inConn: NWConnection?       // the accepted flow from the router
+    private var inRxT = 0.0                 // last frame received on inConn
+    private var listenPort: UInt16 = 0
     private(set) var host = ""
     private(set) var port: UInt16 = 14550
     private(set) var state = "idle"
@@ -69,6 +79,55 @@ final class FCLink {
         c.start(queue: q)
         receive(c)
         Log.info("MAVLink -> \(host):\(port) (sysid \(enc.sysid))")
+        listen(port: port)
+    }
+
+    /// Listener on local UDP `port` for a router that pushes to this Mac (Mode=Normal). Restarted only on a port change.
+    private func listen(port: UInt16) {
+        inConn?.cancel(); inConn = nil; inRxT = 0
+        if listener != nil, listenPort == port { return }
+        listener?.cancel(); listener = nil
+        guard let p = NWEndpoint.Port(rawValue: port) else { return }
+        let params = NWParameters.udp
+        params.serviceClass = .interactiveVoice
+        params.allowLocalEndpointReuse = true
+        do {
+            let l = try NWListener(using: params, on: p)
+            l.newConnectionHandler = { [weak self] c in
+                guard let self = self else { c.cancel(); return }
+                guard case let .hostPort(h, _) = c.endpoint, self.sameHost(h) else {
+                    Log.info("MAVLink listener: ignored flow from \(c.endpoint)")
+                    c.cancel(); return
+                }
+                self.inConn?.cancel()
+                self.inConn = c
+                c.start(queue: self.q)
+                self.receiveIn(c)
+                Log.info("MAVLink <- \(c.endpoint) on local :\(port)")
+            }
+            l.stateUpdateHandler = { st in
+                if case .failed(let e) = st { Log.info("MAVLink listener :\(port) failed: \(e.localizedDescription)") }
+            }
+            l.start(queue: q)
+            listener = l
+            listenPort = port
+        } catch {
+            Log.info("MAVLink listener :\(port) not started: \(error.localizedDescription)")
+        }
+    }
+
+    private func sameHost(_ h: NWEndpoint.Host) -> Bool {
+        var s = "\(h)"
+        if let i = s.firstIndex(of: "%") { s = String(s[..<i]) }  // drop an interface suffix
+        return s == host || s == "::ffff:\(host)"
+    }
+
+    private func receiveIn(_ c: NWConnection) {
+        c.receiveMessage { [weak self] data, _, _, err in
+            guard let self = self, c === self.inConn else { return }
+            if let d = data, !d.isEmpty { self.inRxT = mono(); self.handle(d) }
+            if err == nil { self.receiveIn(c) }
+        }
     }
 
     private func receive(_ c: NWConnection) {
@@ -80,7 +139,12 @@ final class FCLink {
     }
 
     func send(_ d: Data) {
-        guard let c = conn, !d.isEmpty else { return }
+        guard !d.isEmpty else { return }
+        if let ic = inConn, mono() - inRxT < 3.0 {  // the router pushes to us: answer on its flow
+            ic.send(content: d, completion: .contentProcessed { _ in })
+            return
+        }
+        guard let c = conn else { return }
         c.send(content: d, completion: .contentProcessed { _ in })
     }
 
@@ -180,7 +244,7 @@ final class FCLink {
         var lost = 0, got = 0
         for (k, v) in seqs where UInt8(k >> 8) == fcSys { lost += v.lost; got += v.got }
         var s: [String: Any] = [
-            "link": ["host": host, "port": Int(port), "state": state, "fps": rateWin.count / 2,
+            "link": ["host": host, "port": Int(port), "state": (inConn != nil && mono() - inRxT < 3.0) ? "ready (listen :\(listenPort))" : state, "fps": rateWin.count / 2,
                      "loss_pct": jnum(got + lost > 0 ? 100.0 * Double(lost) / Double(got + lost) : nil, 1),
                      "crc_err": parser.crcErrors, "kB": rxBytes / 1024],
             "hb_age": jnum(hbT > 0 ? now - hbT : nil, 2),
