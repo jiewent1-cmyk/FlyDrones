@@ -33,6 +33,7 @@ final class ECLLink {
     private var authKey: Data?
     private var txSeq: UInt64 = 0
     private var rxHigh: UInt64 = 0
+    private var rxHighMs: UInt64 = 0  // newest authenticated send time accepted (tells a restarted sender from a replay)
     private var rxSeen = Set<UInt64>()
     private var parts: [UInt32: (t: Double, n: Int, flags: UInt8, chunks: [Int: Data])] = [:]
     private(set) var lastRx = 0.0
@@ -83,6 +84,9 @@ final class ECLLink {
         self.port = port
         conn?.cancel()
         conn = nil
+        rxHigh = 0  // an explicit (re)connect starts a new receive window; the 30 s send-time check still bounds a replay
+        rxHighMs = 0
+        rxSeen.removeAll()
         parts = [:]
         pings = [:]
         rtts = []
@@ -281,7 +285,22 @@ final class ECLLink {
         let seq = d.u64(authAt), sentMs = d.u64(authAt + 8)
         let nowMs = UInt64(Date().timeIntervalSince1970 * 1000)
         guard nowMs > sentMs ? nowMs - sentMs <= 30_000 : sentMs - nowMs <= 30_000 else { return }
-        guard seq > 0, seq <= rxHigh ? (rxHigh - seq < 256 && !rxSeen.contains(seq)) : true else { return }
+        // Replay window. 2026-11-18 (bench): the companion numbers its datagrams from 1 at every start, so after a
+        // companion restart (crash + systemd restart, Pi reboot) every datagram was far below rxHigh and dropped until
+        // the app was restarted: no camera, no brain, no status. A sequence that falls out of the window is now taken as
+        // a restarted sender when its authenticated send time is newer than anything accepted so far; a replayed old
+        // datagram is not newer, and nothing older than 2 s before the newest accepted send time is accepted at all.
+        guard seq > 0, sentMs + 2000 >= rxHighMs else { return }
+        if seq <= rxHigh {
+            if rxHigh - seq < 256 {
+                guard !rxSeen.contains(seq) else { return }
+            } else {
+                guard sentMs > rxHighMs else { return }
+                rxHigh = 0
+                rxSeen.removeAll()
+            }
+        }
+        rxHighMs = max(rxHighMs, sentMs)
         rxSeen.insert(seq)
         if seq > rxHigh {
             rxHigh = seq

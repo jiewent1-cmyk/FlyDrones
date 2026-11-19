@@ -292,15 +292,28 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
     # the simulation; the companion never took off, so on the real drone nobody did). Without it there is no height for
     # the hand-over gate, no pose for the 3D map, the fence turn or the waypoints. Set it while disarmed, every 2 s until
     # the position stream starts; the origin is fixed, the waypoints are metres from the point where the EKF starts.
+    # 2026-11-18 (first bench run on the real F405, ArduCopter 4.7.0): the FC streamed LOCAL_POSITION_NED with no origin
+    # set, so the "until the position stream starts" test never sent one and arming failed with "Fence requires
+    # position". The test is now the FC's own answer: GPS_GLOBAL_ORIGIN is requested every 2 s while disarmed, and the
+    # origin is (re)sent whenever no answer is newer than ORIGIN_SEEN_S. A rebooted FC loses its origin and gets it back.
+    ORIGIN_SEEN_S = 6.0
+
+    def _origin_confirmed(self) -> bool:
+        m = None if self.m is None else self.m.messages.get("GPS_GLOBAL_ORIGIN")
+        return m is not None and time.time() - m._timestamp <= self.ORIGIN_SEEN_S
+
     def _keep_origin(self) -> None:
         now = time.monotonic()
-        if (self.m is None or self.mute or self.armed() or self._fresh("LOCAL_POSITION_NED") is not None
-                or now - self._origin_t < 2.0):
+        if self.m is None or self.mute or self.armed() or now - self._origin_t < 2.0:
             return
         self._origin_t = now
-        lat, lon, alt = self.origin
-        self.m.mav.set_gps_global_origin_send(self.m.target_system, int(lat * 1e7), int(lon * 1e7), int(alt * 1000))
-        self.origin_sent += 1
+        mav = self.mavutil.mavlink
+        if not self._origin_confirmed():
+            lat, lon, alt = self.origin
+            self.m.mav.set_gps_global_origin_send(self.m.target_system, int(lat * 1e7), int(lon * 1e7), int(alt * 1000))
+            self.origin_sent += 1
+        self.m.mav.command_long_send(self.m.target_system, self.m.target_component, mav.MAV_CMD_REQUEST_MESSAGE, 0,
+                                     mav.MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN, 0, 0, 0, 0, 0, 0)
 
     def _gevent(self, what: str) -> None:
         if not self.guard_events or self.guard_events[-1][1] != what:
