@@ -1,0 +1,1 @@
+hb3__lowbox_s7_k107 lowbox_s7 s7_w2map@intact 107 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height

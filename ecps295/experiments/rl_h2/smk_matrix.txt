@@ -1,0 +1,1 @@
+smk_sh5u__lowbox_s3_k3 lowbox_s3 sh5u@intact 3 --mode patrol --seconds 60 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height

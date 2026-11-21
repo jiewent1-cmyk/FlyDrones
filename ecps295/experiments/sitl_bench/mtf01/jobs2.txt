@@ -1,0 +1,63 @@
+q4scale_100_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=100 --set FLOW_FYSCALER=100
+q4scale_-100_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=-100 --set FLOW_FYSCALER=-100
+q4scale_200_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=200 --set FLOW_FYSCALER=200
+q4scale_-200_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=-200 --set FLOW_FYSCALER=-200
+q4scale_100_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=100 --set FLOW_FYSCALER=100
+q4scale_-100_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=-100 --set FLOW_FYSCALER=-100
+q4scale_200_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=200 --set FLOW_FYSCALER=200
+q4scale_-200_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=-200 --set FLOW_FYSCALER=-200
+q4scale_100_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=100 --set FLOW_FYSCALER=100
+q4scale_-100_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=-100 --set FLOW_FYSCALER=-100
+q4scale_200_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=200 --set FLOW_FYSCALER=200
+q4scale_-200_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set FLOW_FXSCALER=-200 --set FLOW_FYSCALER=-200
+q4orient_9000_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 1.0 --seconds 90 --set FLOW_ORIENT_YAW=9000
+q4orient_18000_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 1.0 --seconds 90 --set FLOW_ORIENT_YAW=18000
+q4orient_9000_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 1.0 --seconds 90 --set FLOW_ORIENT_YAW=9000
+q4orient_18000_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 1.0 --seconds 90 --set FLOW_ORIENT_YAW=18000
+q4orient_9000_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 1.0 --seconds 90 --set FLOW_ORIENT_YAW=9000
+q4orient_18000_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 1.0 --seconds 90 --set FLOW_ORIENT_YAW=18000
+q4delay_s50e10_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=50
+q4delay_s100e10_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=100
+q4delay_s50e50_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=50 --set EK3_FLOW_DELAY=50
+q4rate50_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_RATE=50
+q4delay_s50e10_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=50
+q4delay_s100e10_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=100
+q4delay_s50e50_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=50 --set EK3_FLOW_DELAY=50
+q4rate50_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_RATE=50
+q4delay_s50e10_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=50
+q4delay_s100e10_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=100
+q4delay_s50e50_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_DELAY=50 --set EK3_FLOW_DELAY=50
+q4rate50_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set SIM_FLOW_RATE=50
+q4rnd_0.02_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.02
+q4rnd_0.05_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.05
+q4rnd_0.10_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.10
+q4rnd_0.02_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.02
+q4rnd_0.05_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.05
+q4rnd_0.10_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.10
+q4rnd_0.02_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.02
+q4rnd_0.05_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.05
+q4rnd_0.10_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0 --set SIM_SONAR_RND=0.10
+q4oor1_RNG_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4oor5_RNG_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4jmp1_RNG_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4jmp5_RNG_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4oor1_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4oor5_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4jmp1_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4jmp5_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4oor1_RNG_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4oor5_RNG_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4jmp1_RNG_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4jmp5_RNG_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4oor1_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4oor5_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4jmp1_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4jmp5_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4oor1_RNG_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4oor5_RNG_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4jmp1_RNG_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4jmp5_RNG_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4oor1_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4oor5_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=-10 --fault 19:SIM_SONAR_POS_Z=-0.05
+q4jmp1_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 15:SIM_SONAR_POS_Z=-0.05
+q4jmp5_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05

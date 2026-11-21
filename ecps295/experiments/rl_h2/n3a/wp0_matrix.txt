@@ -1,0 +1,3 @@
+wp0__flat_k0 flat s7_w2map_wp@intact 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+wp0__lowbox_s0_k0 lowbox_s0 s7_w2map_wp@intact 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+wp0__cage20_k0 cage20 s7_w2map_wp@intact 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height

@@ -1,0 +1,1 @@
+trksm3__cage20_k0 cage20_mk s7_w2map@intact 0 --mode patrol --seconds 90 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height --track /home/jacky/sim/rl_trk/ecps295/gazebo/worlds/ecps295_cage20_mk.marker.json --track-at 6

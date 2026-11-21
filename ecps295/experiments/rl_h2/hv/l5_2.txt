@@ -1,0 +1,1 @@
+hq0__cage20_k15 cage20 s7_w2map@intact 15 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height

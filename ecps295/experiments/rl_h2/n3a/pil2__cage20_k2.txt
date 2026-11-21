@@ -1,0 +1,1 @@
+pil2__cage20_k2 cage20 s7_w2map@intact 2 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn

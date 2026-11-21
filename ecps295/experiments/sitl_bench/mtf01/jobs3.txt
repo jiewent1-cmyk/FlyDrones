@@ -1,0 +1,12 @@
+q4f4delay_s0e10_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4
+q4f4delay_s50e10_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=50
+q4f4delay_s100e10_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=100
+q4f4delay_s50e50_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=50 --set EK3_FLOW_DELAY=50
+q4f4delay_s0e10_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4
+q4f4delay_s50e10_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=50
+q4f4delay_s100e10_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=100
+q4f4delay_s50e50_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=50 --set EK3_FLOW_DELAY=50
+q4f4delay_s0e10_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4
+q4f4delay_s50e10_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=50
+q4f4delay_s100e10_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=100
+q4f4delay_s50e50_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --set FENCE_RADIUS=4 --set SIM_FLOW_DELAY=50 --set EK3_FLOW_DELAY=50

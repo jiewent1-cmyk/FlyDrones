@@ -1,0 +1,289 @@
+tag,group,cell,rep,armed,complete,outcome,alt_max,touchdown_mps,disarmed,n_variance,rfnd_stat_gnd,rfnd_stat_air,rfnd_dist_gnd_min,rfnd_dist_gnd_max,rfnd_dist_air_min,rfnd_dist_air_max,liftoff_err_max,desc_low_err_max,hov_alt_rms,hov_hgt_est_rms,f_t0,f_dur,f_rfnd_min,f_rfnd_max,f_rfnd_stats,f_true_max,f_dev_max,f_est_err_max,f_stop_after,dev_base,land_offset,climb_overshoot,alt_err_max,msgs
+v6_d3_f01_r1,f01,d3,1,True,True,完成,2.053,0.488607,True,0,"[2, 4]",[4],0.007,0.2,1.85,2.117,0.141,0.042,,,,,,,,,,,,,0.148,,,Mission: 6 Land
+v6_d3_f01_r2,f01,d3,2,True,True,完成,2.034,0.495377,True,0,"[2, 4]",[4],0.002,0.194,1.847,2.1,0.14,0.04,,,,,,,,,,,,,0.178,,,Mission: 6 Land
+v6_d3_f01_r3,f01,d3,3,True,True,完成,2.033,0.48111,True,0,"[2, 4]",[4],0.005,0.199,1.832,2.097,0.134,0.045,,,,,,,,,,,,,0.054,,,Mission: 6 Land
+v6_d3_f01_r4,f01,d3,4,True,True,完成,2.047,0.505234,True,0,[4],[4],0.016,0.206,1.85,2.108,0.126,0.041,,,,,,,,,,,,,0.173,,,Mission: 6 Land
+v6_d3_f01_r5,f01,d3,5,True,True,完成,2.051,0.494006,True,0,"[2, 4]",[4],0.001,0.2,1.861,2.108,0.143,0.04,,,,,,,,,,,,,0.045,,,Mission: 6 Land
+v6_d3_f10_r1,f10,d3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f10_r2,f10,d3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f10_r3,f10,d3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f10_r4,f10,d3,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f10_r5,f10,d3,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f20_r1,f20,d3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f20_r2,f20,d3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f20_r3,f20,d3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f20_r4,f20,d3,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f20_r5,f20,d3,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f30_r1,f30,d3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.089,82.4,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f30_r2,f30,d3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f30_r3,f30,d3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f30_r4,f30,d3,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_f30_r5,f30,d3,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o01_r1,o01,d3,1,True,True,完成,2.064,0.499931,True,0,"[2, 4]",[4],0.009,0.172,1.839,2.119,0.138,0.038,,,,,,,,,,,,,0.161,,,Mission: 6 Land
+v6_d3_o01_r2,o01,d3,2,True,True,完成,2.041,0.502899,True,0,"[2, 4]",[4],0.009,0.192,1.84,2.1,0.152,0.04,,,,,,,,,,,,,0.033,,,Mission: 6 Land
+v6_d3_o01_r3,o01,d3,3,True,True,完成,2.048,0.499648,True,0,"[2, 4]",[4],0.009,0.21,1.877,2.106,0.146,0.034,,,,,,,,,,,,,0.103,,,Mission: 6 Land
+v6_d3_o01_r4,o01,d3,4,True,True,完成,2.056,0.495289,True,0,"[2, 4]",[4],0.004,0.183,1.852,2.119,0.137,0.041,,,,,,,,,,,,,0.183,,,Mission: 6 Land
+v6_d3_o01_r5,o01,d3,5,True,True,完成,2.053,0.503334,True,0,"[2, 4]",[4],0.005,0.2,1.863,2.11,0.135,0.04,,,,,,,,,,,,,0.093,,,Mission: 6 Land
+v6_d3_o10_r1,o10,d3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o10_r2,o10,d3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.089,82.0,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o10_r3,o10,d3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.072,81.7,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o10_r4,o10,d3,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o10_r5,o10,d3,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o20_r1,o20,d3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.089,82.4,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o20_r2,o20,d3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o20_r3,o20,d3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o20_r4,o20,d3,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.072,81.9,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o20_r5,o20,d3,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o30_r1,o30,d3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o30_r2,o30,d3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o30_r3,o30,d3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o30_r4,o30,d3,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_d3_o30_r5,o30,d3,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f01_a_r1,f01,a,1,True,False,未完成:fence,3.598,0.885681,True,0,"[2, 4]",[4],0.0,0.199,1.862,2.234,0.137,0.079,,,6.6,1.0,0.0,0.153,"[2, 4]",3.598,1.598,1.589,6.1,1.936,0.045,1.59,1.59,New fence; Max Alt fence breached; Fence breach cleared
+v6_f01_a_r2,f01,a,2,True,False,未完成:fence,3.605,0.888101,True,0,"[2, 4]",[4],0.0,0.184,1.842,2.249,0.141,0.074,,,6.7,1.0,0.0,0.151,"[2, 4]",3.605,1.605,1.588,6.1,1.947,0.257,1.604,1.604,New fence; Max Alt fence breached; Fence breach cleared
+v6_f01_a_r3,f01,a,3,True,False,未完成:fence,3.669,0.501309,True,0,"[2, 4]",[4],0.005,0.206,1.843,2.253,0.145,0.043,,,6.7,0.9,0.0,0.177,"[2, 4]",3.627,1.627,1.62,6.1,1.962,0.066,1.669,1.62,New fence; Max Alt fence breached; Fence breach cleared
+v6_f01_c_r1,f01,c,1,True,True,完成,2.032,0.494214,True,0,[4],[4],0.014,0.174,0.443,2.099,0.129,0.041,,,9.1,2.9,0.443,0.52,[4],2.02,0.033,0.025,37.3,0.019,0.331,0.021,0.033,New fence; Mission: 6 Land
+v6_f01_c_r2,f01,c,2,True,True,完成,2.043,0.503165,True,0,[4],[4],0.017,0.198,0.461,2.103,0.132,0.035,,,9.1,3.1,0.461,0.533,[4],2.037,0.037,0.044,37.1,0.018,0.248,0.032,0.032,New fence; Mission: 6 Land
+v6_f01_c_r3,f01,c,3,True,True,完成,2.042,0.491567,True,0,"[2, 4]",[4],0.004,0.188,0.451,2.099,0.144,0.044,,,9.0,3.1,0.451,0.542,[4],2.033,0.033,0.046,36.5,0.029,0.428,0.029,0.029,New fence; Mission: 6 Land
+v6_f01_g10_r1,f01,g10,1,True,False,未完成:EKFvar+EKFfail,2.346,0.495036,True,1,"[2, 4]","[2, 4]",0.0,0.218,0.0,2.098,0.129,0.037,,,8.9,10.1,0.0,0.456,"[2, 4]",2.031,0.033,0.022,4.0,1.969,3.365,0.346,0.033,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_g10_r2,f01,g10,2,True,False,未完成:fence,3.937,0.506319,True,0,[4],[4],0.011,0.208,0.041,2.205,0.137,0.039,,,9.0,10.1,0.041,1.977,[4],3.93,1.93,2.02,15.2,1.923,1.961,1.264,1.93,New fence; Max Alt fence breached; Fence breach cleared
+v6_f01_g10_r3,f01,g10,3,True,False,未完成:EKFvar+EKFfail,2.362,0.498512,True,1,"[2, 4]","[2, 4]",0.004,0.216,0.0,2.109,0.136,0.029,,,9.1,10.0,0.0,0.478,"[2, 4]",2.039,0.039,0.019,3.5,1.949,3.767,0.362,0.037,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_g3_r1,f01,g3,1,True,True,完成,2.04,0.498045,True,0,[4],[4],0.013,0.207,0.056,2.1,0.149,0.036,,,9.1,3.0,0.056,0.134,[4],2.027,0.028,0.019,36.7,0.024,0.553,0.025,0.028,New fence; Mission: 6 Land
+v6_f01_g3_r2,f01,g3,2,True,True,完成,2.043,0.486014,True,0,[4],[4],0.016,0.203,0.042,2.102,0.138,0.04,,,9.0,3.0,0.042,0.131,[4],2.035,0.039,0.025,36.9,0.039,0.69,0.031,0.039,New fence; Mission: 6 Land
+v6_f01_g3_r3,f01,g3,3,True,True,完成,2.044,0.487311,True,0,"[2, 4]",[4],0.006,0.213,0.052,2.102,0.15,0.041,,,9.1,2.9,0.052,0.131,[4],2.035,0.035,0.02,36.9,0.024,0.716,0.033,0.033,New fence; Mission: 6 Land
+v6_f01_g5_r1,f01,g5,1,True,False,未完成:EKFvar+EKFfail,2.285,0.497804,True,1,"[2, 4]",[4],0.005,0.185,0.012,2.258,0.141,0.043,,,9.0,5.0,0.012,0.139,[4],2.032,0.062,0.051,4.9,1.954,3.157,0.285,0.062,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_g5_r2,f01,g5,2,True,True,完成,2.041,0.494082,True,0,"[2, 4]",[4],0.001,0.207,0.037,2.108,0.153,0.044,,,9.1,5.0,0.037,0.131,[4],2.025,0.091,0.029,40.8,0.094,0.047,0.028,0.091,New fence; Mission: 6 Land
+v6_f01_g5_r3,f01,g5,3,True,False,未完成:EKFvar+EKFfail+fence,2.328,1.633349,True,1,"[2, 4]",[4],0.0,0.193,0.043,2.239,0.137,1.513,,,9.0,5.1,0.043,0.138,[4],2.038,0.038,0.021,3.8,1.906,2.368,0.328,0.031,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_gN_r1,f01,gN,1,True,False,未完成:EKFvar+EKFfail,2.447,0.522798,True,1,"[2, 4]","[2, 4]",0.0,0.192,0.0,2.098,0.145,2.115,,,9.1,,0.011,0.127,[4],2.026,0.068,1.936,5.3,1.95,3.035,0.447,0.068,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_gN_r2,f01,gN,2,True,False,未完成:EKFvar+EKFfail+fence,2.359,0.513788,True,1,"[2, 4]","[2, 4]",0.0,0.224,0.0,2.099,0.148,2.044,,,8.9,,0.065,0.147,[4],2.034,0.034,0.019,3.3,1.956,5.484,0.359,0.028,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_gN_r3,f01,gN,3,True,False,未完成:EKFvar+EKFfail,2.345,0.508671,True,1,"[2, 4]","[2, 4]",0.0,0.209,0.0,2.098,0.129,1.833,,,9.0,,0.045,0.127,[4],2.026,0.034,0.022,3.6,1.946,3.992,0.345,0.034,New fence; EKF variance; EKF Failsafe: changed to Land Mode
+v6_f01_h_r1,f01,h,1,True,True,完成+EKFvar+EKFfail,3.993,0.525749,True,1,"[2, 4]","[2, 4]",0.0,0.214,0.0,0.38,0.146,2.165,,,5.4,0.5,0.112,0.343,[4],3.993,1.993,2.065,40.1,1.982,0.602,1.962,1.993,New fence; Mission: 6 Land; EKF variance
+v6_f01_h_r2,f01,h,2,True,True,完成+EKFvar+EKFfail,3.997,0.454439,True,1,"[2, 4]","[2, 4]",0.0,0.189,0.0,0.363,0.136,2.005,,,5.5,0.5,0.152,0.386,[4],3.997,1.997,2.01,40.5,1.988,0.932,1.963,1.997,New fence; Mission: 6 Land; EKF variance
+v6_f01_h_r3,f01,h,3,True,True,完成+EKFvar+EKFfail,3.992,0.53401,True,1,"[2, 4]","[2, 4]",0.0,0.195,0.0,0.328,0.145,2.107,,,5.5,0.5,0.093,0.329,[4],3.992,1.992,2.008,39.9,1.986,1.613,1.963,1.992,New fence; Mission: 6 Land; EKF variance
+v6_f10_a_r1,f10,a,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.7,1.0,0.0,0.0,[2],-0.0,2.0,0.041,8.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_a_r2,f10,a,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.7,1.0,0.0,0.066,[2],-0.0,2.0,0.045,8.4,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_a_r3,f10,a,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.9,1.1,0.0,0.0,[2],-0.0,2.0,0.046,8.4,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_c_r1,f10,c,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,2.9,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_c_r2,f10,c,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.5,3.1,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.028,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_c_r3,f10,c,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,3.1,0.0,0.0,[2],-0.0,2.0,0.045,6.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g10_r1,f10,g10,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,,0.0,0.0,[2],-0.0,2.0,0.046,6.0,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g10_r2,f10,g10,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,,0.0,0.0,[2],-0.0,2.0,0.046,6.0,2.022,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g10_r3,f10,g10,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,,0.0,0.0,[2],-0.0,2.0,0.046,5.8,2.033,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g3_r1,f10,g3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.9,2.9,0.0,0.0,[2],-0.0,2.0,0.03,5.9,2.023,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g3_r2,f10,g3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,36.4,0.03,0.07,[2],-0.0,2.0,0.102,42.3,2.019,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g3_r3,f10,g3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.4,0.03,0.07,[2],-0.0,2.0,0.098,43.3,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g5_r1,f10,g5,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.7,4.9,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g5_r2,f10,g5,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.3,0.03,0.07,[2],-0.0,2.0,0.098,43.4,2.027,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_g5_r3,f10,g5,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.0,5.0,0.0,0.0,[2],-0.0,2.0,0.034,5.8,2.033,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_gN_r1,f10,gN,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.031,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_gN_r2,f10,gN,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,,0.0,0.0,[2],-0.0,2.0,0.041,6.0,2.024,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_gN_r3,f10,gN,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,,0.0,0.0,[2],-0.0,2.0,0.041,5.8,2.03,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_h_r1,f10,h,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.1,0.7,0.0,0.0,[2],-0.0,2.0,0.048,9.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_h_r2,f10,h,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.0,0.6,0.0,0.0,[2],-0.0,2.0,0.052,9.5,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f10_h_r3,f10,h,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.9,0.5,0.0,0.0,[2],-0.0,2.0,0.046,9.3,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_a_r1,f20,a,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.7,1.1,0.0,0.0,[2],-0.0,2.0,0.041,8.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_a_r2,f20,a,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.8,1.0,0.0,0.0,[2],-0.0,2.0,0.045,8.5,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_a_r3,f20,a,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,34.8,0.03,0.07,[2],-0.0,2.0,0.098,43.2,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_c_r1,f20,c,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.6,3.0,0.0,0.0,[2],-0.0,2.0,0.046,5.8,2.025,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_c_r2,f20,c,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,36.6,0.03,0.07,[2],-0.0,2.0,0.098,42.7,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_c_r3,f20,c,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,3.1,0.0,0.069,[2],-0.0,2.0,0.046,6.0,2.036,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g10_r1,f20,g10,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.7,,0.0,0.0,[2],-0.0,2.0,0.048,5.8,2.023,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g10_r2,f20,g10,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.7,,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.027,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g10_r3,f20,g10,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.7,,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.036,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g3_r1,f20,g3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.9,3.0,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g3_r2,f20,g3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,3.0,0.0,0.0,[2],-0.0,2.0,0.048,6.0,2.025,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g3_r3,f20,g3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.8,2.9,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g5_r1,f20,g5,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,4.9,0.0,0.0,[2],-0.0,2.0,0.041,5.9,2.026,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g5_r2,f20,g5,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,5.0,0.0,0.0,[2],-0.0,2.0,0.046,5.8,2.018,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_g5_r3,f20,g5,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.6,5.0,0.0,0.0,[2],-0.0,2.0,0.048,5.8,2.033,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_gN_r1,f20,gN,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.7,,0.0,0.0,[2],-0.0,2.0,0.052,5.8,2.026,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_gN_r2,f20,gN,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.6,,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.025,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_gN_r3,f20,gN,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.8,,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.036,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_h_r1,f20,h,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.2,0.5,0.0,0.0,[2],-0.0,2.0,0.052,9.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_h_r2,f20,h,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,33.8,0.03,0.07,[2],-0.0,2.0,0.098,43.1,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f20_h_r3,f20,h,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.8,0.5,0.0,0.051,[2],-0.0,2.0,0.038,9.2,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_a_r1,f30,a,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.9,1.0,0.0,0.0,[2],-0.0,2.0,0.046,8.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_a_r2,f30,a,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.5,0.9,0.0,0.0,[2],-0.0,2.0,0.034,8.4,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_a_r3,f30,a,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,35.0,0.9,0.0,0.0,[2],-0.0,2.0,0.046,8.4,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_c_r1,f30,c,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,2.9,0.0,0.0,[2],-0.0,2.0,0.038,5.8,2.022,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_c_r2,f30,c,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.6,3.0,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.021,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_c_r3,f30,c,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,3.0,0.0,0.0,[2],-0.0,2.0,0.048,6.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g10_r1,f30,g10,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,,0.0,0.0,[2],-0.0,2.0,0.046,5.8,2.024,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g10_r2,f30,g10,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.9,,0.0,0.0,[2],-0.0,2.0,0.052,5.8,2.019,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g10_r3,f30,g10,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.2,,0.0,0.0,[2],-0.0,2.0,0.05,6.2,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g3_r1,f30,g3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.5,0.03,0.07,[2],-0.0,2.0,0.098,43.4,2.026,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g3_r2,f30,g3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,36.9,0.03,0.07,[2],-0.0,2.0,0.102,42.9,2.027,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g3_r3,f30,g3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.6,3.0,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.04,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g5_r1,f30,g5,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.9,5.1,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g5_r2,f30,g5,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.8,4.9,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.018,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_g5_r3,f30,g5,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.0,4.9,0.0,0.0,[2],-0.0,2.0,0.052,5.8,2.03,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_gN_r1,f30,gN,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,,0.0,0.0,[2],-0.0,2.0,0.041,5.9,2.028,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_gN_r2,f30,gN,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.6,,0.0,0.0,[2],-0.0,2.0,0.05,5.9,2.019,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_gN_r3,f30,gN,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,36.8,0.03,0.07,[2],-0.0,2.0,0.102,42.8,2.04,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_h_r1,f30,h,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.0,0.4,0.0,0.0,[2],-0.0,2.0,0.046,9.3,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_h_r2,f30,h,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.2,0.5,0.0,0.0,[2],-0.0,2.0,0.052,9.4,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_f30_h_r3,f30,h,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,33.8,0.03,0.07,[2],-0.0,2.0,0.098,43.1,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f01_r1,f01,hov,1,True,True,完成,1.071,0.572051,True,0,"[2, 4]",[],0.007,0.192,0,0,0.142,0.056,0.007,0.01,,,,,,,,,,,0.027,,,New fence; Mission: 3 Land
+v6_hov_f01_r2,f01,hov,2,True,True,完成,1.071,0.559086,True,0,"[2, 4]",[],0.003,0.185,0,0,0.14,0.051,0.006,0.007,,,,,,,,,,,0.049,,,New fence; Mission: 3 Land
+v6_hov_f01_r3,f01,hov,3,True,True,完成,1.069,0.575279,True,0,[4],[],0.021,0.197,0,0,0.144,0.052,0.006,0.01,,,,,,,,,,,0.026,,,New fence; Mission: 3 Land
+v6_hov_f01_r4,f01,hov,4,True,True,完成,1.056,0.55276,True,0,[4],[],0.016,0.217,0,0,0.134,0.054,0.006,0.01,,,,,,,,,,,0.055,,,New fence; Mission: 3 Land
+v6_hov_f01_r5,f01,hov,5,True,True,完成,1.06,0.553438,True,0,"[2, 4]",[],0.004,0.207,0,0,0.13,0.053,0.005,0.01,,,,,,,,,,,0.037,,,New fence; Mission: 3 Land
+v6_hov_f10_r1,f10,hov,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f10_r2,f10,hov,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f10_r3,f10,hov,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f10_r4,f10,hov,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f10_r5,f10,hov,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f20_r1,f20,hov,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f20_r2,f20,hov,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f20_r3,f20,hov,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f20_r4,f20,hov,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f20_r5,f20,hov,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f30_r1,f30,hov,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f30_r2,f30,hov,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f30_r3,f30,hov,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f30_r4,f30,hov,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_f30_r5,f30,hov,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o01_r1,o01,hov,1,True,True,完成,1.061,0.550304,True,0,"[2, 4]",[],0.009,0.211,0,0,0.13,0.055,0.003,0.008,,,,,,,,,,,0.035,,,New fence; Mission: 3 Land
+v6_hov_o01_r2,o01,hov,2,True,True,完成,1.048,0.540841,True,0,"[2, 4]",[],0.008,0.219,0,0,0.149,0.059,0.003,0.007,,,,,,,,,,,0.033,,,New fence; Mission: 3 Land
+v6_hov_o01_r3,o01,hov,3,True,True,完成,1.057,0.550282,True,0,"[2, 4]",[],0.003,0.2,0,0,0.136,0.059,0.005,0.009,,,,,,,,,,,0.057,,,New fence; Mission: 3 Land
+v6_hov_o01_r4,o01,hov,4,True,True,完成,1.052,0.55698,True,0,"[2, 4]",[],0.002,0.196,0,0,0.145,0.048,0.004,0.008,,,,,,,,,,,0.065,,,New fence; Mission: 3 Land
+v6_hov_o01_r5,o01,hov,5,True,True,完成,1.048,0.547679,True,0,"[2, 4]",[],0.003,0.227,0,0,0.154,0.061,0.004,0.009,,,,,,,,,,,0.038,,,New fence; Mission: 3 Land
+v6_hov_o10_r1,o10,hov,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o10_r2,o10,hov,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o10_r3,o10,hov,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o10_r4,o10,hov,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o10_r5,o10,hov,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o20_r1,o20,hov,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,0.5,0.098,43.2,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o20_r2,o20,hov,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o20_r3,o20,hov,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o20_r4,o20,hov,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,0.5,0.102,42.7,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o20_r5,o20,hov,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o30_r1,o30,hov,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o30_r2,o30,hov,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o30_r3,o30,hov,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o30_r4,o30,hov,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_hov_o30_r5,o30,hov,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o01_a_r1,o01,a,1,True,True,完成,2.069,0.501966,True,0,"[2, 4]",[4],0.002,0.198,1.83,2.13,0.141,0.043,,,6.7,0.9,0.0,0.092,"[2, 4]",2.069,0.833,1.574,40.9,0.817,0.226,0.069,0.833,New fence; Mission: 6 Land
+v6_o01_a_r2,o01,a,2,True,True,完成,2.067,0.501558,True,0,"[2, 4]",[4],0.001,0.213,1.833,2.129,0.154,0.04,,,6.5,1.0,0.0,0.138,"[2, 4]",2.067,0.88,1.58,40.8,0.805,0.238,0.067,0.817,New fence; Mission: 6 Land
+v6_o01_a_r3,o01,a,3,True,True,完成,2.067,0.498733,True,0,"[2, 4]",[4],0.001,0.203,1.843,2.13,0.149,0.041,,,6.5,1.0,0.0,0.145,"[2, 4]",2.067,0.848,1.569,41.5,0.805,0.239,0.067,0.82,New fence; Mission: 6 Land
+v6_o01_c_r1,o01,c,1,True,False,未完成:fence,4.229,0.391543,True,0,[4],[4],0.013,0.197,0.513,2.208,0.131,0.405,,,9.1,3.0,0.513,2.355,[4],4.221,2.221,2.056,3.5,2.241,0.982,2.229,2.221,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_c_r2,o01,c,2,True,False,未完成:fence,4.254,0.381548,True,0,[4],[4],0.019,0.205,0.502,2.216,0.144,0.402,,,9.0,3.0,0.502,2.408,[4],4.247,2.247,2.069,3.6,2.254,1.046,2.254,2.247,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_c_r3,o01,c,3,True,False,未完成:fence,4.287,0.376711,True,0,[4],[4],0.013,0.179,0.519,2.22,0.14,0.412,,,9.0,3.2,0.519,2.496,[4],4.281,2.281,2.076,3.7,2.293,1.07,2.287,2.281,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g10_r1,o01,g10,1,True,False,未完成:fence,4.962,0.609504,True,0,[4],[4],0.01,0.197,0.114,2.195,0.129,0.674,,,9.0,10.1,0.114,3.072,[4],4.962,2.962,2.617,10.8,2.968,1.956,2.962,2.962,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g10_r2,o01,g10,2,True,False,未完成:fence,4.974,0.611942,True,0,"[2, 4]",[4],0.005,0.223,0.114,2.194,0.154,0.679,,,9.0,10.1,0.114,3.081,[4],4.974,2.974,2.628,10.8,2.974,2.007,2.974,2.974,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g10_r3,o01,g10,3,True,False,未完成:fence,4.969,0.613859,True,0,"[2, 4]",[4],0.002,0.209,0.117,2.182,0.132,0.677,,,9.0,10.0,0.117,3.08,[4],4.969,2.969,2.624,10.7,2.977,2.083,2.969,2.969,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g3_r1,o01,g3,1,True,False,未完成:fence,4.72,0.283825,True,0,[4],[4],0.02,0.19,0.12,2.239,0.142,0.468,,,9.1,3.0,0.12,2.237,[4],4.684,2.684,2.589,3.6,2.73,1.011,2.72,2.684,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g3_r2,o01,g3,2,True,False,未完成:fence,4.729,0.284057,True,0,[4],[4],0.018,0.195,0.113,2.207,0.138,0.461,,,9.0,3.0,0.113,2.298,[4],4.698,2.698,2.594,3.6,2.73,1.11,2.729,2.698,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g3_r3,o01,g3,3,True,False,未完成:fence,4.743,0.289542,True,0,[4],[4],0.017,0.194,0.111,2.242,0.141,0.45,,,9.0,3.0,0.111,2.293,[4],4.708,2.708,2.602,3.6,2.749,0.651,2.743,2.708,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g5_r1,o01,g5,1,True,False,未完成:fence,4.966,0.434287,True,0,[4],[4],0.013,0.203,0.122,2.237,0.139,0.674,,,8.9,5.1,0.122,3.073,[4],4.966,2.966,2.619,5.4,2.972,2.009,2.966,2.966,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g5_r2,o01,g5,2,True,False,未完成:fence,4.969,0.431651,True,0,[4],[4],0.011,0.197,0.11,2.248,0.154,0.664,,,9.1,5.0,0.11,3.077,[4],4.969,2.969,2.622,5.3,2.969,1.335,2.969,2.969,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_g5_r3,o01,g5,3,True,False,未完成:fence,4.979,0.442661,True,0,"[2, 4]",[4],0.002,0.193,0.103,2.203,0.148,0.673,,,8.9,5.1,0.103,3.089,[4],4.979,2.979,2.63,5.4,2.986,1.981,2.979,2.979,New fence; Max Alt fence breached; Fence breach cleared
+v6_o01_gN_r1,o01,gN,1,True,True,完成+EKFvar+EKFfail,4.978,0.514582,True,1,"[2, 4]","[2, 4]",0.0,0.196,0.0,2.106,0.139,1.957,,,9.1,,0.104,3.088,[4],4.978,2.978,2.629,37.0,2.982,0.568,2.978,2.978,New fence; Mission: 6 Land; EKF variance
+v6_o01_gN_r2,o01,gN,2,True,True,完成+EKFvar+EKFfail,4.97,0.536232,True,1,"[2, 4]","[2, 4]",0.0,0.23,0.0,2.109,0.157,1.999,,,9.0,,0.116,3.07,[4],4.97,2.97,2.621,36.9,2.969,0.674,2.97,2.97,New fence; Mission: 6 Land; EKF variance
+v6_o01_gN_r3,o01,gN,3,True,True,完成+EKFvar+EKFfail,4.978,0.499205,True,1,"[2, 4]","[2, 4]",0.0,0.207,0.0,2.119,0.146,2.025,,,9.0,,0.114,3.084,[4],4.978,2.978,2.633,37.0,2.985,0.153,2.978,2.978,New fence; Mission: 6 Land; EKF variance
+v6_o01_h_r1,o01,h,1,True,True,完成+EKFvar+EKFfail,4.896,0.49463,True,1,"[2, 4]","[2, 4]",0.0,0.173,0.0,0.825,0.276,1.952,,,5.5,0.5,0.098,0.32,[4],4.896,2.896,2.535,40.3,2.91,0.258,2.896,2.896,New fence; Mission: 6 Land; EKF variance
+v6_o01_h_r2,o01,h,2,True,True,完成+EKFvar+EKFfail,4.896,0.497139,True,1,"[2, 4]","[2, 4]",0.0,0.185,0.0,0.894,0.216,2.002,,,5.7,0.6,0.172,0.442,[4],4.896,2.896,2.54,39.7,2.914,0.201,2.896,2.896,New fence; Mission: 6 Land; EKF variance
+v6_o01_h_r3,o01,h,3,True,True,完成+EKFvar+EKFfail,4.898,0.513937,True,1,"[2, 4]","[2, 4]",0.0,0.19,0.0,0.842,0.191,2.075,,,5.6,0.6,0.18,0.446,[4],4.898,2.898,2.538,39.6,2.914,0.102,2.898,2.898,New fence; Mission: 6 Land; EKF variance
+v6_o10_a_r1,o10,a,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.5,1.0,0.0,0.0,[2],-0.0,2.0,0.052,8.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_a_r2,o10,a,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.6,1.0,0.0,0.0,[2],-0.0,2.0,0.041,8.5,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_a_r3,o10,a,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.9,1.0,0.0,0.0,[2],-0.0,2.0,0.045,8.3,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_c_r1,o10,c,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.1,3.2,0.0,0.0,[2],-0.0,2.0,0.041,6.0,2.036,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_c_r2,o10,c,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,3.0,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.022,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_c_r3,o10,c,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,3.0,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g10_r1,o10,g10,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,,0.0,0.0,[2],-0.0,2.0,0.046,5.8,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g10_r2,o10,g10,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.1,,0.0,0.0,[2],-0.0,2.0,0.041,6.0,2.028,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g10_r3,o10,g10,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.2,0.03,0.07,[2],-0.0,2.0,0.098,43.1,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g3_r1,o10,g3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.1,3.2,0.0,0.0,[2],-0.0,2.0,0.041,6.0,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g3_r2,o10,g3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.2,0.03,0.07,[2],-0.0,2.0,0.098,43.1,2.022,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g3_r3,o10,g3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,3.0,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.036,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g5_r1,o10,g5,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,5.1,0.0,0.0,[2],-0.0,2.0,0.045,6.0,2.032,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g5_r2,o10,g5,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,5.1,0.0,0.0,[2],-0.0,2.0,0.045,5.9,2.021,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_g5_r3,o10,g5,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.1,5.2,0.0,0.0,[2],-0.0,2.0,0.038,5.9,2.028,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_gN_r1,o10,gN,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_gN_r2,o10,gN,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.5,0.03,0.07,[2],-0.0,2.0,0.098,43.4,2.021,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_gN_r3,o10,gN,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,,0.0,0.0,[2],-0.0,2.0,0.045,6.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_h_r1,o10,h,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.2,0.5,0.0,0.0,[2],-0.0,2.0,0.052,9.4,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_h_r2,o10,h,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.1,0.5,0.0,0.0,[2],-0.0,2.0,0.052,9.4,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o10_h_r3,o10,h,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.6,0.5,0.0,0.0,[2],-0.0,2.0,0.038,9.3,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_a_r1,o20,a,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.7,1.1,0.0,0.0,[2],-0.0,2.0,0.045,8.5,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_a_r2,o20,a,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,33.9,0.03,0.07,[2],-0.0,2.0,0.102,42.4,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_a_r3,o20,a,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.3,1.0,0.0,0.0,[2],-0.0,2.0,0.052,8.3,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_c_r1,o20,c,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,36.8,0.03,0.07,[2],-0.0,2.0,0.102,42.7,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_c_r2,o20,c,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,2.9,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.021,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_c_r3,o20,c,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,3.1,0.0,0.0,[2],-0.0,2.0,0.041,6.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g10_r1,o20,g10,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.032,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g10_r2,o20,g10,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.2,,0.0,0.0,[2],-0.0,2.0,0.041,5.9,2.025,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g10_r3,o20,g10,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.7,,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g3_r1,o20,g3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.1,3.0,0.0,0.0,[2],-0.0,2.0,0.034,5.9,2.026,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g3_r2,o20,g3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.1,0.03,0.07,[2],-0.0,2.0,0.098,43.1,2.024,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g3_r3,o20,g3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,2.9,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g5_r1,o20,g5,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,5.0,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g5_r2,o20,g5,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.7,5.0,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.027,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_g5_r3,o20,g5,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,5.1,0.0,0.0,[2],-0.0,2.0,0.046,6.0,2.04,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_gN_r1,o20,gN,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.1,,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_gN_r2,o20,gN,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.045,5.9,2.025,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_gN_r3,o20,gN,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.036,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_h_r1,o20,h,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,33.8,0.03,0.07,[2],-0.0,2.0,0.098,43.2,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_h_r2,o20,h,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.4,0.5,0.0,0.0,[2],-0.0,2.0,0.052,9.3,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o20_h_r3,o20,h,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.4,0.6,0.0,0.0,[2],-0.0,2.0,0.052,9.4,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_a_r1,o30,a,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,34.4,0.03,0.07,[2],-0.0,2.0,0.098,43.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_a_r2,o30,a,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.6,1.1,0.0,0.0,[2],-0.0,2.0,0.041,8.5,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_a_r3,o30,a,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,34.4,1.0,0.0,0.0,[2],-0.0,2.0,0.052,8.4,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_c_r1,o30,c,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.7,2.9,0.0,0.0,[2],-0.0,2.0,0.048,5.9,2.026,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_c_r2,o30,c,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,2.8,0.0,0.0,[2],-0.0,2.0,0.046,5.8,2.019,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_c_r3,o30,c,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.4,3.0,0.0,0.0,[2],-0.0,2.0,0.05,6.0,2.039,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g10_r1,o30,g10,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,0.0,37.5,0.03,0.07,[2],-0.0,2.0,0.098,43.4,2.027,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g10_r2,o30,g10,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,,0.0,0.0,[2],-0.0,2.0,0.045,5.9,2.024,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g10_r3,o30,g10,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.045,5.9,2.031,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g3_r1,o30,g3,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.5,3.0,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g3_r2,o30,g3,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.9,3.1,0.0,0.0,[2],-0.0,2.0,0.052,5.8,2.022,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g3_r3,o30,g3,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.8,3.0,0.0,0.0,[2],-0.0,2.0,0.052,6.0,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g5_r1,o30,g5,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,4.9,0.0,0.0,[2],-0.0,2.0,0.045,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g5_r2,o30,g5,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.3,5.0,0.0,0.0,[2],-0.0,2.0,0.046,6.0,2.024,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_g5_r3,o30,g5,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.5,5.0,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_gN_r1,o30,gN,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.029,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_gN_r2,o30,gN,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,37.4,,0.0,0.0,[2],-0.0,2.0,0.046,5.9,2.018,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_gN_r3,o30,gN,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,36.6,,0.0,0.0,[2],-0.0,2.0,0.052,5.9,2.033,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_h_r1,o30,h,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.1,0.5,0.0,0.0,[2],-0.0,2.0,0.052,9.5,2.038,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_h_r2,o30,h,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.9,0.5,0.0,0.0,[2],-0.0,2.0,0.046,9.4,2.034,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_o30_h_r3,o30,h,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.0,0.07,0,0,,0,,,33.4,0.4,0.0,0.0,[2],-0.0,2.0,0.04,9.4,2.043,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f10_r1,f10,sq,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f10_r2,f10,sq,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f10_r3,f10,sq,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f10_r4,f10,sq,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f10_r5,f10,sq,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f20_r1,f20,sq,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f20_r2,f20,sq,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f20_r3,f20,sq,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f20_r4,f20,sq,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f20_r5,f20,sq,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f30_r1,f30,sq,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f30_r2,f30,sq,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f30_r3,f30,sq,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.098,43.4,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f30_r4,f30,sq,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.098,43.5,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_f30_r5,f30,sq,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o01_r1,o01,sq,1,True,True,完成,2.048,0.497376,True,0,"[2, 4]",[4],0.0,0.209,1.838,2.108,0.133,0.039,,,,,,,,,,,,,0.19,0.039,0.039,New fence; Mission: 6 Land
+v6_sq_o01_r2,o01,sq,2,True,True,完成,2.055,0.50131,True,0,[4],[4],0.014,0.208,1.853,2.113,0.151,0.034,,,,,,,,,,,,,0.126,0.045,0.045,New fence; Mission: 6 Land
+v6_sq_o01_r3,o01,sq,3,True,True,完成,2.055,0.498534,True,0,"[2, 4]",[4],0.007,0.211,1.862,2.119,0.13,0.037,,,,,,,,,,,,,0.087,0.042,0.042,New fence; Mission: 6 Land
+v6_sq_o01_r4,o01,sq,4,True,True,完成,2.05,0.499272,True,0,[4],[4],0.013,0.224,1.85,2.109,0.151,0.034,,,,,,,,,,,,,0.096,0.039,0.039,New fence; Mission: 6 Land
+v6_sq_o01_r5,o01,sq,5,True,True,完成,2.048,0.500149,True,0,"[2, 4]",[4],0.0,0.207,1.855,2.102,0.13,0.038,,,,,,,,,,,,,0.142,0.039,0.039,New fence; Mission: 6 Land
+v6_sq_o10_r1,o10,sq,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.098,43.5,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o10_r2,o10,sq,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o10_r3,o10,sq,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o10_r4,o10,sq,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o10_r5,o10,sq,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o20_r1,o20,sq,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.102,42.5,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o20_r2,o20,sq,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o20_r3,o20,sq,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o20_r4,o20,sq,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o20_r5,o20,sq,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o30_r1,o30,sq,1,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.098,43.4,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o30_r2,o30,sq,2,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.102,42.6,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o30_r3,o30,sq,3,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o30_r4,o30,sq,4,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,0.0,,0.03,0.07,[2],-0.0,2.0,0.098,43.1,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_o30_r5,o30,sq,5,False,False,未完成:未解锁,-0.0,,False,0,[2],[],0.03,0.07,0,0,,0,,,,,,,,,,,,,0.0,,,New fence; Arm: Fence requires position; Arm: Fence requires position
+v6_sq_r1,f01,sq,1,True,True,完成,2.038,0.494532,True,0,"[2, 4]",[4],0.001,0.208,1.868,2.093,0.141,0.039,,,,,,,,,,,,,0.142,0.023,0.023,New fence; Mission: 6 Land
+v6_sq_r2,f01,sq,2,True,True,完成,2.035,0.485953,True,0,"[2, 4]",[4],0.009,0.2,1.856,2.097,0.137,0.045,,,,,,,,,,,,,0.006,0.019,0.022,New fence; Mission: 6 Land
+v6_sq_r3,f01,sq,3,True,True,完成,2.043,0.485389,True,0,[4],[4],0.018,0.201,1.85,2.098,0.125,0.047,,,,,,,,,,,,,0.104,0.029,0.029,New fence; Mission: 6 Land
+v6_sq_r4,f01,sq,4,True,True,完成,2.046,0.501922,True,0,[4],[4],0.012,0.203,1.874,2.099,0.132,0.034,,,,,,,,,,,,,0.058,0.034,0.034,New fence; Mission: 6 Land
+v6_sq_r5,f01,sq,5,True,True,完成,2.043,0.486679,True,0,"[2, 4]",[4],0.0,0.194,1.856,2.108,0.133,0.047,,,,,,,,,,,,,0.184,0.029,0.029,New fence; Mission: 6 Land

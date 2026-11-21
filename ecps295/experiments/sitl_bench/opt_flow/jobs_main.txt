@@ -1,0 +1,28 @@
+hn_base|parm/flownoise.parm|4|45|--scenario hover --alt 2.0 --hold 120
+hn_m05|parm/flownoise_mnse05.parm|4|45|--scenario hover --alt 2.0 --hold 120
+hn_m10|parm/flownoise_mnse10.parm|4|45|--scenario hover --alt 2.0 --hold 120
+hn_m01|parm/flownoise_mnse01.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ofs_base|parm/wind.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ofs_raw|parm/ofs_wind.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ofs_fixed|parm/ofs_fix_wind.parm|4|45|--scenario hover --alt 2.0 --hold 120
+fpos_raw|parm/flowpos_wind.parm|4|45|--scenario hover --alt 2.0 --hold 120
+mis_base|parm/harsh.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+mis_flownse|parm/harsh_flownse.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+mis_rngnse|parm/harsh_rngnse.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+mis_hgtgate|parm/harsh_hgtgate.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+hp_rngnse|parm/rngnse.parm|4|45|--scenario hover --alt 2.0 --hold 120
+hp_rnggate|parm/rnggate.parm|4|45|--scenario hover --alt 2.0 --hold 120
+hp_hgtgate|parm/hgtgate.parm|4|45|--scenario hover --alt 2.0 --hold 120
+hp_hgtdelay|parm/hgtdelay.parm|4|45|--scenario hover --alt 2.0 --hold 120
+fd3|parm/base.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=1.5:3
+fd5|parm/base.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=1.5:5
+fu3|parm/base.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-1.5:3
+fu5|parm/base.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-1.5:5
+fd3p|parm/prot.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=1.5:3
+fd5p|parm/prot.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=1.5:5
+fu3p|parm/prot.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-1.5:3
+fu5p|parm/prot.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-1.5:5
+fo3|parm/base.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-10:3
+fo5|parm/base.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-10:5
+fo3p|parm/prot.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-10:3
+fo5p|parm/prot.parm|4|45|--scenario hover --alt 2.0 --hold 60 --fault 20:SIM_SONAR_POS_Z=-10:5

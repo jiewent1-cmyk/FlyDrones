@@ -1,0 +1,1 @@
+pil_smoke2__lowbox_s0_k0 lowbox_s0 s7_w2map@intact 0 --mode patrol --seconds 30 --cruise 0.5 --max-forward 0.5 --fence-turn

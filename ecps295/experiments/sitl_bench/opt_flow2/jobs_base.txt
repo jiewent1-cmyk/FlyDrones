@@ -1,0 +1,6 @@
+base_q2_RNG_r1|mtf01_sitl_rng.parm|4|0|-|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+base_q2_RNG_r2|mtf01_sitl_rng.parm|4|0|-|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+base_q2_RNG_r3|mtf01_sitl_rng.parm|4|0|-|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+base_q4jmp5_RNG_r1|mtf01_sitl_rng.parm|4|0|-|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+base_q4jmp5_RNG_r2|mtf01_sitl_rng.parm|4|0|-|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05
+base_q4jmp5_RNG_r3|mtf01_sitl_rng.parm|4|0|-|D3 --alt 2.0 --side 2.0 --no-loiter-test --fault 14:SIM_SONAR_POS_Z=1.5 --fault 19:SIM_SONAR_POS_Z=-0.05

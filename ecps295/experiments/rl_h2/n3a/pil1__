@@ -1,0 +1,1 @@
+pil1__ lowbox_s0_k3  lowbox_s0 s7_w2map@intact 3 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn lowbox_s0_k3.txt

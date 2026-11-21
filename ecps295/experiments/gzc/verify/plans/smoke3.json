@@ -1,0 +1,1 @@
+{"world": "ecps295_lowbox_s19", "fence_m": 2.7, "steps": [{"op": "route", "tag": "behind_lb0", "pts": [[-0.15, -0.03], [-1.69, -0.38]]}, {"op": "route", "tag": "behind_lb4", "pts": [[0.51, -0.58], [1.44, -1.63]]}, {"op": "route", "tag": "on_lb0", "pts": [[-1.02, -0.23]]}, {"op": "route", "tag": "on_lb1", "pts": [[-1.95, 0.56]]}]}

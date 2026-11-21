@@ -1,0 +1,9 @@
+m_H2_FNSE_r4|mtf01_sitl_rng.parm|10|60|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+m_H2_FNSE_r5|mtf01_sitl_rng.parm|10|200|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+m_H2_FNSE_r6|mtf01_sitl_rng.parm|10|330|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+s_H2_FNSE_fmn01_r4|mtf01_sitl_rng.parm|10|60|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15,EK3_FLOW_M_NSE=0.1|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+s_H2_FNSE_fmn01_r5|mtf01_sitl_rng.parm|10|200|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15,EK3_FLOW_M_NSE=0.1|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+s_H2_FNSE_fmn01_r6|mtf01_sitl_rng.parm|10|330|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15,EK3_FLOW_M_NSE=0.1|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+s_H2_FNSE_fdl0_r4|mtf01_sitl_rng.parm|10|60|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15,EK3_FLOW_DELAY=0|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+s_H2_FNSE_fdl0_r5|mtf01_sitl_rng.parm|10|200|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15,EK3_FLOW_DELAY=0|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+s_H2_FNSE_fdl0_r6|mtf01_sitl_rng.parm|10|330|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1,SIM_FLOW_RND=0.15,EK3_FLOW_DELAY=0|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260

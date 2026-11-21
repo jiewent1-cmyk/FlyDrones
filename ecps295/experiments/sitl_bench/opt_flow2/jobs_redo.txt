@@ -1,0 +1,1 @@
+m_H2_HDG_r2|mtf01_sitl_rng.parm|10|150|SIM_SONAR_RND=0.02,FENCE_RADIUS=4,SIM_WIND_T=1|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260

@@ -1,0 +1,1 @@
+hs_d80__lowbox_s12 lowbox_s12 s7_w2map@intact 12 --mode hovertest --ext-height

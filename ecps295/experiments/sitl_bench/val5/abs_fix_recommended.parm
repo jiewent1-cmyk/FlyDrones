@@ -1,0 +1,44 @@
+# abs_fix recommended parameters (2026-11-19, ArduCopter 4.7.0 SITL). Approach: ArUco fix -> ODOMETRY -> EKF3 ExtNav position,
+# with optical flow kept as the velocity source. No firmware change needed: HAL_VISUALODOM_ENABLED and EK3_FEATURE_EXTERNAL_NAV
+# are already in /home/jacky/sim/fw_ecps295_mtf/extra_hwdef.dat.
+# Apply on top of /home/jacky/sim/opt_flow2/opt_recommended.parm (EK3_RNG_M_NSE 0.1, EK3_HGT_I_GATE 200, SURFTRAK_MODE 0).
+# Every number is a SITL result (see report.md); check it on the real vehicle with the steps in report.md section 6.
+#
+# ---------- EKF sources ----------
+EK3_SRC1_POSXY 6      # was 0 -> 6 ExtNav. The marker fix is the absolute horizontal position.
+EK3_SRC1_VELXY 5      # unchanged: optical flow stays the velocity source while the marker is out of view.
+EK3_SRC1_POSZ 2       # unchanged: rangefinder height. The ODOMETRY z field is not fused.
+EK3_SRC1_VELZ 0       # unchanged
+EK3_SRC1_YAW 6        # was 0 -> 6 ExtNav yaw = marker-derived yaw sent in ODOMETRY.q.
+                      # Required without a compass: in AID_ABSOLUTE the EKF counts as unhealthy until yaw is aligned
+                      #   (AP_NavEKF3_Control.cpp:786). With YAW 0, SITL raised "EKF variance" + LAND 1 s after the first fix.
+                      # 6 is also recommended with a compass: with SIM_MAG_MOT (motor interference) and YAW 1 the
+                      #   square run ended 3.4 m off. With a clean, well-calibrated compass, 1 also works (see report.md table 2.3).
+EK3_GLITCH_RAD 5      # was 0 -> 5 (default 25; any value > 0 behaves the same here). With 0, position innovations outside
+                      #   EK3_POS_I_GATE are still fused with inflated variance (PosVelFusion.cpp:827) instead of rejected.
+                      #   With 20 % single-frame misdetections and no companion gate: hover dev_max 0.61 -> 0.16 m.
+                      #   No reset side effect: the variance-based reset needs !velAiding, and flow keeps velAiding true.
+EK3_POS_I_GATE 500    # unchanged (5 sigma)
+# ---------- Visual odometry front end ----------
+VISO_TYPE 1           # MAVLink
+VISO_DELAY_MS 100     # = companion latency from camera exposure to sending, measured on the Orange Pi (max 250).
+                      #   The FC's jitter correction maps time_usec to the arrival time, so the latency must be set here.
+                      #   SITL with 300 ms real latency: VISO_DELAY_MS 40 gave track RMS 0.20 m; 250 gave 0.12 m.
+VISO_POS_M_NSE 0.1    # floor on the reported position sigma. The companion reports max(0.1, 2 x measured sigma).
+VISO_YAW_M_NSE 0.05   # floor on the reported yaw sigma (rad). The EKF floors it at 5 deg anyway (Measurements.cpp writeExtNavData).
+VISO_QUAL_MIN 1       # fixes are sent with quality 100. A quality-0 keep-alive at 5 Hz keeps VisOdom "healthy"
+                      #   (pre-arm check) but is not fused (AP_VisualOdom_MAV.cpp handle_pose_estimate).
+VISO_POS_X 0          # 0 if the companion already moves the fix from the camera to the IMU/body origin (recommended);
+VISO_POS_Y 0          #   otherwise the camera offset in metres, body frame.
+VISO_POS_Z 0
+VISO_ORIENT 0
+VISO_SCALE 1
+# ---------- Mission ----------
+WP_YAW_BEHAVIOR 0     # for hover legs (a waypoint on top of the take-off point): with 2 the nose swung 90 deg in SITL and the
+                      #   forward camera lost the marker. For the course, keep 2 only if every leg's next waypoint is in
+                      #   front of a marker; otherwise set the heading explicitly (CONDITION_YAW) so a marker is in view.
+# ---------- Unchanged safety settings (still needed) ----------
+# FS_EKF_ACTION 1, FS_EKF_THRESH 0.8 (EKF failsafe -> LAND), FENCE_* as before.
+# A companion stop is not a failsafe: the EKF dead-reckons on flow after the last fix (10 s later posTimeout). SITL: drift
+#   like the no-fix baseline, no mode change. If the course must abort on companion loss, use FS_GCS (heartbeat) or a
+#   companion-side LAND command. Do not rely on VisOdom health in flight; Copter does not act on it.

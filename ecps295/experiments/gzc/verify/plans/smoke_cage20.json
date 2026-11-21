@@ -1,0 +1,45 @@
+{
+ "world": "ecps295_cage20",
+ "fence_m": 2.7,
+ "steps": [
+  {
+   "op": "route",
+   "tag": "behind_box_w",
+   "pts": [
+    [
+     0.29,
+     -0.78
+    ],
+    [
+     0.77,
+     -2.05
+    ]
+   ]
+  },
+  {
+   "op": "route",
+   "tag": "adj_stack_high",
+   "pts": [
+    [
+     1.5,
+     0.0
+    ]
+   ]
+  },
+  {
+   "op": "route",
+   "tag": "refuse",
+   "pts": [
+    [
+     0.0,
+     0.5
+    ],
+    [
+     2.7500000000000004,
+     0.0
+    ]
+   ],
+   "expect_refuse": true
+  }
+ ]
+}

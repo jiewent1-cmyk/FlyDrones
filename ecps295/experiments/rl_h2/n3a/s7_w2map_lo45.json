@@ -1,0 +1,2 @@
+{"name": "s7_w2map_lo45", "source": "N4 map band_lo_m 0.45 (low box tops below the drone count as obstacles unless it is already over one)",
+ "overrides": {"ecps_pilot": {"struct": {"shield": {"map": {"band_lo_m": 0.45}}}}}}

@@ -1,0 +1,1 @@
+md_v4__lowbox_s0_notex_k0 lowbox_s0_notex v4@intact 0 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height

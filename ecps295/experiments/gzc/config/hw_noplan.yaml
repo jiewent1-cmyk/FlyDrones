@@ -1,0 +1,90 @@
+model: s7_w2map.yaml
+mavlink:
+  url: udpin:127.0.0.1:14560
+  fc_sysid: 1
+  stream_hz: 20
+  rangefinder_hz: 20
+  handover_alt_m: 0.3
+  ekf_origin:
+  - 33.643
+  - -117.842
+  - 20.0
+  ext_height: true
+guard:
+  tof_stale_s: 0.3
+  tof_land_s: 2.0
+  camera_ready_s: 0.3
+  tof_min_valid_zones: 8
+  required_tof_bearings:
+  - 0
+  - 180
+camera:
+  source: uvc
+  device: /dev/video0
+  width: 640
+  height: 480
+  fourcc: MJPG
+  fps: 30
+  out_w: 192
+  out_h: 144
+tof:
+  source: real
+  sensors:
+    front:
+      bearing: 0
+      bus: 0
+      addr: 41
+      hz: 15
+      n: 8
+      hfov: 60.0
+      vfov: 60.0
+      max_m: 3.5
+      flip_lr: false
+      flip_ud: false
+      transpose: false
+      range_kind: radial
+      valid_status:
+      - 5
+      - 9
+    rear:
+      bearing: 180
+      bus: 1
+      addr: 41
+      hz: 15
+      n: 8
+      hfov: 60.0
+      vfov: 60.0
+      max_m: 3.5
+      flip_lr: false
+      flip_ud: false
+      transpose: false
+      range_kind: radial
+      valid_status:
+      - 5
+      - 9
+console:
+  port: 14700
+  handover: hold
+  key_file: /home/jacky/sim/gzc2/config/console.key
+  link_timeout_s: 1.5
+  lost_land_s: 20
+  goto_timeout_s: 90
+  goto_fence_margin_m: 0.4
+  planner:
+    enabled: false
+marker:
+  enabled: false
+  dictionary: 4x4_50
+  marker_id: 7
+  size_m: 0.15
+  hfov_deg: 70.0
+  pitch_deg: 12.0
+  hz: 10
+  cpus: 0-5
+landmark:
+  enabled: false
+  ids: all
+  positions: {}
+  auto_register: true
+  max_range_m: 3.0
+  max_bearing_deg: 30

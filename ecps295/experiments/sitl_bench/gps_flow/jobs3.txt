@@ -1,0 +1,3 @@
+IFfa_poor_r0|/home/jacky/sim/gps_flow/parms/IFfa_poor_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --ch8 1500 --seed 1
+IFfa_poor_r1|/home/jacky/sim/gps_flow/parms/IFfa_poor_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --ch8 1500 --seed 2
+IFfa_poor_r2|/home/jacky/sim/gps_flow/parms/IFfa_poor_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --ch8 1500 --seed 3

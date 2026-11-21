@@ -1,0 +1,31 @@
+# opt_flow2 推荐参数（2026-11-19，ArduCopter 4.7.0 SITL，MTF-01 + EK3_SRC1_POSZ 2，无 GPS/罗盘）
+# 只列本轮有运行依据的改动；其余保持 /home/jacky/sim/mtf01/mtf01_recommended.parm（围栏、航线速度、FLOW_TYPE 5 等）。
+# 格式：参数 建议值   # 现值（fc_real_20261118.parm / mtf01_sitl_rng.parm）-> 建议值；依据运行组（runs/<组>_rN）；改善幅度
+# 数字为 中位数 [最小–最大]，n=3 或 6。全部是 SITL 结论，真机必须复核（见 report.md 第六节）。
+#
+# ---------- 测距异常保护（本轮唯一有大幅、可重复改善的一组）----------
+EK3_RNG_M_NSE 0.1     # 现值 0.5 -> 0.1。与下一行一起才起作用（高度门限 = HGT_I_GATE/100 × sqrt(P + RNG_M_NSE²)）。
+                      # 依据 f_def_* vs f_p1_* / f_p1b_*（AUTO 悬停 2 m，读数 ±1.5 m 跳变）：
+                      #   读数变小 1 s：真值最高 2.94 [2.94–2.98] -> 2.02 [2.01–2.02] m；3 s：4.19 -> 2.02（任务继续 3/3，原值 0/3）
+                      #   读数变大 1/3 s：原值触发 Max Alt fence -> LAND（3 s 时以 1.28 m/s 触地）；新值真值偏离 ≤0.04 m，任务继续 3/3
+                      #   代价（正常飞行）：ab_SQ_ALL_recH vs m_SQ_ALL，航段高度 RMS 0.015 -> 0.018 m（+3 mm，范围不重叠）
+                      #   风险：约 5 s 的故障会撞上 EKF 5 s 高度超时重置（hgtRetryTimeMode12_ms），f_p1_DN5 1/3 冲到 6.95 m（原值 4.34 m 3/3）
+EK3_HGT_I_GATE 200    # 现值 500 -> 200。同上。注意：POSZ=2 时测距高度的门限是 HGT_I_GATE，不是 RNG_I_GATE
+EK3_RNG_I_GATE 500    # 现值 500，不改。POSZ=2 时只用于地形状态估计，而该估计在测距做高度源时被跳过（OptFlowFusion.cpp:89）。
+                      # 依据：f_p1b_DN3/UP3（不改 RNG_I_GATE）与 f_p1_DN3/UP3（改 200）结果相同；s_SQ_ALL_rig200 与 m_SQ_ALL 的差异在离散度内
+SURFTRAK_MODE 0       # 现值 1 -> 0。LOITER/ALT_HOLD 的地面跟踪直接用原始测距（2 m 以下的跳变不算 glitch），绕过 EKF 门限。
+                      # 依据 l_*_UP3（LOITER 悬停，读数变大 1.5 m、3 s）：原参数真值最低 0.00 m（触地 3/3）；只改 EKF 门限 0.81 m；
+                      #   门限 + SURFTRAK_MODE 0：2.01 [1.99–2.05] m。无故障悬停 l_def_ALL_NF vs l_st0_ALL_NF 15 s 窗口高度波动都约 0.04 m，无可见代价。
+                      #   AUTO 相对高度航点不用地面跟踪，本项只影响 LOITER/ALT_HOLD
+#
+# ---------- 水平 ----------
+FLOW_POS_X 0          # 现值 0。若 MTF-01 实际不在 IMU 正下方，填实测偏移（m，机头为 +X、向下为 +Z）。
+FLOW_POS_Y 0          # 依据 s_SQ_WIND_fposU vs fposS（传感器 X +5 cm、Z +3 cm，风 1.5 m/s + 湍流）：跟踪 RMS 0.089 [0.064–0.102] -> 0.058 [0.044–0.061] m，
+FLOW_POS_Z 0          #   范围刚好不重叠，改善约 3 cm。偏移为 0 时不需要动。
+# 以下经测试无效或有副作用，保持现值：
+# EK3_FLOW_M_NSE 0.25 不改：0.1 在纯光流噪声悬停中漂移 0.82 -> 0.52 m（n=6，范围重叠），但 A/B（ab_SQ_ALL_recHF）任务落点偏差 0.37 -> 0.54 m、最大偏航 0.36 -> 0.57 m，变差
+# EK3_FLOW_I_GATE 300 不改：150 / 500 悬停漂移 0.81 / 0.54 m，基线 0.82 [0.53–0.93]，在离散度内
+# EK3_FLOW_DELAY 10 不改：0 / 50 悬停漂移 0.50 [0.42–0.94] / 0.72 m，在离散度内；SITL 光流延迟模型不代表 MTF-01
+# RNGFND1_POS_Z 0 不改：设成 -0.05（与仿真里测距的 5 cm 安装偏移一致）反而出现 5 cm 恒定高度偏差（s_SQ_ALL_rposS 航段 RMS 0.051 vs 0.015），
+#   原因是落地时修正后的读数被 rngOnGnd 下限截断；真机先把 RNGFND1_GNDCLR 设成落地实测读数
+# EK3_RNG_M_NSE 0.25（单独）不改：s_SQ_ALL_rmn025 与基线差异在离散度内

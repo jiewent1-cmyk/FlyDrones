@@ -1,0 +1,81 @@
+=== of_mav /home/jacky/sim/ardupilot/libraries/AP_OpticalFlow/AP_OpticalFlow_MAV.cpp
+   23: #define OPTFLOW_MAV_TIMEOUT_SEC 0.5f
+   52:     state.surface_quality = quality_sum / count;
+   55:     const float dt = (latest_frame_us - prev_frame_us) * 1.0e-6;
+   56:     prev_frame_us = latest_frame_us;
+   59:     if (is_positive(dt) && (dt < OPTFLOW_MAV_TIMEOUT_SEC)) {
+   66:         const float dt_used = flow_sum_is_rads ? 1.0f : dt;
+   67:         state.flowRate = { ((float)flow_sum.x / count) * flow_scale_factor_x * dt_used,
+   68:                            ((float)flow_sum.y / count) * flow_scale_factor_y * dt_used };
+   80:         _applyYaw(state.flowRate);
+   91:     quality_sum = 0;
+  107:     latest_frame_us = AP_HAL::micros64();
+  109:     // use flow_rate_x/y fields if non-zero values are ever provided
+  110:     if (!flow_sum_is_rads && (!is_zero(packet.flow_rate_x) || !is_zero(packet.flow_rate_y))) {
+  111:         flow_sum_is_rads = true;
+  113:         quality_sum = 0;
+  118:     if (flow_sum_is_rads) {
+  119:         // higher precision flow_rate_x/y fields are used
+  120:         flow_sum.x += packet.flow_rate_x;
+  121:         flow_sum.y += packet.flow_rate_y;
+  127:     quality_sum += packet.quality;
+=== of_h /home/jacky/sim/ardupilot/libraries/AP_OpticalFlow/AP_OpticalFlow_MAV.h
+   30:     uint64_t prev_frame_us;             // system time of last message when update was last called
+   31:     uint64_t latest_frame_us;           // system time of most recent messages processed
+   33:     bool flow_sum_is_rads;              // true if flow_sum holds values in rad/s, if false flow_sum holds dpi
+   34:     uint16_t quality_sum;               // sum of sensor's quality values since last call to update
+=== of /home/jacky/sim/ardupilot/libraries/AP_OpticalFlow/AP_OpticalFlow.cpp
+  121:      _log_bit = log_bit;
+  196:     // only healthy if the data is less than 0.5s old
+  197:     _flags.healthy = (AP_HAL::millis() - _last_update_ms < 500);
+  211:             GCS_SEND_TEXT(MAV_SEVERITY_INFO, "FlowCal: FLOW_FXSCALER=%d, FLOW_FYSCALER=%d", (int)_flowScalerX, (int)_flowScalerY);
+  271:     _last_update_ms = AP_HAL::millis();
+  275:     AP::ahrs().writeOptFlowMeas(quality(),
+  278:                                 _last_update_ms,
+  294:     if (_log_bit != (uint32_t)-1 &&
+  295:         !logger->should_log(_log_bit)) {
+  302:         surface_quality : _state.surface_quality,
+=== rf_mav /home/jacky/sim/ardupilot/libraries/AP_RangeFinder/AP_RangeFinder_MAVLink.cpp
+   30:     // only accept distances for the configured orientation
+   31:     if (packet.orientation == orientation()) {
+   33:         distance = packet.current_distance * 0.01;
+   34:         _max_distance = packet.max_distance * 0.01;
+   35:         _min_distance = packet.min_distance * 0.01;
+   37:         signal_quality = packet.signal_quality;
+   38:         if (signal_quality == 0) {
+   40:             signal_quality = RangeFinder::SIGNAL_QUALITY_UNKNOWN;
+   41:         } else if (signal_quality == 1) {
+   42:             // Map 1 to 0 as that is what ardupilot uses as the worst signal quality
+   43:             signal_quality = RangeFinder::SIGNAL_QUALITY_MIN;
+   48: float AP_RangeFinder_MAVLink::max_distance() const
+   50:     const auto baseclass_max_distance = AP_RangeFinder_Backend::max_distance();
+   52:     if (is_zero(_max_distance) && is_zero(_min_distance)) {
+   54:         return baseclass_max_distance;
+   59:     return MIN(baseclass_max_distance, _max_distance);
+   61: float AP_RangeFinder_MAVLink::min_distance() const
+   63:     const auto baseclass_min_distance = AP_RangeFinder_Backend::min_distance();
+   65:     if (is_zero(_max_distance) && is_zero(_min_distance)) {
+   67:         return baseclass_min_distance;
+   72:     return MAX(baseclass_min_distance, _min_distance);
+   82:     if (AP_HAL::millis() - state.last_reading_ms > AP_RANGEFINDER_MAVLINK_TIMEOUT_MS) {
+   83:         set_status(RangeFinder::Status::NoData);
+   85:         state.signal_quality_pct = RangeFinder::SIGNAL_QUALITY_UNKNOWN;
+   88:         state.signal_quality_pct = signal_quality;
+=== rf_h /home/jacky/sim/ardupilot/libraries/AP_RangeFinder/AP_RangeFinder_MAVLink.h
+   10: // Data timeout
+   11: #define AP_RANGEFINDER_MAVLINK_TIMEOUT_MS 500
+   31:     float max_distance() const override;
+   32:     float min_distance() const override;
+   44:     float _max_distance;
+   45:     float _min_distance;
+   46:     int8_t signal_quality;
+=== rf_back /home/jacky/sim/ardupilot/libraries/AP_RangeFinder/AP_RangeFinder_Backend.cpp
+   48:         return RangeFinder::Status::NotConnected;
+   55:     return ((state.status != RangeFinder::Status::NotConnected) &&
+   56:             (state.status != RangeFinder::Status::NoData));
+   63:     if (state_arg.distance_m > max_distance()) {
+   64:         set_status(state_arg, RangeFinder::Status::OutOfRangeHigh);
+   65:     } else if (state_arg.distance_m < min_distance()) {
+   66:         set_status(state_arg, RangeFinder::Status::OutOfRangeLow);
+   68:         set_status(state_arg, RangeFinder::Status::Good);
+   78:     if (_status == RangeFinder::Status::Good) {

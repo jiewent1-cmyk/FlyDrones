@@ -1,0 +1,4 @@
+h1a|parm/base.parm|4|0|--scenario hover --alt 1.0 --hold 120
+h1b|parm/base.parm|4|90|--scenario hover --alt 2.0 --hold 120
+h1c|parm/wind.parm|4|45|--scenario hover --alt 2.0 --hold 120
+h1d|parm/flownoise.parm|4|0|--scenario hover --alt 2.0 --hold 120

@@ -1,0 +1,32 @@
+[
+ {
+  "params": "{\"E\": 0.7, \"R\": 0.6, \"T\": 1.0, \"fc\": 0.5, \"tau\": 30.0}",
+  "fp_n": 20,
+  "fp_per_h": 2.03,
+  "fp_runs": 220,
+  "det_n": 55,
+  "det_runs": 55,
+  "delay_med": 0.27,
+  "delay_max": 10.2
+ },
+ {
+  "params": "{\"E\": 0.7, \"R\": 0.6, \"T\": 1.5, \"fc\": 0.5, \"tau\": 30.0}",
+  "fp_n": 20,
+  "fp_per_h": 2.03,
+  "fp_runs": 220,
+  "det_n": 55,
+  "det_runs": 55,
+  "delay_med": 0.27,
+  "delay_max": 10.7
+ },
+ {
+  "params": "{\"E\": 0.7, \"R\": 0.6, \"T\": 0.5, \"fc\": 0.5, \"tau\": 10.0}",
+  "fp_n": 20,
+  "fp_per_h": 2.03,
+  "fp_runs": 220,
+  "det_n": 51,
+  "det_runs": 55,
+  "delay_med": 0.26,
+  "delay_max": 9.75
+ }
+]

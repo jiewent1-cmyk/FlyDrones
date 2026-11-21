@@ -1,0 +1,12 @@
+mis_base|parm/harsh.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+mis_recA|parm/recA.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+mis_recB|parm/recB.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+mis_flownse|parm/harsh_flownse.parm|4|45|--scenario mission --alt 2.0 --side 2.0 --laps 3
+ab_base_r1|parm/harsh.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_base_r2|parm/harsh.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_base_r3|parm/harsh.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_recA_r1|parm/recA.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_recA_r2|parm/recA.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_recA_r3|parm/recA.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_recB_r1|parm/recB.parm|4|45|--scenario hover --alt 2.0 --hold 120
+ab_recB_r2|parm/recB.parm|4|45|--scenario hover --alt 2.0 --hold 120

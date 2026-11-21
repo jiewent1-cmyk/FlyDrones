@@ -1,0 +1,61 @@
+# gps_flow_recommended.parm  (2026-11-19, ArduCopter 4.7.0, MatekF405-TE, MTF-01 + HGLRC M100 Pro)
+# 推荐架构 (i)：源组 1 = GPS 位置/速度 + 罗盘 + 测距高度；源组 2/3 = 光流 + 罗盘 + 测距高度；遥控三段开关切换；不用 Lua。
+# 只列相对 fc_real_20261118.parm 需要改/确认的项；其余沿用 ~/sim/mtf01/mtf01_recommended.parm（FENCE_RADIUS 4 等）。
+# 依据列中的运行名见 ~/sim/gps_flow/report.md 与 results.csv。SITL 依据只说明方案间相对好坏，不代表真机数值。
+#
+# ---- 硬件：GPS + 罗盘 ----
+SERIAL3_PROTOCOL 5        # 现 2 (MAVLink2) -> 5 (GPS)。不改 GPS 根本不会被识别。未仿真（SITL GPS 走内部串口）
+SERIAL3_BAUD 115          # 现 57；u-blox 驱动会自动协商，115 是常用起点。未仿真
+GPS1_TYPE 1               # 现 0 -> 1 (u-blox)
+GPS_AUTO_CONFIG 1         # 现 0 -> 1，让驱动配置 M10 输出速率/消息。未仿真
+COMPASS_ENABLE 1          # 现 0 -> 1。FM vs F0：光流跟踪 0.054 [0.045–0.067] vs 0.062 [0.045–0.097] m，差别在离散度内；开它主要是为了 GPS 模式（GSF_good 无罗盘 0/3 解锁）
+COMPASS_USE 1             # 现 1
+COMPASS_EXTERNAL 1        # 现 1；M100 Pro 的 QMC5883L 外置
+COMPASS_ORIENT 0          # 现 6（旧值，来源不明）。必须按 M100 Pro 实际安装方向重新确认/做罗盘校准后由校准结果决定
+COMPASS_AUTODEC 1         # 现 1
+COMPASS_MOTCT 2           # 现 0 -> 2（按电流补偿），装好后做 compassmot。依据 FMmot2/FMmot6：随油门变化 11°/35° 的航向误差使光流跟踪从 0.054 m 变 0.174/0.587 m
+# COMPASS_MOT_X/Y/Z       由 compassmot 得出，不要沿用现值 (-2.11, 0.80, -0.24)，那是旧罗盘的
+#
+# ---- EKF 源组 ----
+EK3_SRC1_POSXY 3          # 现 0 -> GPS
+EK3_SRC1_VELXY 3          # 现 5 -> GPS
+EK3_SRC1_VELZ 0           # 现 0；不用 GPS 垂直速度，高度只由测距决定
+EK3_SRC1_POSZ 2           # 现 6 -> 测距（mtf01 结论；本次所有 GPS 运行 alt_rms 0.008–0.014 m）
+EK3_SRC1_YAW 1            # 现 0 -> 罗盘
+EK3_SRC2_POSXY 0          # 现 0
+EK3_SRC2_VELXY 5          # 现 0 -> 光流
+EK3_SRC2_VELZ 0
+EK3_SRC2_POSZ 2           # 现 1 -> 测距
+EK3_SRC2_YAW 1            # 现 0 -> 罗盘（前提：compassmot 后飞行中航向误差变化 <5°，否则改 0，见报告 Q2）
+EK3_SRC3_POSXY 0          # 开关拨到高位 = 源组 3：做成与源组 2 相同，避免误拨进一个未配置的源组
+EK3_SRC3_VELXY 5
+EK3_SRC3_VELZ 0
+EK3_SRC3_POSZ 2
+EK3_SRC3_YAW 1
+EK3_SRC_OPTIONS 1         # 现 1，保持。FuseAllVelocities：GPS 模式下也融合光流速度。IGfa_loss 3/3 完成 (track 0.38 m) vs IG_loss 0/3 (EKF failsafe，落点偏 9.4–12.2 m)；IGfa_poor vs IG_poor 跟踪 1.01 vs 1.06 m 无差别；光流模式下的代价：IFfa_poor 0.112 [0.064–0.136] vs IF_poor 0.079 [0.077–0.118] m，在离散度内但方向变差；若现场 GPS 速度噪声大，改 0
+RC8_OPTION 90             # 现 0 -> EKF 源组开关（低=1 GPS，中=2 光流，高=3 光流）。用哪个通道要按遥控器实际空闲的三段开关定；RC7 已是 153
+#
+# ---- GPS 门限 / 故障 ----
+EK3_GLITCH_RAD 0          # 现 0，暂不改（gr25 / pg300 对比见报告 Q3；3 m 跳变时三者都会把飞机带偏 >1.5 m）
+EK3_POS_I_GATE 500        # 现 500，暂不改（同上）
+EK3_CHECK_SCALE 100       # 现 100，不改：SITL 里 GPS 质量检查只看到恒定 HDOP 1.21，无法验证
+GPS_HDOP_GOOD 140         # 现 140，不改：SITL HDOP 恒为 1.21，无依据
+FS_EKF_ACTION 1           # 现 1 (LAND)，保持。IG_loss：GPS 丢失后约 15 s 才 "stopped aiding" -> EKF variance -> LAND
+FS_EKF_THRESH 0.8         # 现 0.8，保持（未比较其他值）
+#
+# ---- 解锁 / 原点 ----
+ARMING_SKIPCHK 4104       # 现 4104（跳过 GPS lock + GPS config），保持：室内无星时不被 GPS 检查拦住；GPS 模式的安全由 "Need Position Estimate" 和源开关保证。Q5_in_org 可解锁
+VISO_TYPE 0               # 现 1 -> 0：EK3_SRC*_POSZ 2 后 VISION_POSITION_ESTIMATE 不再被使用。IG_comp0（VISO_TYPE 1 + 机载电脑照发）0.389 m vs IG_good（VISO_TYPE 0）0.383 m，无差别，属于清理而非改善
+# 机载电脑：室外可以不发 SET_GPS_GLOBAL_ORIGIN。IG_comp500：硬编码原点（偏 500 m）在 GPS 之前被采用（6 s vs 41 s），但任务误差与 IG_comp0/IG_good 相同（0.40 vs 0.39/0.38 m），SITL 未见冲突；为避免本地坐标偏几百米/几公里，建议有 3D fix 时不发；
+#           室内（无星）仍必须发，否则 "Arm: Fence requires position"（Q5_in_noorg 3/3 无法解锁）。
+#           改成：开机 30 s 内若 GPS_RAW_INT.fix_type < 3 才发原点。
+#
+# ---- 围栏（沿用 mtf01 推荐）----
+FENCE_RADIUS 4            # mtf01 推荐；SW_F2G_d3：切换瞬间 3 m 位置重置触发 Circle fence -> LAND (2/3)
+FENCE_ALT_MAX 2.5         # mtf01 推荐
+FENCE_MARGIN 0.3          # mtf01 推荐
+#
+# ---- 不用 Lua ----
+# SCR_ENABLE 不设：MatekF405-TE hwdef 为 FLASH_SIZE_KB 1024 + minimize_fpv_osd.inc，
+# AP_Scripting_config.h: AP_SCRIPTING_ENABLED = (HAL_PROGRAM_SIZE_LIMIT_KB > 1024) -> 该板固件不含脚本；F405 只有 192 KB RAM，脚本堆一般要 ≥43 KB，也不现实。
+# ahrs-source-gps-optflow.lua 的自动切换在这块板上不可用。

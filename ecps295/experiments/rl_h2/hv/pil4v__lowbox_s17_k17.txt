@@ -1,0 +1,1 @@
+pil4v__lowbox_s17_k17 lowbox_s17 s7_w2map@intact 17 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn

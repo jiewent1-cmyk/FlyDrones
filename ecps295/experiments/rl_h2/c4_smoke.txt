@@ -1,0 +1,1 @@
+smoke_c4s3__lowbox_s0_k0 lowbox_s0 c4_s3@bypass 0 --mode patrol --seconds 40 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height

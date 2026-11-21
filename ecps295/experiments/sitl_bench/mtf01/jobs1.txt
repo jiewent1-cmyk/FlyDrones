@@ -1,0 +1,36 @@
+q1_B_a08_r1|mtf01_sitl.parm|4|D3 --alt 0.8 --side 1.0 --hover-alt 0.8
+q1_B_a15_r1|mtf01_sitl.parm|4|D3 --alt 1.5 --side 1.0 --hover-alt 1.5
+q1_B_a20_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 1.0 --hover-alt 2.0
+q1_B_a08_r2|mtf01_sitl.parm|4|D3 --alt 0.8 --side 1.0 --hover-alt 0.8
+q1_B_a15_r2|mtf01_sitl.parm|4|D3 --alt 1.5 --side 1.0 --hover-alt 1.5
+q1_B_a20_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 1.0 --hover-alt 2.0
+q1_B_a08_r3|mtf01_sitl.parm|4|D3 --alt 0.8 --side 1.0 --hover-alt 0.8
+q1_B_a15_r3|mtf01_sitl.parm|4|D3 --alt 1.5 --side 1.0 --hover-alt 1.5
+q1_B_a20_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 1.0 --hover-alt 2.0
+q2_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_RNG_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_BARO_r1|mtf01_sitl_baro.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_BRNG_r1|mtf01_sitl_barorng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_RNG_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_BARO_r2|mtf01_sitl_baro.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_BRNG_r2|mtf01_sitl_barorng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_RNG_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_BARO_r3|mtf01_sitl_baro.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2_BRNG_r3|mtf01_sitl_barorng.parm|4|D3 --alt 2.0 --side 2.0 --hover-alt 2.0
+q2cut_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_RNG_r1|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_BARO_r1|mtf01_sitl_baro.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_BRNG_r1|mtf01_sitl_barorng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2hb_B_r1|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15 --hb-cut
+q2cut_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_RNG_r2|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_BARO_r2|mtf01_sitl_baro.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_BRNG_r2|mtf01_sitl_barorng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2hb_B_r2|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15 --hb-cut
+q2cut_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_RNG_r3|mtf01_sitl_rng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_BARO_r3|mtf01_sitl_baro.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2cut_BRNG_r3|mtf01_sitl_barorng.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15
+q2hb_B_r3|mtf01_sitl.parm|4|D3 --alt 2.0 --side 2.0 --no-loiter-test --vis-cut 15 --hb-cut

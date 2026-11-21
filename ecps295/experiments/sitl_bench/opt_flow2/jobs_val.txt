@@ -1,0 +1,4 @@
+v_h2_s4|mtf01_sitl_rng.parm|4|0|SIM_SONAR_RND=0.02,FENCE_RADIUS=4|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+v_h2_s10|mtf01_sitl_rng.parm|10|0|SIM_SONAR_RND=0.02,FENCE_RADIUS=4|HOV --alt 2.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+v_h1_s10|mtf01_sitl_rng.parm|10|0|SIM_SONAR_RND=0.02,FENCE_RADIUS=4|HOV --alt 1.0 --hold 120 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260
+v_sq_s10|mtf01_sitl_rng.parm|10|0|SIM_SONAR_RND=0.02,FENCE_RADIUS=4|SQ --alt 2.0 --side 2.0 --laps 3 --hold 0 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 260

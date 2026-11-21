@@ -1,0 +1,48 @@
+IG_good_r0|/home/jacky/sim/gps_flow/parms/IG_good_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --seed 1
+IG_good_r1|/home/jacky/sim/gps_flow/parms/IG_good_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --seed 2
+IG_good_r2|/home/jacky/sim/gps_flow/parms/IG_good_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --seed 3
+IG_poor_r0|/home/jacky/sim/gps_flow/parms/IG_poor_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --seed 1
+IG_poor_r1|/home/jacky/sim/gps_flow/parms/IG_poor_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --seed 2
+IG_poor_r2|/home/jacky/sim/gps_flow/parms/IG_poor_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --seed 3
+IF_poor_r0|/home/jacky/sim/gps_flow/parms/IF_poor_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --ch8 1500 --seed 1
+IF_poor_r1|/home/jacky/sim/gps_flow/parms/IF_poor_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --ch8 1500 --seed 2
+IF_poor_r2|/home/jacky/sim/gps_flow/parms/IF_poor_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --ch8 1500 --seed 3
+F0_r0|/home/jacky/sim/gps_flow/parms/F0_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 1
+F0_r1|/home/jacky/sim/gps_flow/parms/F0_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 2
+F0_r2|/home/jacky/sim/gps_flow/parms/F0_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 3
+FM_r0|/home/jacky/sim/gps_flow/parms/FM_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 1
+FM_r1|/home/jacky/sim/gps_flow/parms/FM_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 2
+FM_r2|/home/jacky/sim/gps_flow/parms/FM_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 3
+II_poor_r0|/home/jacky/sim/gps_flow/parms/II_poor_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --seed 1
+II_poor_r1|/home/jacky/sim/gps_flow/parms/II_poor_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --seed 2
+II_poor_r2|/home/jacky/sim/gps_flow/parms/II_poor_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 1.5:20 --seed 3
+FMdec20_r0|/home/jacky/sim/gps_flow/parms/FMdec20_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 1
+FMdec20_r1|/home/jacky/sim/gps_flow/parms/FMdec20_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 2
+FMdec20_r2|/home/jacky/sim/gps_flow/parms/FMdec20_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 3
+FMmot2_r0|/home/jacky/sim/gps_flow/parms/FMmot2_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 1
+FMmot2_r1|/home/jacky/sim/gps_flow/parms/FMmot2_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 2
+FMmot2_r2|/home/jacky/sim/gps_flow/parms/FMmot2_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 3
+FMmot6_r0|/home/jacky/sim/gps_flow/parms/FMmot6_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 1
+FMmot6_r1|/home/jacky/sim/gps_flow/parms/FMmot6_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 2
+FMmot6_r2|/home/jacky/sim/gps_flow/parms/FMmot6_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --seed 3
+SW_F2G_d1_r0|/home/jacky/sim/gps_flow/parms/SW_F2G_d1_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --ch8 1500 --gps-step 5:0.7,0.7 --switch 15:1000 --seed 1
+SW_F2G_d1_r1|/home/jacky/sim/gps_flow/parms/SW_F2G_d1_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --ch8 1500 --gps-step 5:0.7,0.7 --switch 15:1000 --seed 2
+SW_F2G_d1_r2|/home/jacky/sim/gps_flow/parms/SW_F2G_d1_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --ch8 1500 --gps-step 5:0.7,0.7 --switch 15:1000 --seed 3
+SW_F2G_d3_r0|/home/jacky/sim/gps_flow/parms/SW_F2G_d3_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --ch8 1500 --gps-step 5:2.1,2.1 --switch 15:1000 --seed 1
+SW_F2G_d3_r1|/home/jacky/sim/gps_flow/parms/SW_F2G_d3_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --ch8 1500 --gps-step 5:2.1,2.1 --switch 15:1000 --seed 2
+SW_F2G_d3_r2|/home/jacky/sim/gps_flow/parms/SW_F2G_d3_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --ch8 1500 --gps-step 5:2.1,2.1 --switch 15:1000 --seed 3
+SW_G2F_r0|/home/jacky/sim/gps_flow/parms/SW_G2F_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --switch 15:1500 --seed 1
+SW_G2F_r1|/home/jacky/sim/gps_flow/parms/SW_G2F_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --switch 15:1500 --seed 2
+SW_G2F_r2|/home/jacky/sim/gps_flow/parms/SW_G2F_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --switch 15:1500 --seed 3
+IG_loss_r0|/home/jacky/sim/gps_flow/parms/IG_loss_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --fault 15:SIM_GPS1_ENABLE=0 --seed 1
+IG_loss_r1|/home/jacky/sim/gps_flow/parms/IG_loss_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --fault 15:SIM_GPS1_ENABLE=0 --seed 2
+IG_loss_r2|/home/jacky/sim/gps_flow/parms/IG_loss_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --fault 15:SIM_GPS1_ENABLE=0 --seed 3
+IG_step3_r0|/home/jacky/sim/gps_flow/parms/IG_step3_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --gps-step 15:3,0:10 --seed 1
+IG_step3_r1|/home/jacky/sim/gps_flow/parms/IG_step3_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --gps-step 15:3,0:10 --seed 2
+IG_step3_r2|/home/jacky/sim/gps_flow/parms/IG_step3_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --gps-step 15:3,0:10 --seed 3
+IGfa_loss_r0|/home/jacky/sim/gps_flow/parms/IGfa_loss_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --fault 15:SIM_GPS1_ENABLE=0 --seed 1
+IGfa_loss_r1|/home/jacky/sim/gps_flow/parms/IGfa_loss_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --fault 15:SIM_GPS1_ENABLE=0 --seed 2
+IGfa_loss_r2|/home/jacky/sim/gps_flow/parms/IGfa_loss_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --fault 15:SIM_GPS1_ENABLE=0 --seed 3
+GSF_good_r0|/home/jacky/sim/gps_flow/parms/GSF_good_r0.parm|5|33.643000,-117.842000,20,10|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --seed 1
+GSF_good_r1|/home/jacky/sim/gps_flow/parms/GSF_good_r1.parm|5|33.643020,-117.842000,20,130|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --seed 2
+GSF_good_r2|/home/jacky/sim/gps_flow/parms/GSF_good_r2.parm|5|33.643040,-117.842000,20,250|D3 --alt 2 --side 2 --hold 8 --no-loiter-test --settle 25 --no-origin --no-vis --gps-walk 0.5:20 --seed 3

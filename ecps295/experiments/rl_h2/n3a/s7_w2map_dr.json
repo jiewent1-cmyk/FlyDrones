@@ -1,0 +1,2 @@
+{"name": "s7_w2map_dr", "source": "N4 drift-aware shield (each barrier tightened by the estimated uncommanded drift, patch_drift.py)",
+ "overrides": {"ecps_pilot": {"struct": {"shield": {"drift": {"enabled": true, "tau_s": 1.0, "resp_s": 0.5, "win_s": 0.5, "max_mps": 0.15}}}}}}

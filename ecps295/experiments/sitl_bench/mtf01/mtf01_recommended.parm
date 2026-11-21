@@ -1,0 +1,47 @@
+# MTF-01 建议参数（2026-11-19 SITL 结果，ArduCopter 4.7.0 / Matek F405，无 GPS 无罗盘）
+# 只列需要改动或需要确认的真机参数；未列出的保持 fc_real_20261118.parm 现值。
+# 依据中的运行名对应 runs/<tag>/，汇总见 report.md / results.csv。
+# 标 [未仿真] 的是按厂商说明/几何推算，SITL 没有验证。
+#
+# --- 传感器接口（SITL 用的是 FLOW_TYPE 10 / RNGFND1_TYPE 100 仿真驱动，MAVLink 驱动本身没有仿真）---
+SERIAL4_PROTOCOL 1        # MTF-01 MAVLink 输出 [未仿真]
+SERIAL4_BAUD 115          # MTF-01 出厂波特率按 115200 假设，装机前核对说明书 [未仿真]
+FLOW_TYPE 5               # MAVLink 光流 [未仿真]
+FLOW_FXSCALER 0           # 由 -800（3901-L0X MSP 用的值）改回 0，再按手推/飞行标定；q4scale_*：±20% 比例误差使跟踪 RMS 从 0.065 m 升到 0.23–0.44 m
+FLOW_FYSCALER 0           # 同上
+FLOW_ORIENT_YAW 0         # 按 MTF-01 箭头朝机头安装；装错 90°/180° 时离地约 8 s 内飞走（q4orient_*），起飞前必须做手持检查
+RNGFND1_TYPE 10           # MAVLink 测距 [未仿真]
+RNGFND1_MAX 8             # MTF-01 标称量程；q1_B_a20/q2_RNG 2 m 飞行正常。室外阳光下实际量程必须现场测
+RNGFND1_MIN 0.01          # 标称 0.02 m 起
+RNGFND1_ORIENT 25         # 朝下，不变
+RNGFND1_GNDCLR 0.03       # 现值；装机后落地实测读数再改 [未仿真]
+#
+# --- 高度来源 ---
+EK3_SRC1_POSZ 2           # 测距直接做高度源（方案 b）。q2_RNG：任务高度 RMS 0.011 m、估计误差 RMS 0.014 m，与路线 B（q2_B 0.011/0.020）相同；
+                          # 机载电脑断流时不受影响（q2cut_RNG 0.025 m），而路线 B 会无提示地切到气压计（q2cut_B 0.056 m，最大 0.19 m）
+EK3_RNG_USE_HGT -1        # 不用气压+测距切换：q2_BRNG 高度 RMS 0.083 m、最高 2.13 m，比 b 差
+EK3_SRC2_POSZ 1           # 现值（气压），保留作备用源；EKF3 在测距/外部高度丢失时会自动退到气压计
+VISO_TYPE 1               # 现值。所有 SITL 运行里机载电脑都仍在发 VISION_POSITION_ESTIMATE；改成 0 没有仿真过，先不动
+#
+# --- 光流 EKF ---
+EK3_FLOW_DELAY 10         # 现值。SITL 中真实延迟 50/100 ms（SIM_FLOW_DELAY 1/2 样本@20Hz）配 EK3_FLOW_DELAY 10 或 100，跟踪 RMS 都在 0.05–0.08 m（q4f4dly_*），SITL 分辨不出；真机用日志 OF.flowX 与 IMU 角速率互相关测实际延迟再定
+EK3_FLOW_M_NSE 0.25       # 现值，未调
+EK3_FLOW_I_GATE 300       # 现值，未调
+EK3_FLOW_MAX 2.5          # 现值；2 m 高 0.4 m/s 只用到约 0.2 rad/s
+EK3_RNG_USE_SPD 2         # 现值
+#
+# --- 围栏 ---
+FENCE_ALT_MAX 2.5         # 1.3 → 2.5：2 m 任务真值最高 2.01–2.23 m（q2_*、q2cut_*、q2hb_*），LOITER 手动超调到 2.34 m（q2_BRNG 悬停）
+FENCE_MARGIN 0.3          # 2 → 0.3（FIELD_PARAMS，所有运行都用 0.3）
+FENCE_RADIUS 4            # 3 → 4：2 m 正方形从角点起飞，对角点离起点 2.83 m，真值最大半径 2.75–3.03 m（q2_*），
+                          # 余量约 0.1 m，再多 0.2 m 偏差就会 "Circle fence breached" → LAND；q4f4delay_s0e10 / q4f4dly_*（FENCE_RADIUS 4）9+3 次均未误触发。
+                          # 4 m 圆在 6 m 网笼里不再保护全部墙面——起飞点要放在网笼中心附近，正方形向前/右展开
+#
+# --- 航线 / 悬停速度（auto_mission.py FIELD_PARAMS 原值，全部运行使用，未测更快的值）---
+WP_SPD 0.4
+WP_SPD_UP 0.5
+WP_SPD_DN 0.4
+WP_ACC 1.0
+WP_RADIUS_M 0.2           # 航点到达误差中位数 < 0.2 m（q2_RNG wp_err）
+LOIT_SPEED_MS 1.0
+RTL_ALT_M 0               # 当前高度返航；2 m 高没有必要再爬升

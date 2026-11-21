@@ -1,0 +1,2 @@
+mc4_h2_s7__lowbox_s38_k38 lowbox_s38 h2_s7@intact 38 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
+mc4_h2_s8__lowbox_s27_k27 lowbox_s27 h2_s8@intact 27 --mode patrol --seconds 120 --cruise 0.5 --max-forward 0.5 --fence-turn --ext-height
