@@ -50,14 +50,20 @@ def start(cmd, log, cpus=None):
     return p
 
 
+# HEIGHT=rng (2026-11-19, MTF-01): the rangefinder is the EKF height source (EK3_SRC1_POSZ 2, VISO_TYPE 0) and the
+# companion sends no route-B height (mavlink.ext_height false); default = route B (G_extnav_height.parm).
+RNG_HEIGHT = os.environ.get("HEIGHT", "extnav") == "rng"
+HEIGHT_PARM = "I_rng_height_mtf01.parm" if RNG_HEIGHT else "G_extnav_height.parm"
+rep["height_source"] = "rangefinder" if RNG_HEIGHT else "route B"
+
 # ------------------------------------------------------------------ SITL + router
 (W / "hil.parm").write_text(
     "\n".join(
         [
             (R / "ecps295/sitl/variants/companion_fs.parm").read_text(),
-            (R / "ecps295/sitl/variants/G_extnav_height.parm").read_text(),
-            "RNGFND1_TYPE 100",  # SITL downward rangefinder: the route-B input
-            "RNGFND1_MAX 3",
+            (R / f"ecps295/sitl/variants/{HEIGHT_PARM}").read_text(),
+            "RNGFND1_TYPE 100",  # SITL downward rangefinder: the route-B input, or the EKF height itself (HEIGHT=rng)
+            f"RNGFND1_MAX {8 if RNG_HEIGHT else 3}",
             "RNGFND1_MIN 0.05",
             "RNGFND1_ORIENT 25",
             "GUID_TIMEOUT 1",
@@ -151,6 +157,8 @@ rep["ekf_ready_s"] = round(time.monotonic() - t0, 1)
 hw_cfg = yaml.safe_load((R / "config/companion.yaml").read_text())
 if os.environ.get("RNG_HZ"):
     hw_cfg["mavlink"]["rangefinder_hz"] = float(os.environ["RNG_HZ"])
+if RNG_HEIGHT:
+    hw_cfg["mavlink"]["ext_height"] = False
 hw_yaml = W / "companion_hw.yaml"
 hw_yaml.write_text(yaml.safe_dump(hw_cfg))
 rep["rangefinder_hz_requested"] = hw_cfg["mavlink"].get("rangefinder_hz")
@@ -311,6 +319,9 @@ if "scenario_result" in rep:
     print("scenario:", SCENARIO, rep["scenario_result"])
 rep["pass"] = all(p["pass"] for p in rep["phases"].values()) and rep.get("scenario_result", {}).get("pass", True)
 print(json.dumps(rep["phases"], indent=1))
+if RNG_HEIGHT:  # nothing may reach the FC as an external height in this configuration
+    rep["route_b_absent"] = len(vh) == 0
+    print("route-B height absent (HEIGHT=rng):", "PASS" if rep["route_b_absent"] else f"FAIL ({len(vh)} messages)")
 print("route-B height:", rep["route_b_height_m"])
 ra = sorted(obs["viso_age"])
 if ra:

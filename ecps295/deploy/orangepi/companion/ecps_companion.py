@@ -411,7 +411,7 @@ try:
             "cmd_throttle": round(cmd.throttle, 3),
             "escape": int(cmd.escape),
             "note": cmd.note,
-            "guard": getattr(drone, "guard_note", ""),
+            "guard": getattr(drone, "guard_note", "") or (drone.height_guard.note() if hasattr(drone, "height_guard") else ""),
             **({"trk_state": pilot.target.state,
                 "trk_range": round(pilot.target.last_det.range_m, 3) if pilot.target.last_det is not None else "",
                 "trk_bearing": round(pilot.target.last_det.bearing_deg, 1) if pilot.target.last_det is not None else "",

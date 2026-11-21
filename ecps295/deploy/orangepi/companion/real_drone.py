@@ -28,6 +28,7 @@ import numpy as np
 
 from flydrones.motor.command import FlightCommand
 from flydrones.safety import Telemetry
+from height_guard import HeightGuard
 from mavlink_twin import Ecps295MavlinkDrone
 
 
@@ -140,6 +141,7 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         self._hold = False
         self._last_text = 0.0
         self.guard_note = ""
+        self.height_guard = HeightGuard((guard or {}).get("height_monitor"))  # baro vouches for the rangefinder
         self.guard_events: list[tuple[float, str]] = []
         self.guard_ticks = {"tof_hover": 0, "tof_land": 0, "time_hold": 0, "handover_refused": 0}
 
@@ -428,6 +430,7 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
             self._heartbeat()
             self.send_ext_height()
         self._keep_origin()
+        self.height_guard.tick(self)  # own path, like the E-stop: acts whether or not we are in control
         t.flying = self.armed()
         return t
 
