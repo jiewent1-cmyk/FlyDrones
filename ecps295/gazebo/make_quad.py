@@ -65,8 +65,17 @@ ap.add_argument("--tof-max", type=float, default=2.0)  # m, Matek spec (RNGFND1_
 ap.add_argument("--tof-fov", type=float, default=27.0)  # deg, full cone (Matek 3901-L0X spec)
 ap.add_argument("--tof-rate", type=float, default=10.0)  # Hz; real VL53L0X ~30 Hz, but the GPU ray pass at 30 Hz cost
 # RTF 1.000 -> 0.906 over whole runs (2026-10-03), 10 Hz -> 0.973; the EKF fuses height at <= 10-20 Hz anyway
+# VANTAGE survey camera (2026-11-03): a second, downward camera for whole-site stills (companion survey_cam, console
+# op still). 5 MP 70 deg pinhole, the configuration survey/vision/CAPTURE_BENCH.md recommends. Image top = drone
+# forward, image right = drone right. 2 Hz: a still is taken while hovering, and every render pass costs RTF, so it
+# is only on the separate model ecps295_quad_survey (gen_survey_world.py); ecps295_quad and every other world stay as
+# they were.
+ap.add_argument("--survey-res", type=int, nargs=2, default=[2592, 1944])
+ap.add_argument("--survey-hfov", type=float, default=70.0)
+ap.add_argument("--survey-rate", type=float, default=2.0)
 a = ap.parse_args()
 a.views_active = "none"  # set per generated variant
+a.survey_cam = False  # set per generated variant
 
 RHO = 1.2041
 A0, CLA, CDA = 0.3, 4.25, 0.10  # blade incidence / lift / drag slopes (Iris values)
@@ -189,6 +198,29 @@ def camera_parts():
       </sensor>"""
 
 
+SURVEY_TOPIC = "ecps295/survey_cam"
+# just ahead of the battery and below the nose, so neither is in view; no mass (see the camera note above)
+SURVEY_X, SURVEY_Z = 0.046, -0.02
+
+
+def survey_camera_parts():
+    if not a.survey_cam:
+        return ""
+    w, h = a.survey_res
+    # pitch +90 deg turns the sensor's +x (view direction) to -z (down) and its +z (image up) to +x (forward)
+    return f"""
+      <sensor name="survey_cam" type="camera">
+        <pose>{SURVEY_X} 0 {SURVEY_Z} 0 {math.pi / 2:.5f} 0</pose>
+        <always_on>1</always_on><update_rate>{a.survey_rate}</update_rate><topic>{SURVEY_TOPIC}</topic>
+        <camera>
+          <horizontal_fov>{math.radians(a.survey_hfov):.5f}</horizontal_fov>
+          <image><width>{w}</width><height>{h}</height><format>R8G8B8</format></image>
+          <clip><near>0.02</near><far>50</far></clip>
+          <noise><type>gaussian</type><mean>0</mean><stddev>{a.cam_noise}</stddev></noise>
+        </camera>
+      </sensor>"""
+
+
 TOF_TOPIC = "ecps295/tof"
 # behind the battery (its visual would block the beam), 15 mm below the body origin: ~8 mm above the floor when
 # landed, which keeps the reading inside the ray's min range (a reading below min is inf and would look like "no
@@ -281,7 +313,7 @@ def build_model(name: str) -> str:
         <pose degrees="true">0 0 0 180 0 0</pose>
         <always_on>1</always_on><update_rate>1000.0</update_rate>
       </sensor>
-{camera_parts()}
+{camera_parts()}{survey_camera_parts()}
 {tof_parts()}
 {chase_camera()}
     </link>
@@ -363,6 +395,12 @@ for mname, _, views in VARIANTS:
     mdir.mkdir(parents=True, exist_ok=True)
     (mdir / "model.sdf").write_text(build_model(mname))
     (mdir / "model.config").write_text(build_config(mname))
+a.views_active, a.survey_cam = "none", True
+mdir = HERE / "models" / "ecps295_quad_survey"
+mdir.mkdir(parents=True, exist_ok=True)
+(mdir / "model.sdf").write_text(build_model("ecps295_quad_survey"))
+(mdir / "model.config").write_text(build_config("ecps295_quad_survey"))
+a.survey_cam = False
 (HERE / "worlds").mkdir(exist_ok=True)
 
 

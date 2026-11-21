@@ -51,7 +51,7 @@ ap.add_argument("--mode", choices=["bench", "shadow", "guided"], default="bench"
 ap.add_argument("--hw", default=str(ROOT / "config" / "companion.yaml"), help="hardware config (camera, ToF, MAVLink)")
 ap.add_argument("--config", default="", help="MiniFly variant YAML (default: hw config 'model')")
 ap.add_argument("--url", default="", help="MAVLink URL (default: hw config mavlink.url)")
-ap.add_argument("--camera", default="", help="uvc | sim | replay:<dir> | off | sitl_marker:<n,e,up,yaw[,id]> (SITL tests; default: hw config)")
+ap.add_argument("--camera", default="", help="uvc | sim | replay:<dir> | shm:<cam_bridge file> | off | sitl_marker:<n,e,up,yaw[,id]> (SITL tests; default: hw config)")
 ap.add_argument("--tof", default="", help="real | sim | off | sitl:<layout.json> (SITL tests; default: hw config)")
 ap.add_argument("--seconds", type=float, default=0, help="stop after this long; 0 = until SIGINT / SIGTERM")
 ap.add_argument("--cruise", type=float, default=0.5)
@@ -96,6 +96,8 @@ if a.mode == "guided":
     if (a.pil or cam_src != "uvc" or tof_src != "real") and not a.sitl:
         ap.error("guided mode requires physical UVC camera and real ToF; PIL, sim, replay, and SITL sources are disabled"
                  " (simulator tests: --sitl)")
+    if str((hw.get("survey_cam") or {}).get("source", "off")) not in ("off", "uvc") and not a.sitl:
+        ap.error("guided mode requires the physical survey camera (survey_cam.source uvc or off); simulator tests: --sitl")
     if float(os.environ.get("ECPS_DRIFT_MPS", "0") or 0) != 0:
         ap.error("guided mode refuses the ECPS_DRIFT_MPS test hook")
 
@@ -258,8 +260,10 @@ console_port = a.console if a.console >= 0 else int((hw.get("console") or {}).ge
 if console_port:
     import console_link
 
+    # 2026-11-03: the optional nadir survey camera, only for the console's still command (absent section: none)
+    survey_cam = camera_mod.make_survey(hw.get("survey_cam"))
     console = console_link.make(console_port, pilot=pilot, drone=drone, cam=cam, tofs=tofs, cfg=cfg,
-                                console_cfg=hw.get("console") or {},
+                                console_cfg=hw.get("console") or {}, survey_cam=survey_cam,
                                 run_info={"mode": a.mode, "model": Path(model).name, "seed": a.seed, "hz": HZ,
                                           "camera": cam_src, "tof": tof_src, "tag": a.tag})
 
