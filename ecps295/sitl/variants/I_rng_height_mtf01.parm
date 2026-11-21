@@ -1,0 +1,18 @@
+# I (2026-11-19): MicoAir MTF-01 (8 m ToF + flow over MAVLink) with the rangefinder as the EKF height source.
+# Replaces route B (G_extnav_height.parm) for flights over a flat floor: the companion sends no height
+# (companion.yaml mavlink.ext_height: false) and the FC needs no VisualOdom.
+# Gates from the SITL study of 2026-11-19 (opt_flow2): a wrong rangefinder reading for 1-3 s then moves the drone
+# < 0.04 m; SURFTRAK_MODE 0 keeps LOITER / ALT_HOLD from following the raw rangefinder past the EKF gate.
+EK3_SRC1_POSZ    2
+EK3_RNG_USE_HGT  -1
+VISO_TYPE        0
+EK3_RNG_M_NSE    0.1
+EK3_HGT_I_GATE   200
+SURFTRAK_MODE    0
+# Source set 3 = optical flow + barometer height: the companion's height guard (companion/height_guard.py) switches
+# to it with MAV_CMD_SET_EKF_SOURCE_SET when the rangefinder and the barometer disagree, then asks for LAND.
+EK3_SRC3_POSXY   0
+EK3_SRC3_VELXY   5
+EK3_SRC3_POSZ    1
+EK3_SRC3_VELZ    0
+EK3_SRC3_YAW     0

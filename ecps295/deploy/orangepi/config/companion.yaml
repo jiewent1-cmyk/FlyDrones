@@ -17,6 +17,15 @@ guard:                        # companion-only safety layer (real_drone.py, 2026
   camera_ready_s: 0.3         # hand-over only with a camera frame younger than this
   tof_min_valid_zones: 8
   required_tof_bearings: [0, 180]
+  height_monitor:               # 2026-11-21: the barometer vouches for the rangefinder (companion/height_guard.py, SITL val7)
+    enabled: false              # switch on only after e has been checked on this airframe's flight logs
+    fc_hz: 0.5                  # low-pass of both heights
+    tau_s: 10                   # bias tracker (baro drift)
+    e_m: 0.7                    # |baro - range - bias| above this ...
+    t_s: 0.5                    # ... for this long = the rangefinder is not believed
+    rate_m: 99                  # 2 s rate criterion; 99 = off (false alarms on baro steps in SITL)
+    source_set: 3               # EKF source set with baro height: needs EK3_SRC3_POSZ 1, EK3_SRC3_VELXY 5 on the FC
+    land_delay_s: 0.5           # LAND this long after the switch
 
 camera:
   source: uvc                 # uvc | sim | replay:<dir> | off
