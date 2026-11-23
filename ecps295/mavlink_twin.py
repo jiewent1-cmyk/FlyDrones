@@ -123,10 +123,22 @@ class Ecps295MavlinkDrone(MavlinkDrone):
             (mav.MAVLINK_MSG_ID_RANGEFINDER, 10.0),
             (mav.MAVLINK_MSG_ID_SCALED_PRESSURE, self.stream_hz),
             (mav.MAVLINK_MSG_ID_RC_CHANNELS, 2.0),
+            *([(mav.MAVLINK_MSG_ID_GPS_RAW_INT, float(self.gps_stream_hz))] if getattr(self, "gps_stream_hz", 0) else []),
         ):
             self.m.mav.command_long_send(
                 self.m.target_system, self.m.target_component, mav.MAV_CMD_SET_MESSAGE_INTERVAL, 0, mid, 1e6 / hz, 0, 0, 0, 0, 0
             )
+
+    def gps_sample(self) -> dict | None:
+        """Latest GPS_RAW_INT for ecps_gps_anchor.GpsAnchor (2026-11-23); streamed only when gps_stream_hz is set."""
+        g = None if self.m is None else self.m.messages.get("GPS_RAW_INT")
+        if g is None:
+            return None
+        hacc = getattr(g, "h_acc", 0) / 1000.0  # mm; 0 = the FC does not know: fall back to HDOP x 5 m
+        if hacc <= 0:
+            hacc = g.eph / 100.0 * 5.0 if g.eph != 65535 else 99.0
+        return {"stamp": g.time_usec, "lat": g.lat / 1e7, "lon": g.lon / 1e7, "fix": g.fix_type, "hacc": hacc,
+                "sats": g.satellites_visible if g.satellites_visible != 255 else 0}
 
     def _heartbeat(self) -> None:
         # F9

@@ -22,10 +22,17 @@ guard:                        # companion-only safety layer (real_drone.py, 2026
     fc_hz: 0.5                  # low-pass of both heights
     tau_s: 10                   # bias tracker (baro drift)
     e_m: 0.7                    # |baro - range - bias| above this ...
-    t_s: 0.5                    # ... for this long = the rangefinder is not believed
+    t_s: 0.2                    # ... for this long = the rangefinder is not believed (0.5 until 2026-11-22; bench check open)
     rate_m: 99                  # 2 s rate criterion; 99 = off (false alarms on baro steps in SITL)
     source_set: 3               # EKF source set with baro height: needs EK3_SRC3_POSZ 1, EK3_SRC3_VELXY 5 on the FC
     land_delay_s: 0.5           # LAND this long after the switch
+    oor_s: 0.3                  # 2026-11-22: range invalid this long in the air = trip (0 = off)
+    skip_invalid: true          # invalid readings stay out of the low-pass (a 0.2 s blip tripped the guard without it)
+    b_rate_m: 0.3               # bias moves more than this in b_window_s = slow rangefinder drift, trip (0 = off);
+    b_window_s: 10              #   check the real baro drift after power-up on a bench log first (margin 1.5x in SITL)
+    synth: false                # synthetic rangefinder from the baro after a trip; true needs on the FC: RNGFND2_TYPE 10,
+                                #   RNGFND2_ORIENT 25, RNGFND2_MIN / MAX / GNDCLR as RNGFND1
+    rng1_min: null              # RNGFND1_MIN to put back after a trip if the FC's value could not be read (synth only)
 
 camera:
   source: uvc                 # uvc | sim | replay:<dir> | off
@@ -96,3 +103,15 @@ landmark:                     # 2026-10-22 position fix from fixed ArUco markers
   auto_register: true
   max_range_m: 3.0            # fixes farther than this, or more than max_bearing_deg off the nose, are not used
   max_bearing_deg: 30
+
+gps_anchor:                   # 2026-11-23 GPS bounds the flow drift (ecps295/ecps_gps_anchor.py). The FC stays on flow + compass
+  enabled: false              # (EK3_SRC1_POSXY 0): the GPS position is used here only, never in the EKF. Outdoors only.
+  tau_s: 60                   # time constant of the correction (SITL: 30 s follows a poor GPS too much; 60 / 120 not resolved)
+  dead_k: 1.0                 # dead band = dead_k x reported horizontal accuracy: inside it the GPS is not followed
+  jump_m: 1.5                 # a GPS jump larger than this is absorbed, not followed
+  hacc_max_m: 2.5             # GPS worse than this (or fix < 3D, satellites < sats_min) is ignored, the correction is held
+  sats_min: 7
+  rate_max_mps: 0.10
+  max_m: 3.0                  # largest correction
+  min_alt_m: 0.5              # the reference is taken above this height
+  stream_hz: 5                # GPS_RAW_INT rate requested from the FC

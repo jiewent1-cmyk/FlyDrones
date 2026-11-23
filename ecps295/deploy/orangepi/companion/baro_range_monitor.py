@@ -71,11 +71,19 @@ class BaroRangeMonitor:
     tau_s    : 上面斜率估计的时间常数 [s]
     b_hold   : 【建议一节的单独实验用，默认 0 = 任务书原算法】
                 判据 B 需要超限连续保持 b_hold 秒才触发（0 = 立即触发）。
+    skip_invalid : 【2026-11-22，默认 False = 原算法】True 时无效读数（超量程 / 低于下限）不进入 h_r 的低通。
+                原算法把无效读数也滤进去：0.2 s 的超量程毛刺就把 h_r 拉走，读数恢复后残差超限而触发
+                （消融第四轮补充：毛刺 10/10 误触发，修正后 0/10）。
+    b_rate   : 【2026-11-22，默认 0 = 关】判据 C：偏置 b 在 b_window 秒内变化超过 b_rate 米即触发。
+                偏置跟踪会把测距慢漂当成气压漂移吃掉（0.05 m/s 的慢漂原算法 10/10 不触发）。消融第五轮：
+                0.3 m / 10 s 在 23 s 检出 0.05 m/s 慢漂，气压漂移 1.2 m/min（10 s 内 0.2 m）下 0/56 误触发。
+    b_window : 判据 C 的时间窗 [s]
     """
 
     def __init__(self, fc=1.0, tau=30.0, E=0.5, T=1.0, R=0.6,
                  baro_h_min=0.15, p0_window=2.0, rng_min=0.02, rng_max=7.9,
-                 baro_timeout=0.5, p0_bias_m=0.0, slope=False, tau_s=30.0, b_hold=0.0):
+                 baro_timeout=0.5, p0_bias_m=0.0, slope=False, tau_s=30.0, b_hold=0.0,
+                 skip_invalid=False, b_rate=0.0, b_window=10.0):
         self.fc = float(fc)
         self.tau = float(tau)
         self.E = float(E)
@@ -91,6 +99,10 @@ class BaroRangeMonitor:
         self.slope = bool(slope)     # 偏置是否带线性项
         self.tau_s = float(tau_s)   # 斜率估计的时间常数 [s]
         self.b_hold = float(b_hold)  # 判据 B 需要超限持续的时长 [s]（建议实验用，默认 0）
+        self.skip_invalid = bool(skip_invalid)
+        self.b_rate = float(b_rate)
+        self.b_window = float(b_window)
+        self._b_hist = deque()      # (t, b)，判据 C 用
         self.rate_bad_t = 0.0
         self.s = 0.0                # 斜率估计 [m/s]
         self.t_ref = None           # 线性模型参考时刻
@@ -111,8 +123,10 @@ class BaroRangeMonitor:
         self.t_exceed = 0.0             # |e| > E 已经持续了多久 [s]
         self.trig_A = False             # 判据 A 触发（粘滞）
         self.trig_B = False             # 判据 B 触发（粘滞）
+        self.trig_C = False             # 判据 C 触发（粘滞）
         self.t_trig_A = None
         self.t_trig_B = None
+        self.t_trig_C = None
         self.t_trig = None              # 任一判据首次触发时刻
         self.reason = None              # 'A' / 'B' / 'AB'
         self.baro_stale = False
@@ -162,12 +176,14 @@ class BaroRangeMonitor:
                 self.p0 = sum(samples) / len(samples)
             self.b = 0.0
             self.b_set = False
+            self._b_hist.clear()
         elif (not armed) and self.armed:
             # 重新解锁 / 落地解锁：重置
             self.armed = False
             self.enabled = False
-            self.trig_A = self.trig_B = False
-            self.t_trig = self.t_trig_A = self.t_trig_B = None
+            self.trig_A = self.trig_B = self.trig_C = False
+            self.t_trig = self.t_trig_A = self.t_trig_B = self.t_trig_C = None
+            self._b_hist.clear()
             self.reason = None
             self.t_exceed = 0.0
             self.rate_bad_t = 0.0
@@ -188,7 +204,7 @@ class BaroRangeMonitor:
             p = press_abs / self.p0
             h_b_raw = BARO_K * (1.0 - p ** BARO_EXP) - self.p0_bias_m
         h_r_raw = None
-        if distance is not None and math.isfinite(distance):
+        if distance is not None and math.isfinite(distance) and (not self.skip_invalid or self.range_valid(distance)):
             h_r_raw = distance * math.cos(roll) * math.cos(pitch)
 
         # --- 解锁瞬间直接置 b = h_b - h_r（任务书要求） ---
@@ -207,7 +223,9 @@ class BaroRangeMonitor:
         else:
             if h_b_raw is not None:
                 self.h_b += self._alpha(dt, self._tau_f) * (h_b_raw - self.h_b)
-            if h_r_raw is not None:
+            if h_r_raw is not None and self.h_r is None:
+                self.h_r = h_r_raw      # skip_invalid：地面上第一帧 0.0 m 无效，h_r 要等第一个有效读数
+            elif h_r_raw is not None:
                 self.h_r += self._alpha(dt, self._tau_f) * (h_r_raw - self.h_r)
 
         if self.h_b is None or self.h_r is None:
@@ -282,20 +300,31 @@ class BaroRangeMonitor:
             else:
                 self.b += self._alpha(dt, self.tau) * ((self.h_b - self.h_r) - self.b)
 
+        # --- 判据 C：偏置在 b_window 秒内走得太多（测距慢漂被偏置跟踪吃掉） ---
+        if self.b_rate > 0:
+            self._b_hist.append((t, self.b))
+            while t - self._b_hist[0][0] > self.b_window:
+                self._b_hist.popleft()
+            t_old, b_old = self._b_hist[0]
+            if (not self.trig_C) and t - t_old >= self.b_window - 0.5 and abs(self.b - b_old) > self.b_rate:
+                self.trig_C = True
+                self.t_trig_C = t
+
         # --- 触发汇总 ---
-        if self.t_trig is None and (self.trig_A or self.trig_B):
+        if self.t_trig is None and (self.trig_A or self.trig_B or self.trig_C):
             self.t_trig = t
-            self.reason = "AB" if (self.trig_A and self.trig_B) else ("A" if self.trig_A else "B")
+            self.reason = "".join(k for k, v in (("A", self.trig_A), ("B", self.trig_B), ("C", self.trig_C)) if v)
         return self.state(mode)
 
     # ------------------------------------------------------------------ 输出
     def state(self, mode=None):
         return {"t": self._last_t, "h_r": self.h_r, "h_b": self.h_b, "b": self.b, "e": self.e,
                 "enabled": self.enabled, "armed": self.armed, "trig_A": self.trig_A, "trig_B": self.trig_B,
-                "trigger": self.trig_A or self.trig_B, "reason": self.reason, "t_trig": self.t_trig,
-                "t_trig_A": self.t_trig_A, "t_trig_B": self.t_trig_B, "t_exceed": self.t_exceed,
+                "trig_C": self.trig_C, "trigger": self.trig_A or self.trig_B or self.trig_C, "reason": self.reason,
+                "t_trig": self.t_trig, "t_trig_A": self.t_trig_A, "t_trig_B": self.t_trig_B, "t_trig_C": self.t_trig_C,
+                "t_exceed": self.t_exceed,
                 "baro_stale": self.baro_stale, "rng_valid": self.rng_valid, "mode": mode}
 
     @property
     def triggered(self):
-        return self.trig_A or self.trig_B
+        return self.trig_A or self.trig_B or self.trig_C

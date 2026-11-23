@@ -201,6 +201,14 @@ if hw.get("landmark") and hasattr(pilot, "landmark"):  # 2026-10-22 landmark pos
 
     pilot.landmark = LandmarkFix(hw["landmark"])
 lm_on = bool(getattr(getattr(pilot, "landmark", None), "enabled", False))
+if hw.get("gps_anchor") and hasattr(pilot, "gps_anchor"):  # 2026-11-23 GPS bounds the flow drift (ecps295/ecps_gps_anchor.py)
+    from ecps_gps_anchor import GpsAnchor
+
+    pilot.gps_anchor = GpsAnchor(hw["gps_anchor"])
+ga_on = bool(getattr(getattr(pilot, "gps_anchor", None), "enabled", False))
+if ga_on:
+    drone.gps_stream_hz = float(hw["gps_anchor"].get("stream_hz", 5.0))  # requested with the next stream request
+    print(f"ecps_companion: GPS anchor on ({hw['gps_anchor']})", flush=True)
 if mk_cfg.get("enabled") and cam is not None and hasattr(pilot, "target"):
     from ecps_target import MarkerDetector, MarkerThread
 
@@ -424,6 +432,8 @@ try:
             "rtl": getattr(pilot, "rtl_state", ""),
             **({"lm_dn": round(pilot.landmark.offset[0], 3), "lm_de": round(pilot.landmark.offset[1], 3), "lm_fixes": pilot.landmark.fixes}
                if lm_on else {}),
+            **({"ga_dn": round(pilot.gps_anchor.offset[0], 3), "ga_de": round(pilot.gps_anchor.offset[1], 3),
+                "ga_state": pilot.gps_anchor.state} if ga_on else {}),
             **{k: round(v, 1) for k, v in info.rates.items() if k.startswith(("DN", "MDN"))},
         }
         if w is None:
@@ -529,6 +539,7 @@ summary = {
                "det_ms": pct(marker.det_ms), "fixes": pilot.target.fixes, "state": pilot.target.state,
                "est": pilot.target.est, "log": pilot.target.log[-100:]} if marker is not None else None,
     "landmark": pilot.landmark.summary() if lm_on else None,
+    "gps_anchor": pilot.gps_anchor.summary() if ga_on else None,
     "rtl": [e for e in pilot.watchdog_events if e[1].startswith("rtl")][-50:],
 }
 json.dump({"args": vars(a), "hw": hw, "summary": summary}, open(out / "run.json", "w"), indent=1, default=str)

@@ -66,6 +66,7 @@ class EcpsPilot(Pilot):
         target: dict | None = None,
         rtl: dict | None = None,
         landmark: dict | None = None,
+        gps_anchor: dict | None = None,
         **kw,
     ):
         super().__init__(*args, **kw)
@@ -139,6 +140,9 @@ class EcpsPilot(Pilot):
         from ecps_landmark import LandmarkFix
 
         self.landmark = LandmarkFix(landmark)  # off unless landmark.enabled; the companion attaches the MarkerThread
+        from ecps_gps_anchor import GpsAnchor
+
+        self.gps_anchor = GpsAnchor(gps_anchor)  # 2026-11-23, off unless gps_anchor.enabled; needs drone.gps_sample()
         sg = StructGuard(struct)  # 2026-10-13 blind-side fixes (ecps_struct.py), off unless configured
         self.struct = sg if sg.enabled else None
 
@@ -325,6 +329,7 @@ class EcpsPilot(Pilot):
             g = self.gestures.read(t, cam)
             vision = self.illusion.apply(vision, g, t)
         tel = self.drone.telemetry()
+        ekf_xy = (tel.x_m, tel.y_m)  # raw EKF position, before any offset
         if self.landmark.enabled and tel.x_m is not None and tel.y_m is not None:
             now_m = tel.t if getattr(tel, "t", None) is not None else time.monotonic()
             self.landmark.update(now_m, tel.x_m, tel.y_m, tel.yaw_deg, t, self._event)
@@ -332,6 +337,17 @@ class EcpsPilot(Pilot):
                 tel = copy.copy(tel)  # the drone keeps its raw EKF telemetry
                 tel.x_m, tel.y_m = self.landmark.correct(tel.x_m, tel.y_m)
             self.drone.pos_offset = self.landmark.offset
+        if self.gps_anchor.enabled and ekf_xy[0] is not None and ekf_xy[1] is not None:
+            # GPS bounds the flow drift (ecps_gps_anchor.py); a landmark fix, when there is one, re-bases it
+            lm = self.landmark.enabled and self.landmark.fixes > 0
+            off = self.gps_anchor.step(
+                tel.t if getattr(tel, "t", None) is not None else time.monotonic(), ekf_xy[0], ekf_xy[1],
+                getattr(self.drone, "gps_sample", lambda: None)(), bool(getattr(tel, "flying", False)), t,
+                self.landmark.offset if lm else None, self.landmark.fixes if lm else 0, self._event, tel.alt_m)
+            if off != (0.0, 0.0) or lm:
+                tel = copy.copy(tel)
+                tel.x_m, tel.y_m = ekf_xy[0] - off[0], ekf_xy[1] - off[1]
+            self.drone.pos_offset = off
         self._last_yaw_dps = tel.yaw_rate_dps or 0.0
         inputs = self.encoder.encode(vision, tel.yaw_rate_dps)
         rates = self.brain.tick(inputs, ms=dt * 1000.0)

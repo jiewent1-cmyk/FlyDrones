@@ -153,6 +153,9 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         mav = self.mavutil.mavlink
         self.m.mav.command_long_send(self.m.target_system, self.m.target_component, mav.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
                                      mav.MAVLINK_MSG_ID_RANGEFINDER, 1e6 / self.rangefinder_hz, 0, 0, 0, 0, 0)
+        if self.height_guard.enabled and self.height_guard.synth:  # the guard watches the downward sensor itself
+            self.m.mav.command_long_send(self.m.target_system, self.m.target_component, mav.MAV_CMD_SET_MESSAGE_INTERVAL,
+                                         0, mav.MAVLINK_MSG_ID_DISTANCE_SENSOR, 1e6 / self.rangefinder_hz, 0, 0, 0, 0, 0)
 
     # ---------------------------------------------------------------- freshness (2026-10-16, Gazebo PIL)
     # The route-B height must never come from a stale reading. In the first PIL run the companion's stream requests
@@ -209,6 +212,9 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
                 if not self.mute:
                     self._heartbeat()
                     self.send_ext_height()
+                if self.height_guard.stalled(self.armed()):  # the main loop no longer runs the guard: tell the pilot
+                    self._gevent("HEIGHT GUARD STALLED: the companion loop does not run it")
+                    self._text("ECPS: HEIGHT GUARD STALLED", every_s=2.0)
             except Exception as e:
                 print(f"[mavlink watchdog] {type(e).__name__}: {e}", flush=True)
             deadline += 0.05
