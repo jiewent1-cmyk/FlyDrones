@@ -10,7 +10,7 @@ the two and moves the hold target slowly:
 The FC's EKF never sees the GPS position: a GPS jump or outage cannot move the estimate or make the EKF switch sources.
 
 SITL study (ArduCopter 4.7.0, 15 min holds, 3 flow noise levels x 3 GPS qualities x 10 repeats, report
-项目文档/09_台架测试/gps_hover_20261123/report.md): fusing the GPS position in the FC is the best choice with a good GPS
+ecps295/experiments/gps_hover_20261123/report.md): fusing the GPS position in the FC is the best choice with a good GPS
 (0.9 m against 1.8-3.2 m with noisy flow) and by far the worst with a poor one (4 m against 0.7 m) and with a GPS jump
 or outage (3.6 m, 6 m). This anchor is the safe middle: 3 m GPS jumps absorbed in 80 / 80 runs, no false jump in 270
 fifteen-minute runs, outage = correction held. Its gain is modest and not statistically established (maximum offset

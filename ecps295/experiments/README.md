@@ -15,6 +15,7 @@ These are working copies, kept as they were run. Paths inside the scripts still 
 | `sitl_bench/val1` ... `val8` | `~/sim/val*` | follow-up validation rounds (2026-11-20), incl. the baro-vouches-for-rangefinder monitor (val7, val8) |
 | `sitl_bench/abl` | `~/sim/abl` | height-guard ablation |
 | `sitl_bench/field1119` | `~/sim/field1119` | rehearsal of the 2026-11-19 no-GPS AUTO mission |
+| `gps_hover_20261123` | `~/sim/gps_hover` | GPS + compass hover study (2026-11-23, 2250 SITL runs): scripts, job lists, result tables, `report.md`; basis of `ecps295/ecps_gps_anchor.py` |
 | `bench_20261118` | Mac | bench-day tools (`s7_watch.py`, `tof_view.py`, `flow_check.py`) and FC parameters before / after |
 | `rl_h2` | `~/sim/rl_h2` | Gazebo matrices, chain scripts and patch scripts of the hover / hold / PIL work (`hv`, `n3a`, `s5gz`-`s7gz`) |
 | `rl_trk` | `~/sim/rl_trk` | TargetTrack matrix scripts not already under `ecps295/gazebo` |

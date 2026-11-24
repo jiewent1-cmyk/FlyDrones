@@ -1,0 +1,660 @@
+h15_F__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_F0__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_FM2__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_FM6__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_B120__N05_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 120
+h15_B120__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 120
+h15_B120__N05_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 120
+h15_D10_030__N05_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1
+h15_A20__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_A20__N05_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1
+h15_G__N05_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1
+h15_G__N05_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_G__N05_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1
+h15_F__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_F0__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_FM2__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_FM6__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_B120__N15_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 120
+h15_B120__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 120
+h15_B120__N15_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 120
+h15_D10_030__N15_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1
+h15_A20__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_A20__N15_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1
+h15_G__N15_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1
+h15_G__N15_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_G__N15_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1
+h15_F__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_F0__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_FM2__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_FM6__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_B120__N25_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 120
+h15_B120__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 120
+h15_B120__N25_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 120
+h15_D10_030__N25_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1
+h15_A20__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_A20__N25_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1
+h15_G__N25_Gg__r00|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 1
+h15_G__N25_Gm__r00|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 1
+h15_G__N25_Gp__r00|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r00.parm|5|33.643000,-117.842000,20,10|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 1
+h15_F__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_F0__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_FM2__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_FM6__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_B120__N05_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 120
+h15_B120__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 120
+h15_B120__N05_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 120
+h15_D10_030__N05_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2
+h15_A20__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_A20__N05_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2
+h15_G__N05_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2
+h15_G__N05_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_G__N05_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2
+h15_F__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_F0__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_FM2__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_FM6__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_B120__N15_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 120
+h15_B120__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 120
+h15_B120__N15_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 120
+h15_D10_030__N15_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2
+h15_A20__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_A20__N15_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2
+h15_G__N15_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2
+h15_G__N15_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_G__N15_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2
+h15_F__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_F0__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_FM2__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_FM6__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_B120__N25_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 120
+h15_B120__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 120
+h15_B120__N25_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 120
+h15_D10_030__N25_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2
+h15_A20__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_A20__N25_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2
+h15_G__N25_Gg__r01|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 2
+h15_G__N25_Gm__r01|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 2
+h15_G__N25_Gp__r01|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r01.parm|5|33.643000,-117.842000,20,130|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 2
+h15_F__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_F0__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_FM2__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_FM6__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_B120__N05_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 120
+h15_B120__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 120
+h15_B120__N05_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 120
+h15_D10_030__N05_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3
+h15_A20__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_A20__N05_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3
+h15_G__N05_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3
+h15_G__N05_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_G__N05_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3
+h15_F__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_F0__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_FM2__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_FM6__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_B120__N15_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 120
+h15_B120__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 120
+h15_B120__N15_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 120
+h15_D10_030__N15_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3
+h15_A20__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_A20__N15_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3
+h15_G__N15_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3
+h15_G__N15_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_G__N15_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3
+h15_F__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_F0__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_FM2__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_FM6__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_B120__N25_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 120
+h15_B120__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 120
+h15_B120__N25_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 120
+h15_D10_030__N25_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3
+h15_A20__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_A20__N25_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3
+h15_G__N25_Gg__r02|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 3
+h15_G__N25_Gm__r02|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 3
+h15_G__N25_Gp__r02|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r02.parm|5|33.643000,-117.842000,20,250|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 3
+h15_F__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_F0__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_FM2__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_FM6__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_B120__N05_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 120
+h15_B120__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 120
+h15_B120__N05_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 120
+h15_D10_030__N05_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4
+h15_A20__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_A20__N05_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4
+h15_G__N05_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4
+h15_G__N05_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_G__N05_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4
+h15_F__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_F0__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_FM2__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_FM6__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_B120__N15_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 120
+h15_B120__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 120
+h15_B120__N15_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 120
+h15_D10_030__N15_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4
+h15_A20__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_A20__N15_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4
+h15_G__N15_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4
+h15_G__N15_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_G__N15_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4
+h15_F__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_F0__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_FM2__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_FM6__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_B120__N25_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 120
+h15_B120__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 120
+h15_B120__N25_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 120
+h15_D10_030__N25_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4
+h15_A20__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_A20__N25_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4
+h15_G__N25_Gg__r03|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 4
+h15_G__N25_Gm__r03|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 4
+h15_G__N25_Gp__r03|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r03.parm|5|33.643000,-117.842000,20,70|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 4
+h15_F__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_F0__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_FM2__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_FM6__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_B120__N05_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 120
+h15_B120__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 120
+h15_B120__N05_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 120
+h15_D10_030__N05_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5
+h15_A20__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_A20__N05_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5
+h15_G__N05_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5
+h15_G__N05_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_G__N05_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5
+h15_F__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_F0__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_FM2__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_FM6__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_B120__N15_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 120
+h15_B120__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 120
+h15_B120__N15_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 120
+h15_D10_030__N15_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5
+h15_A20__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_A20__N15_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5
+h15_G__N15_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5
+h15_G__N15_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_G__N15_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5
+h15_F__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_F0__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_FM2__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_FM6__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_B120__N25_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 120
+h15_B120__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 120
+h15_B120__N25_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 120
+h15_D10_030__N25_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5
+h15_A20__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_A20__N25_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5
+h15_G__N25_Gg__r04|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 5
+h15_G__N25_Gm__r04|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 5
+h15_G__N25_Gp__r04|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r04.parm|5|33.643000,-117.842000,20,190|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 5
+h15_F__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_F0__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_FM2__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_FM6__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_B120__N05_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 120
+h15_B120__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 120
+h15_B120__N05_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 120
+h15_D10_030__N05_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6
+h15_A20__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_A20__N05_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6
+h15_G__N05_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6
+h15_G__N05_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_G__N05_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6
+h15_F__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_F0__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_FM2__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_FM6__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_B120__N15_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 120
+h15_B120__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 120
+h15_B120__N15_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 120
+h15_D10_030__N15_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6
+h15_A20__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_A20__N15_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6
+h15_G__N15_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6
+h15_G__N15_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_G__N15_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6
+h15_F__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_F0__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_FM2__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_FM6__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_B120__N25_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 120
+h15_B120__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 120
+h15_B120__N25_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 120
+h15_D10_030__N25_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6
+h15_A20__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_A20__N25_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6
+h15_G__N25_Gg__r05|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 6
+h15_G__N25_Gm__r05|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 6
+h15_G__N25_Gp__r05|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r05.parm|5|33.643000,-117.842000,20,310|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 6
+h15_F__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_F0__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_FM2__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_FM6__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_B120__N05_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 120
+h15_B120__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 120
+h15_B120__N05_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 120
+h15_D10_030__N05_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7
+h15_A20__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_A20__N05_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7
+h15_G__N05_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7
+h15_G__N05_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_G__N05_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7
+h15_F__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_F0__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_FM2__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_FM6__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_B120__N15_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 120
+h15_B120__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 120
+h15_B120__N15_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 120
+h15_D10_030__N15_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7
+h15_A20__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_A20__N15_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7
+h15_G__N15_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7
+h15_G__N15_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_G__N15_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7
+h15_F__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_F0__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_FM2__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_FM6__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_B120__N25_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 120
+h15_B120__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 120
+h15_B120__N25_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 120
+h15_D10_030__N25_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7
+h15_A20__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_A20__N25_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7
+h15_G__N25_Gg__r06|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 7
+h15_G__N25_Gm__r06|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 7
+h15_G__N25_Gp__r06|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r06.parm|5|33.643000,-117.842000,20,40|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 7
+h15_F__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_F0__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_FM2__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_FM6__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_B120__N05_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 120
+h15_B120__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 120
+h15_B120__N05_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 120
+h15_D10_030__N05_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8
+h15_A20__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_A20__N05_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8
+h15_G__N05_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8
+h15_G__N05_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_G__N05_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8
+h15_F__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_F0__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_FM2__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_FM6__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_B120__N15_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 120
+h15_B120__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 120
+h15_B120__N15_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 120
+h15_D10_030__N15_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8
+h15_A20__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_A20__N15_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8
+h15_G__N15_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8
+h15_G__N15_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_G__N15_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8
+h15_F__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_F0__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_FM2__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_FM6__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_B120__N25_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 120
+h15_B120__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 120
+h15_B120__N25_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 120
+h15_D10_030__N25_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8
+h15_A20__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_A20__N25_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8
+h15_G__N25_Gg__r07|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 8
+h15_G__N25_Gm__r07|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 8
+h15_G__N25_Gp__r07|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r07.parm|5|33.643000,-117.842000,20,160|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 8
+h15_F__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_F0__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_FM2__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_FM6__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_B120__N05_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 120
+h15_B120__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 120
+h15_B120__N05_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 120
+h15_D10_030__N05_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9
+h15_A20__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_A20__N05_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9
+h15_G__N05_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9
+h15_G__N05_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_G__N05_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9
+h15_F__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_F0__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_FM2__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_FM6__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_B120__N15_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 120
+h15_B120__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 120
+h15_B120__N15_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 120
+h15_D10_030__N15_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9
+h15_A20__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_A20__N15_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9
+h15_G__N15_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9
+h15_G__N15_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_G__N15_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9
+h15_F__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_F0__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_FM2__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_FM6__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_B120__N25_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 120
+h15_B120__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 120
+h15_B120__N25_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 120
+h15_D10_030__N25_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9
+h15_A20__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_A20__N25_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9
+h15_G__N25_Gg__r08|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 9
+h15_G__N25_Gm__r08|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 9
+h15_G__N25_Gp__r08|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r08.parm|5|33.643000,-117.842000,20,280|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 9
+h15_F__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_F__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_F0__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_F0__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_FM2__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_FM2__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_FM6__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_FM6__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_B120__N05_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 120
+h15_B120__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 120
+h15_B120__N05_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N05_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 120
+h15_D10_030__N05_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D10_030__N05_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N05_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D05_030__N05_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N05_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N05_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N05_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_D10_120__N05_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N05_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_A20__N05_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10
+h15_A20__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_A20__N05_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N05_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10
+h15_G__N05_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10
+h15_G__N05_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_G__N05_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_G__N05_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10
+h15_F__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_F__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_F0__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_F0__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_FM2__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_FM2__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_FM6__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_FM6__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_B120__N15_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 120
+h15_B120__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 120
+h15_B120__N15_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N15_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 120
+h15_D10_030__N15_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D10_030__N15_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N15_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D05_030__N15_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N15_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N15_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N15_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_D10_120__N15_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N15_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_A20__N15_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10
+h15_A20__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_A20__N15_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N15_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10
+h15_G__N15_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10
+h15_G__N15_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_G__N15_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_G__N15_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10
+h15_F__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_F__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_F0__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_F0__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_FM2__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_FM2__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_FM6__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_FM6__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_B120__N25_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 120
+h15_B120__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 120
+h15_B120__N25_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_B120__N25_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 120
+h15_D10_030__N25_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D10_030__N25_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D10_030__N25_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 30 --fix-dead-k 1
+h15_D05_030__N25_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D05_030__N25_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D05_030__N25_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 30 --fix-dead-k 0.5
+h15_D10_120__N25_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_D10_120__N25_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_D10_120__N25_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10 --fix 120 --fix-dead-k 1
+h15_A20__N25_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10
+h15_A20__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_A20__N25_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_A20__N25_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10
+h15_G__N25_Gg__r09|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gg__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.3:300:0.08:5 --seed 10
+h15_G__N25_Gm__r09|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gm__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 0.8:300:0.15:5 --seed 10
+h15_G__N25_Gp__r09|/home/jacky/sim/gps_hover/parms/h15_G__N25_Gp__r09.parm|5|33.643000,-117.842000,20,100|--hover 900 --gps-walk 1.5:300:0.30:5 --seed 10
