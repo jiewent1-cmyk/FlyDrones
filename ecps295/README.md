@@ -11,6 +11,7 @@ Nothing under `src/flydrones/` is modified; everything here subclasses or drives
 
 <p align="center"><img src="../assets/art/sim.jpg" alt="A quadcopter weaving through obstacles in a GPS-free simulation" width="80%"></p>
 > Documentation (architecture, hardware, FC parameters, simulation guide, flight-test plan, glossary): [`docs/`](docs/README.md)
+> All figures and diagrams on one page · 全部图表总览：[`docs/FIGURES.md`](docs/FIGURES.md)
 
 ## At a glance · 概览
 
@@ -35,6 +36,47 @@ FlyDrones 的 MiniFly 连接组大脑通过 ArduPilot 驾驶 2S 课程四旋翼�
 | 2 × VL53L7CX 8×8 ToF (60° × 60°), front + rear | Orange Pi I²C TWI0 / TWI1, 3.3 V | obstacle ranging → map → shield · 避障测距 |
 | USB UVC camera: ELP OV7725 120° or Waveshare OV9281 (global shutter), chosen after a bench test | Orange Pi USB-C | the brain's eyes · 大脑的视觉输入 |
 | 3D-printed PETG parts: 3901-L0X mount, Orange Pi cover + battery deck, GPS mast | airframe | mounting · 结构件 |
+
+How the parts talk to each other on the real drone, and what stands in for them in simulation (dashed).
+各部件之间的连接，以及仿真中替代它们的部分（虚线）。
+
+```mermaid
+flowchart LR
+  subgraph SENS["Sensors"]
+    CAM["USB UVC camera<br/>640x480, 30 fps"]
+    TOF["2 × VL53L7CX 8×8<br/>front + rear, 15 Hz"]
+    DOWN["Matek 3901-L0X<br/>flow + down ToF"]
+  end
+  subgraph OPI["Orange Pi Zero 3W"]
+    COMP["ecps_companion.py<br/>20 Hz: retina, MiniFly, decoder,<br/>local map, shield, governor"]
+    MR["mavlink-router"]
+  end
+  FC["Matek F405-WMO<br/>ArduCopter 4.7, EKF3"]
+  RC["ELRS receiver<br/>pilot RC, mode switch"]
+  MAC["Mac ground console<br/>ECPS Console.app"]
+  subgraph SIMS["Simulation stand-ins"]
+    GZ["Gazebo Harmonic<br/>physics, fisheye, down ToF"]
+    SITL["ArduPilot SITL<br/>Copter-4.7.0"]
+    RG4["run_g4.py on the PC<br/>same control code"]
+  end
+  CAM -->|"USB"| COMP
+  TOF -->|"I²C TWI0 / TWI1"| COMP
+  DOWN -->|"MSP, UART4"| FC
+  COMP <-->|"UDP 14560"| MR
+  MR <-->|"MAVLink2, UART3"| FC
+  RC -->|"CRSF"| FC
+  MAC <-->|"ECL1, UDP 14700"| COMP
+  MAC <-->|"MAVLink, UDP 14550"| MR
+  GZ <-->|"JSON lockstep"| SITL
+  GZ -->|"camera via cam_bridge.py"| RG4
+  RG4 <-->|"MAVLink, SIM_STATE for 8×8 ToF ray-cast"| SITL
+  SITL -.->|"replaces"| FC
+  RG4 -.->|"replaces"| COMP
+```
+
+*System overview: sensors, Orange Pi companion, flight controller, ground console and their simulation stand-ins. From
+`deploy/orangepi/companion/ecps_companion.py`, `real_drone.py`, `console_link.py`, `deploy/orangepi/config/companion.yaml`,
+`deploy/orangepi/config/mavlink-router.conf`, `run_g4.py`, `gz_camera_drone.py`, `mavlink_twin.py`, `docs/ARCHITECTURE.md` §7.*
 
 | | Upstream FlyDrones | This branch (v4 + route B) | Evidence |
 |---|---|---|---|
@@ -86,6 +128,40 @@ The sections below are the lab notebook: setup, commands and raw tables in the o
 | L1 | FlyDrones `SimDrone` with SITL-identified per-axis lag (xy 0.60 s, z 0.35 s, yaw 0.12 s) | `envs.py` |
 | L2 | ArduPilot SITL Copter-4.7.0 + course params + 295 g / 2S frame model | `make_sitl_params.py`, `sitl/` |
 | L2 link | `MavlinkDrone` with fixes F1 (stream requests), F3, F4 (checked takeoff), F7, F9 (heartbeat) | `mavlink_twin.py` |
+
+The same `ecps_*.py` control code runs in four test set-ups before the real drone; each one makes more of the chain real.
+同一套 `ecps_*.py` 控制代码在上真机之前跑四种测试环境，每一种都让更多环节变成真实的。
+
+```mermaid
+flowchart TD
+  CODE["shared control code<br/>ecps_pilot, ecps_retina, ecps_decoder,<br/>ecps_struct, ecps_map, my_minifly"]
+  subgraph M1["1 Fast twin, rl/twin.py"]
+    T1["simulated: velocity-mode quad with SITL-identified lags,<br/>ray-cast fisheye, ToF, baro, flow-EKF error model<br/>no ArduPilot, no Gazebo, faster than real time"]
+  end
+  subgraph M2["2 ArduPilot SITL"]
+    S2["real: ArduCopter 4.7 code and course params<br/>simulated: physics from sitl/ecps295.json<br/>no camera: run_s5.py, s7_flow.py"]
+  end
+  subgraph M3["3 Gazebo + ArduPilot SITL, run_g4.py"]
+    G3["real: ArduCopter code<br/>simulated: Gazebo physics, fisheye, down ToF,<br/>SITL flow, 8×8 ToF ray-cast from SIM_STATE"]
+  end
+  subgraph M4["4 Processor-in-the-loop"]
+    P4A["simulation PC: Gazebo + SITL<br/>pil_rog.py streams camera and ToF"]
+    P4B["Orange Pi: ecps_companion.py --pil<br/>real CPU, RealDrone backend, watchdogs"]
+  end
+  subgraph M5["Real drone"]
+    R5["real: Orange Pi, camera, VL53L7CX,<br/>F405-WMO, 3901-L0X"]
+  end
+  CODE --> T1
+  CODE -->|"mavlink_twin.py only"| S2
+  CODE --> G3
+  CODE --> P4B
+  CODE --> R5
+  P4A -->|"UDP: frames, 8×8 zones, go flag 10 Hz"| P4B
+  P4A <-->|"SITL MAVLink, UDP 14561"| P4B
+```
+
+*The four ways to run the stack and which parts are real or simulated in each. From `rl/twin.py`, `run_s5.py`,
+`run_g4.py`, `mavlink_twin.py`, `pil_rog.py`, `deploy/orangepi/companion/pil_link.py`, `ecps_companion.py`.*
 
 ## Setup
 

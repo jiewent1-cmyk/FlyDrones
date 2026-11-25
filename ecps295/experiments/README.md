@@ -23,6 +23,10 @@ These are working copies, kept as they were run. Paths inside the scripts still 
 | `gzc` | `~/sim/gzc2` | Gazebo console verification: plans, queue, planner on / off configs |
 | `misc` | `~/sim` | `thermal_log.sh`, low-box matrix result lists |
 
+Figures: most directories with result data have a `make_figures.py` that redraws the PNG files in `figures/` from the
+result files next to it (`python make_figures.py`, needs matplotlib, numpy, pandas). The reports show them in place;
+[`../docs/FIGURES.md`](../docs/FIGURES.md) lists them all. `sitl_bench/val8` holds a job list only: its figure shows the plan, not results.
+
 Firmware build inputs are in `ecps295/firmware`, 3D-print generators in `ecps295/hardware/3d_print`.
 
 ## Left out on purpose

@@ -28,6 +28,53 @@ libsystemd-dev pkg-config build-essential；`mavlink-routerd` 装到 `/usr/bin`�
 飞控串口 = UART2 `/dev/ttyS2`（PB0 TX 排针 11 → 飞控 RX3，PB1 RX 排针 13 ← 飞控 TX3，GND 排针 6）。**不要接排针 8/10（UART0）**：那是 U-Boot 控制台，飞控上电后持续发送的数据会打断自动启动，Pi 开不了机（2026-10-31）。
 原有的 `uart0-pb9-pb10` overlay（`/dev/ttyS0`）和 `/root/opiRasPiUartTest` 未改动。
 
+## 服务与进程 / Services and processes
+
+Pi 上的常驻进程和它们之间的链路。The resident processes on the Pi and the links between them.
+
+```mermaid
+flowchart LR
+  FC["Matek F405-WMO<br/>ArduCopter 4.7.0"]
+  SEC["ecps-security.service<br/>nftables allowlist"]
+  MR["mavlink-router.service<br/>mavlink-routerd"]
+  CP["ecps-companion.service<br/>ecps_companion.py<br/>ECPS_MODE=shadow"]
+  CAM["camera thread<br/>V4L2 /dev/video0"]
+  TOF["ToF threads ×2<br/>/dev/i2c-0 and /dev/i2c-1"]
+  MKT["marker detector thread<br/>ArUco, A55 cores"]
+  CON["ECPS Console.app<br/>Mac ground console"]
+  FC <-->|"UART2 /dev/ttyS2<br/>MAVLink2 115200"| MR
+  MR <-->|"UDP 14560 localhost"| CP
+  MR -->|"UDP 14550"| CON
+  CAM -->|"192×144 gray frames"| CP
+  TOF -->|"8×8 zones at 15 Hz"| CP
+  CP --> MKT
+  CP <-->|"UDP 14700 ECL1"| CON
+  SEC -.->|"filters incoming UDP 14550"| MR
+  SEC -.->|"filters incoming UDP 14700"| CP
+```
+
+*机载服务、传感器线程和控制台链路。The onboard services, the sensor threads and the console link. Sources:
+`systemd/ecps-companion.service`, `systemd/ecps-security.service`, `config/mavlink-router.conf`, `config/companion.yaml`,
+`companion/ecps_companion.py`, `companion/console_link.py`.*
+
+## 开机流程 / Boot sequence
+
+装好之后的开机顺序。The boot order after installation.
+
+```mermaid
+flowchart TD
+  BOOT["Power on<br/>armbianEnv overlays i2c0 i2c1 uart2"] --> DEV["/dev/i2c-0 and /dev/i2c-1<br/>/dev/ttyS2"]
+  DEV --> SEC["ecps-security.service<br/>enabled at boot<br/>nftables allowlist"]
+  SEC --> MR["mavlink-router.service<br/>enabled at boot<br/>FC UART to UDP 14560 and 14550"]
+  MR --> MAN["systemctl start ecps-companion<br/>installed, not enabled at boot<br/>ECPS_MODE=shadow"]
+  MAN --> CON["ECPS Console.app connects<br/>HELLO heartbeat at 5 Hz<br/>guidance needs ECPS_MODE=guided"]
+```
+
+*开机顺序：`ecps-security.service` 和 `mavlink-router.service` 开机自启，`ecps-companion.service` 已安装但不开机自启，
+地面测试通过后手动 `systemctl start`。Boot order: `ecps-security.service` and `mavlink-router.service` start at boot,
+`ecps-companion.service` is installed but not enabled — it is started by hand after the ground tests. Sources:
+`scripts/install_pi.sh`, `systemd/*.service`, `config/ecps-security.nft`.*
+
 ## 常用命令 / Commands
 
 重新部署前给控制台 Mac 固定一个专用 AP 地址，并以该地址放行 MAVLink / ECL1：

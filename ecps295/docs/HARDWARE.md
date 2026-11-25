@@ -42,6 +42,37 @@ Fallback flow sensor (not bought): MicoAir MTF-01 in MSP mode, if the 3901-L0X p
 
 ## 3. Wiring and pin-out
 
+Every sensor and every actuator of the flying configuration hangs off the flight controller or off the companion
+computer; the bus type of each link is on the edge.
+
+```mermaid
+flowchart LR
+  FC["Matek F405-WMO<br/>ArduCopter 4.7.0"]
+  ESC["4 × SoloGood 20A BLHeli_S"]
+  MOT["4 × Gemfan Hurricane 4024"]
+  FLOW["Matek 3901-L0X<br/>flow + downward ToF"]
+  CMP["HGLRC M100 Pro<br/>compass only"]
+  RX["Happymodel EP2 ELRS"]
+  ESP["XIAO ESP32-C3 DroneBridge"]
+  OPI["Orange Pi Zero 3W"]
+  TOFF["VL53L7CX front<br/>Pololu 3418"]
+  TOFR["VL53L7CX rear<br/>Pololu 3418"]
+  CAM["USB camera<br/>ELP OV7725 or OV9281"]
+  FC -->|"DShot600, S5–S8"| ESC
+  ESC --> MOT
+  FC <-->|"MSP 115200, UART4 SERIAL4"| FLOW
+  FC <-->|"I²C compass"| CMP
+  FC <-->|"CRSF, UART2 SERIAL6"| RX
+  FC <-->|"MAVLink2 57600, UART5 SERIAL3"| ESP
+  FC <-->|"MAVLink2, UART3 SERIAL2"| OPI
+  OPI <-->|"I²C TWI0, 0x29"| TOFF
+  OPI <-->|"I²C TWI1, 0x29"| TOFR
+  OPI <-->|"UVC over USB-C"| CAM
+```
+
+*Bus map of the flying configuration; power rails are in §3.3. Sources: the pin tables in this section,
+[ARCHITECTURE.md](ARCHITECTURE.md) §7.1 and `../deploy/orangepi/config/companion.yaml`.*
+
 ### 3.1 Flight controller
 
 | Pad | ArduPilot port | Device | Protocol / baud |

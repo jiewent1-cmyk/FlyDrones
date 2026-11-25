@@ -19,6 +19,15 @@ runs: 1222
 | G_E10 | 92 | 39 | 28 | 1 | 15 | 9 | 0 | 0 | 3.71 | -5.63 | 0.90 |
 | BAROPRI | 92 | 62 | 0 | 0 | 11 | 19 | 0 | 0 | 4.18 | -42.95 | 0.73 |
 
+![各控制器配置的结果类别比例](figures/fig1_arm_outcomes.png)
+*Figure 1. Run outcome mix by controller arm across all recorded faults. Source: all_runs.csv; script: make_figures.py.*
+
+![各控制器配置的不安全结果率](figures/fig2_unsafe_rate.png)
+*Figure 2. Fraction of runs classified UNSAFE for each controller arm. Source: all_runs.csv; script: make_figures.py.*
+
+![主要配置的最大高度逐次分布](figures/fig3_altitude_spread.png)
+*Figure 3. Per-run maximum altitude for FULL, NOGUARD, and BARE arms; black marks show medians. Source: all_runs.csv; script: make_figures.py.*
+
 ## arm x fault: n, then U=unsafe D=degraded G=armed on ground A=abort N=nofly
 
 | fault | FULL | NOGUARD | BARE | STOCKGATE | SURF1 | FULL_NOALTF | BARE_NOALTF | G_LANDONLY | G_RATE | G_E05 | G_E10 | BAROPRI |

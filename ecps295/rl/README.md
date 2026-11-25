@@ -25,6 +25,36 @@
 | `results/twin/` | 每次 CMA-ES 运行的记录：`gens.jsonl`、`val.jsonl`、`best_val.json`、`config.json`、`episodes.jsonl.gz`、`cmaes.log`；`cage20_holdout/` 是 slew 修复前后的快仿真 64 种子对照 |
 | `results/gazebo/gazebo_runs.csv` | 服务器上每一次 Gazebo 运行一行：结果、触发器指标、扫视转角中位数、整段 RTF |
 
+下图是一次优化从起点到 Gazebo 验收的流程。快仿真只负责筛选，是否采用以 Gazebo 上的配对统计为准。
+
+```mermaid
+flowchart TD
+  X0["起点 x0<br/>v3_2，或 --base / --x0-yaml"]
+  W["每代抽 K 个程序化世界<br/>worlds.py episode_set，cage20 不参与训练"]
+  ASK["es.ask：popsize 个候选<br/>params.py 解码器参数，z 空间 0..1"]
+  RUN["batch.py 并行跑 episode.py + twin.py<br/>候选和参考飞同一批回合，公共随机数"]
+  FIT["适应度 F，v1–v6<br/>es.tell，写 gens.jsonl 和 es.pkl"]
+  VAL{"每 5 代或最后一代？<br/>--val-every 5"}
+  HO["分布均值在 24 回合留出集上评估<br/>更好则写 best_val.json"]
+  NEXT{"还有下一代？"}
+  EXP["导出留出集最优点<br/>validate.py export / export_arms.py<br/>→ configs/、minifly/*.yaml"]
+  GZ["Gazebo 复测<br/>server/gz_batch.py 或 validate.py gazebo<br/>cage20 32 个种子，lowbox 50 个世界"]
+  ST["配对统计 stats.py<br/>McNemar、bootstrap CI、Wilcoxon、Holm"]
+  GATE{"显著好于参考？"}
+  ACC["采用为新配置"]
+  KEEP["保留为参数变体或对照"]
+  X0 --> W --> ASK --> RUN --> FIT --> VAL
+  VAL -->|"是"| HO --> NEXT
+  VAL -->|"否"| NEXT
+  NEXT -->|"是"| W
+  NEXT -->|"否"| EXP --> GZ --> ST --> GATE
+  GATE -->|"是"| ACC
+  GATE -->|"否"| KEEP
+```
+
+*CMA-ES 优化、快仿真评估与 Gazebo 验收的流程。来源：`cmaes_run.py`（`main`）、`worlds.py`、`params.py`、`batch.py`、
+`episode.py`、`twin.py`、`validate.py`、`export_arms.py`、`server/gz_batch.py`、`stats.py`，以及本文第 3 节。*
+
 ## 2. 复现
 
 ```bash

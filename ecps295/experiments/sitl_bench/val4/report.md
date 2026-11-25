@@ -57,6 +57,15 @@ ArduCopter 4.7.0 SITL，工具链复用 `/home/jacky/sim/val2/`（`run_one.sh`/`
 | 500/0.5/0 | 3/3, 0.81 | **0/3** | 3/3, 0.86 | **0/3** | **0/3** | 3/3, 0.41 | 0.015 | 0.014 | 0/3 |
 | 500/0.5/1 (orig) | 3/3, 0.81 | **0/3** | 3/3, 0.86 | **0/3** | **0/3** | 3/3, 0.32 | 0.015 | 0.015 | 0/3 |
 
+![各门限组在六类故障中的完成率](figures/fig1_fault_completion_heatmap.png)
+*图 1. 各门限参数组在不同故障下的任务完成比例。数据来源：results.csv；脚本：make_figures.py。*
+
+![门限组悬停高度误差](figures/fig2_hov_altitude_error.png)
+*图 2. 各参数组 HOV 运行的逐次真值高度 RMS 误差。数据来源：results.csv；脚本：make_figures.py。*
+
+![复现爬升故障时的最高真值高度](figures/fig3_reproduction_altitude.png)
+*图 3. 原始组和 FINAL 组爬升故障复现运行的逐次真值最大高度。数据来源：results.csv；脚本：make_figures.py。*
+
 加粗 = 0/3（真值结局均为 `Max Alt fence breached` → LAND；未加粗的失败格 dev_base 未列，如 a 格 0/3 时 dev_base ≈ 1.92–1.95）。f 格全部 3/3。**"6 种异常全部完成且偏离 < 0.5 m"的组：没有。**
 
 逐格说明：

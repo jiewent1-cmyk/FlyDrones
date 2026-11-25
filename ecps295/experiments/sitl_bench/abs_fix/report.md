@@ -48,6 +48,9 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改、�
   - 正方形四标记：跟踪 RMS 0.07（σ 0.05 / 100 ms），0.10（σ 0.15 / 300 ms）。
   - 悬停始终可见：最大偏离 0.14 / 0.31 m。
 
+![不同修正方法下的悬停漂移](figures/fig2_hover_correction.png)
+*图 1. 无修正和不同修正条件下，悬停 120 秒期间的最大偏离。数据来源：report.md §1.2 表“实测：两种方法把漂移从多少降到多少”；脚本：make_figures.py。*
+
 ### 1.3 间歇可见时 EKF 怎么做（(a)，源码加实测）
 
 1. **起飞前没看到标记。** EKF 处于 AID_RELATIVE，只用光流，可以正常解锁。解锁检查需要 VisOdom “healthy”，也就是 300 ms 内收到过消息（`AP_VisualOdom_Backend.cpp:36`）。所以机载电脑要以 5 Hz 发 quality 0 的保活 ODOMETRY，并设 `VISO_QUAL_MIN 1`：这类消息只算健康，不送进 EKF（`AP_VisualOdom_MAV.cpp handle_pose_estimate`）。`VISION_POSITION_ESTIMATE` 没有 quality 字段，做不到这一点。
@@ -125,6 +128,9 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改、�
 | 1.0 m | **0.36** [0.27–0.46] / 0.34 / 0.40 | **0.10** [0.09–0.10] / 0.19 / 0.24 |
 
 漂移大致与高度成正比。光流噪声是角速率噪声，乘以高度才变成速度噪声。降到 1 m 约减一半到 2/3，但仍明显大于 (a) 的 0.05–0.15 m。前视相机在 1 m 高时看墙上 1 m 高的标记，俯仰几何反而更好（第 6 条）。
+
+![不同高度下无修正的悬停与正方形误差](figures/fig1_uncorrected_altitude.png)
+*图 2. 不同飞行高度下悬停最大偏离和正方形航线跟踪 RMS；标记为中位数，误差线两端为表中的最小值和最大值（每个高度 3 次，因中位数偏向一端，误差线上下不对称）。数据来源：report.md §1.6 表；脚本：make_figures.py。*
 
 ### 1.7 推荐方案
 
@@ -231,6 +237,9 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改、�
 | (b) 四角 s05_l100 / s05_l300 | 0.08 / 0.08 | 0.19 / 0.20 | 0.08 / 0.16 · 0.10 / 0.16 | 0.15 / 0.21 | 0.18–0.22 | 0.73–0.77 |
 | (b) 四角 s15_l100 / s15_l300 | 0.13 / 0.16 | 0.35 / 0.53 | 0.09 / 0.18 · 0.09 / 0.22 | 0.07 / 0.13 | 0.49–0.50 | 0.76–0.80 |
 | 5 Hz，起飞角，s15_l300：(a) / (b) | 0.16 / 0.14 | – | – / 0.25 · – / 0.23 | 0.09 / 0.14 | 0.15 / 0.34 | 0.66 / 0.81 |
+
+![正方形路线各修正条件的跟踪 RMS](figures/fig3_square_tracking.png)
+*图 3. 基线、四角 ExtNav 和四角 ExtPos 条件下正方形航线的逐次跟踪 RMS。数据来源：results.csv；脚本：make_figures.py。*
 
 ### 2.3 偏航与罗盘（正方形，s05_l100）
 

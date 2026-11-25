@@ -86,6 +86,15 @@ E2/E3 在 FINAL+苛刻之上追加 `FENCE_RADIUS=3.5` / `FENCE_ALT_MAX=2.3`（�
 
 ---
 
+![四组跟踪 RMS 的逐次结果与中位数](figures/fig1_tracking_spread.png)
+*图 1. A1/A3 无扰动组与 B1/B3 苛刻扰动组的逐次跟踪 RMS；点表示单次运行，黑线表示中位数。数据来源：results.csv；脚本：make_figures.py。*
+
+![解锁条件矩阵中的任务完成率](figures/fig2_unlock_matrix.png)
+*图 2. C 组四种解锁条件下的任务完成比例（每种条件运行 3 次）。数据来源：results.csv；脚本：make_figures.py。*
+
+![三种围栏设置的水平余量](figures/fig3_fence_headroom.png)
+*图 3. 每次运行距有效水平围栏半径的余量；黑线表示中位数。数据来源：results.csv 和 report.md §5（有效半径）；脚本：make_figures.py。*
+
 # 6. 分项说明
 
 ## A 组（FINAL，无扰动）

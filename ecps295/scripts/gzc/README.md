@@ -14,3 +14,19 @@ The chase camera (480 px JPEG, 15 Hz) reaches the Pi as PIL kind 5 and shows in 
 Files outside this tree:
 - `pil_link_session_chase.diff`: the Pi test copy vs `/opt` (CTL aux bit 0 = session, kind 5 chase → `cam.last_bgr`). It belongs to the console line (feat/console); `/opt` is not changed.
 - `gz_g4_mine_gzc.diff`: ROG launcher changes (the monitor airframe per instance, the chase stream, `RUN_TIMEOUT`, line-buffered `exp.log`).
+
+## How the scripts chain
+
+```mermaid
+flowchart LR
+    U["gzc.sh start world minutes"] -->|"ssh Pi"| PS["gzc_start.sh<br/>router + companion"]
+    U -->|"ssh ROG"| GZ["gz_g4_mine.sh<br/>*_monitor world, INST 5"]
+    GZ --> RG["run_g4.py --mode console<br/>scripted RC pilot"]
+    RG -->|"SITL serial2 to UDP 14561"| PS
+    RG -->|"chase camera, PIL kind 5"| PS
+    PS -->|"UDP 14550 / ECL 14700"| APP["ECPS Console app<br/>on the Mac"]
+    X["gzc.sh stop"] -->|"SIGINT: lands"| RG
+    X -->|"ssh Pi"| PT["gzc_stop.sh<br/>router service and governor restored"]
+    ST["gzc.sh status"] -.-> RG
+    ST -.-> PS
+```

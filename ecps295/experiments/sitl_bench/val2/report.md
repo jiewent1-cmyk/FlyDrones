@@ -102,6 +102,15 @@ ArduCopter 4.7.0 SITL，`/home/jacky/sim/ardupilot/build/sitl/bin/arducopter`（
 
 注（截 0）：读数 = 真值 − `SIM_SONAR_POS_Z` − 0.05，被 `RNGFND1_MIN 0.01` 截为 0 → OutOfRangeLow，测距状态不再是 Good。截 0 条件是真值 ≤ 1.55 m。**爬升段和下降段的"读数变小 1.5 m"（dn15）全部实际截 0**，等效于超量程/测距丢失，不是 1.5 m 跳变；表中已标 `clip` 列。dn05（变小 0.5 m）的截 0 条件是真值 ≤ 0.55 m，实际注入高度 0.58–1.25 m，未截 0（最低一次 0.58 m，读数约 0.03 m，接近边界）。
 
+![各飞行阶段的逐次高度偏差](figures/fig1_phase_deviation.png)
+*图 1. 不同飞行阶段和参数组的逐次最大高度偏差。数据来源：results.csv；脚本：make_figures.py。*
+
+![不同飞行阶段的任务完成率](figures/fig2_completion_by_phase.png)
+*图 2. D、F 两组在不同飞行阶段的任务完成率。数据来源：results.csv；脚本：make_figures.py。*
+
+![不同测距异常下的触地速度](figures/fig3_touchdown_speed.png)
+*图 3. 按测距故障类型分组的逐次触地速度。数据来源：results.csv；脚本：make_figures.py。*
+
 ## 三、与预期对照
 
 1. **"FINAL 下 1 s 和 3 s 异常：真值高度偏离 < 0.1 m，任务继续"**

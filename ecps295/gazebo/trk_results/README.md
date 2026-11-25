@@ -20,7 +20,8 @@ hand-copied tree `~/sim/rl_trk` (`trk1_matrix.txt` has its absolute paths).
 trk1 (10-18, TargetTrack v1, `trk1_matrix.txt`, `matrix_trk1.log`): 42 runs, 0 contacts / near misses. cage10 excluded
 (marker generated outside its 10-ft nets, fixed since). 26/39 pass (arrived, 0.6-1.5 m, facing < 20 deg), 35/39 reached
 ~1 m; failures: brain looming escapes on the marker pushed the drone back to 1.6-1.7 m after arrival (9), approach/lost
-cycles (2), search turns undone by escapes (2). Range error median ~7 cm, bearing ~0.2 deg.
+cycles (2), search turns undone by escapes (2). Range error median ~7 cm, bearing ~0.5 deg
+(median of the per-run medians in `matrix_trk1.log`; an earlier version of this note said ~0.2 deg).
 
 v2 (10-19, `ecps_target.py`): ARRIVED holds the goal's range, APPROACH/ARRIVED ignore brain escapes with the marker fresh
 within 30 deg of the nose and >= 0.7 m, SEARCH turns through escapes; offline tests 8/8, Pi SITL 1.00 m / 0.6 deg.
@@ -37,3 +38,25 @@ trk3 (10-20 23:10-23:45, v2 + search relocation, `trk3_matrix.txt`, `matrix_trk3
 0 contacts / near misses, end distance median 1.08 m, arrival median 19.3 s (max 56 s: lowbox_s4_k2, relocated once).
 Two runs relocated after a fruitless full turn: cage10_k2 (the trk2 failure, now arrived 1.07 m) and lowbox_s4_k2. None
 regressed against trk2. Ran alongside a 1-instance PIL batch (INST 5).
+
+## Figures
+
+![Pass / fail of every tracking run for trk1, trk2 and trk3, by world and start variant](figures/fig1_pass_fail.png)
+
+*Figure 1. Pass / fail of each of the 42 runs per version, by world and start variant k (k0, k1: track start at 6 s; k2: at 20 s); cage10 is included here (trk1 0/3, trk2 2/3, trk3 3/3). Source: matrix_trk1.log, matrix_trk2.log, matrix_trk3.log; script: make_figures.py.*
+
+![End distance to the marker for the three versions](figures/fig2_end_distance.png)
+
+*Figure 2. Distance to the marker at the end of each run, with the 0.6-1.5 m pass window. Source: matrix_trk1.log, matrix_trk2.log, matrix_trk3.log; script: make_figures.py.*
+
+![Time from track start to arrival for the three versions](figures/fig3_arrival_time.png)
+
+*Figure 3. Time from track start to ARRIVED for the runs that arrived. Source: matrix_trk1.log, matrix_trk2.log, matrix_trk3.log; script: make_figures.py.*
+
+![Median range and bearing error per run](figures/fig4_estimate_error.png)
+
+*Figure 4. Median range and bearing error of the marker estimate per run, against simulator truth. Source: matrix_trk1.log, matrix_trk2.log, matrix_trk3.log; script: make_figures.py.*
+
+![Minimum clearance per run](figures/fig5_min_clearance.png)
+
+*Figure 5. Minimum clearance during each run (no contacts, no near misses in any of the 126 runs). Source: matrix_trk1.log, matrix_trk2.log, matrix_trk3.log; script: make_figures.py.*

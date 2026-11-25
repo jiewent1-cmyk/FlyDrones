@@ -39,6 +39,19 @@ flowchart LR
 | Twin update | hover throttle, hover current, time constants from GUIDED velocity steps, vibration, `PM.Load` → SITL JSON + Gazebo model; `SIM_FLOW_RND`, `SIM_SONAR_RND`, `RNGFND1_MAX` from the bench; cage lux and mat texture; measured obstacle layout → `ecps295_cage20_real.sdf` | regression (hover, single wall, patrol × 5 each) gives a twin-error table |
 | PIL | on the Orange Pi, process pinned to the A76 cores (`taskset`), `pil_replay.py` replays recorded frames through Retina → MiniFly → decoder → MAVLink; 10 min at 20 Hz with temperature and throttling (`/sys/class/thermal`); route-B message latency and jitter; camera-to-action latency (LED + high-speed video) | **p99 < 25 ms** per tick, no thermal throttling |
 
+The four steps before the cage, each one gated by the exit criterion of the table above:
+
+```mermaid
+flowchart LR
+  B["Bench<br/>3901-L0X · VL53L7CX · camera A/B"] -->|"gate: numbers written back into the twin<br/>and the Gazebo models, camera chosen"| F["First flight 10-28<br/>RC only, full logging"]
+  F -->|"gate: logs for the twin update"| T["Twin update<br/>hover throttle, time constants,<br/>obstacle layout"]
+  T -->|"gate: regression hover, single wall,<br/>patrol × 5 each gives a twin-error table"| P["PIL on the Orange Pi<br/>taskset, pil_replay.py"]
+  P -->|"gate: p99 under 25 ms per tick,<br/>no thermal throttling"| C["Cage flights"]
+```
+
+*Pre-cage ladder with the go / no-go gates; every gate is the exit criterion of the table in §2. Sources: this page,
+§2 and §5.*
+
 ## 3. Cage stages
 
 | Stage | Content | Repetitions | Main metrics |
@@ -51,6 +64,22 @@ flowchart LR
 | R4 | wall approaches: taped wall head-on, taped wall offset 0.45 m, plain wall head-on; MiniFly v4 vs classical baseline, both with the shield, plus v4 without the shield | 3 walls × 2 controllers × ≥ 5 | contact, minimum clearance, brake and escape onset |
 | R5 | 120 s patrol in the real cage layout; v4 + route B vs baseline | 2 controllers × ≥ 5 | contacts, near misses, path length, coverage |
 | R6 | (optional) brain-off arm in R4 | × 3 | — |
+
+The cage stages, each one entered only when the gate of the previous stage is met:
+
+```mermaid
+flowchart LR
+  R0["R0 manual Loiter<br/>flow + ToF, 3 × 60 s"] -->|"gate: companion watchdogs and FS_GCS_ENABLE 5<br/>ground test passed, holds position on flow + ToF"| R1["R1 companion GUIDED hover<br/>5 × 60 s"]
+  R1 -->|"gate: GUIDED hover at least 60 s,<br/>position and height SD recorded (G2)"| R1B["R1b shield on the real drone<br/>forward, backward, diagonal × 3"]
+  R1B -->|"gate: stopping distance vs d_safe<br/>recorded, no stall or oscillation"| R2["R2 route B<br/>5 flights with and without"]
+  R2 -->|"gate: route B verified on the real drone (G3)"| R3["R3 companion faults<br/>kill -STOP, camera unplug, 3 each"]
+  R3 -->|"gate: time to hover and land,<br/>landing quality recorded"| R4["R4 wall approaches<br/>3 walls × 2 controllers × at least 5"]
+  R4 -->|"gate: at least 5 wall approaches<br/>per condition (G3)"| R5["R5 120 s patrol<br/>2 controllers × at least 5"]
+  R5 -.-> R6["R6 brain-off arm<br/>optional, × 3"]
+```
+
+*Cage ladder with the go / no-go gates; the gate texts are the metrics of §3 and the milestone criteria of §5.
+Sources: this page, §1, §3 and §5.*
 
 About 75 flights in total; at 4–5 flights per battery that is 15–20 cage days of 1–2 hours. Book the cage early for
 exam week and winter break.

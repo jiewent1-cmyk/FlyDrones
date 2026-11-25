@@ -18,3 +18,19 @@ The runners here are the ROG copies; they call `~/sim/rl_h2/run_matrix_mine.sh` 
 Results of the 10-18 batch (pos hold vs vel 0) are in the Chinese RL roadmap §3.12. In block A, the median truth rms went from 14.4 to 6.0 cm.
 
 Sync to ROG: `rsync` the changed `ecps295/*.py` into `~/sim/rl_h2/ecps295/` and this folder into `~/sim/rl_h2/hv/`. ROG has no git credentials, so commit here on the Mac.
+
+## How the scripts chain
+
+```mermaid
+flowchart LR
+    B["batch.txt / sweep.txt<br/>job lists"] --> P["par.sh / par2.sh<br/>3 workers, instances 5-7"]
+    P -->|"one line per job"| R["run.sh / run2.sh<br/>set ECPS_HOLD, INST, EXTRA_PARM"]
+    R --> M["run_matrix_mine.sh<br/>in ~/sim/rl_h2"]
+    M --> G["run_g4.py --mode hovertest<br/>Gazebo + SITL"]
+    G --> L["hv_batch.log / hv_sweep.log"]
+    L --> S["hover_stats.py<br/>paired Wilcoxon test"]
+    H["pil_hold.sh<br/>spec world:seed:pos or vel"] -->|"ssh: companion on the Orange Pi"| PI["ecps_companion.py<br/>--mode guided"]
+    H -->|"ssh: Gazebo run with ECPS_PIL"| M
+    M --> PL["matrix_pil4.log"]
+    PL --> PS["pilhold_stats.py"]
+```

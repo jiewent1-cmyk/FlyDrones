@@ -66,6 +66,10 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，源码未�
 | 1 m：C0 / WIND / ALL | 3/3/3 | 1.000 / 1.000 / 1.009 | 0.989–1.013 / 0.977–1.028 / 0.975–1.041 | 0.009 / 0.009 / 0.015 | 0.124 / 0.122 / 0.313 | | |
 | 参考：TURB 10（第一轮的湍流） | 3 | 2.037 | **1.045–2.621** | | 0.357 | | 0/3 完成，高度围栏 |
 
+![2 m 悬停各扰动组的真值最大漂移](figures/fig1_hover_disturbances.png)
+*图1. 2 m 悬停 120 s 各扰动组每次运行的真值最大漂移（横线为中位数）：光流噪声（FNSE）是唯一的明显来源，其余组与无扰动（C0）重叠。数据来源：results.csv（m_H2_* / x_H2_TURB10 各组）；脚本：make_figures.py。*
+
+
 ### 2.2 扰动贡献：2 m 高、2 m 正方形 3 圈（`WP_SPD 0.4`，航点不停留）
 
 | 组 | n | 跟踪 RMS | 跟踪最大 | 航段高度 RMS | 转角高度 RMS | 高度误差最大 | 爬升 EKF 误差 RMS | 下降 EKF 误差 RMS | 落点偏差 |
@@ -79,6 +83,10 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，源码未�
 | RNSE | 3 | 0.056 [0.054–0.074] | 0.177 | **0.013** | **0.016** | 0.059 | 0.023 | 0.027 | 0.151 |
 | ALL | 6 | 0.166 [0.132–0.270] | 0.357 | 0.015 | 0.018 | 0.061 | 0.024 | 0.027 | 0.367 |
 | 参考：TURB 10 | 3 | 0.151 | | **0.369** | | 0.606 | | | 0/3 完成，高度围栏 |
+
+![2 m 正方形任务各扰动组的跟踪 RMS](figures/fig2_square_disturbances.png)
+*图2. 2 m 正方形任务各扰动组每次运行的跟踪 RMS（横线为中位数）：光流噪声（FNSE）抬高约 3 倍，±5% 比例误差与基线范围重叠，极端湍流（TURB 10）无法完成任务。数据来源：results.csv（m_SQ_* / x_SQ_TURB10 各组）；脚本：make_figures.py。*
+
 
 “爬升”段的高度误差还包括 `climb_overshoot`：AUTO 起飞后的超调，无扰动约 0.04 m，ALL 约 0.06–0.07 m。
 
@@ -110,6 +118,10 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，源码未�
 
 recH 的水平指标与原参数的差异都在离散度内，没有改善也没有确定的变差。H1 的漂移 0.54 对 0.31 m 范围重叠，n=3，列为可疑。recH 在正常飞行中没有收益，推荐它只是为了第 2.5 节的故障保护。
 
+![A/B 两臂在全部扰动下的悬停漂移与任务跟踪 RMS](figures/fig3_ab_normal_flight.png)
+*图3. 全部扰动（ALL）下原参数 / recH / recHF 的悬停真值最大漂移（H1、H2）与正方形任务跟踪 RMS：三臂范围互相重叠，正常飞行没有可分辨的收益。数据来源：results.csv（m_H*_ALL / ab_H*_ALL_* / ab_SQ_ALL_* 各组）；脚本：make_figures.py。*
+
+
 ### 2.5 测距异常（AUTO 2 m 悬停，进入 AUTO 后 25 s 注入；def = 原参数，p1 = `EK3_RNG_M_NSE 0.1` + `EK3_RNG_I_GATE 200` + `EK3_HGT_I_GATE 200`，p1b = 不改 `RNG_I_GATE`）
 
 “最高”是故障开始到飞行结束的真值最高高度。“最低”是故障开始到离开 AUTO 之前的真值最低高度；之后是 LAND，属于保护动作。
@@ -127,6 +139,10 @@ recH 的水平指标与原参数的差异都在离散度内，没有改善也没
 | 超量程（12 m > `RNGFND1_MAX` 8），1 s | 2.04 / 1.85 / 完成 3/3 | 2.23 / 1.96 / 完成 3/3 |
 | 超量程 3 s | 2.02 / 1.91 / `EKF variance` → EKF failsafe LAND 3/3 | 2.17 / 1.89 / EKF failsafe LAND 3/3 |
 | 超量程 5 s | 2.09 / 1.90 / EKF failsafe LAND 3/3 | 2.22 / 1.99 / EKF failsafe LAND 3/3 |
+
+![测距故障下 def 与 p1 的故障期间真值最高高度和触地速度](figures/fig4_rng_faults.png)
+*图4. AUTO 悬停中注入测距故障（def = 原参数，p1 = 收紧门限，绿色小点为 p1b）每次运行的故障期真值最高高度（左）与触地垂直速度（右）：p1 消除了 DN 的爬高（6.95 m 的 5 s 特例除外）和 UP 的 1.28 m/s 触地。数据来源：results.csv（f_def_* / f_p1_* / f_p1b_* 各组）；脚本：make_figures.py。*
+
 
 LOITER 悬停（RC3 1500，飞控定高，读数变大 1.5 m、3 s，15 s 窗口）：
 

@@ -45,6 +45,24 @@ bash ~/sim/verify_desktop.sh     # 验收，约 15 分钟，运行时机器上�
 | hw | 生成 hw 树。默认用分支代码，再打上 `hw_run_g4.patch`（服务器 `run_g4.py` 的仿真时钟和对照臂改动，都由环境变量开启，默认不生效）。设置 `HW_TAR=...` 时，改用 `pack_hw_tree.sh` 从服务器打包的树。旧树保留为 `~/sim/hw.old` | |
 | launchers | 把 ROG 的启动脚本复制到 `~/sim`，并改成通过 `ECPS_TREE` 选择运行树 | |
 
+各阶段按这个顺序跑，只有 apt 和驱动需要 sudo。The stages run in this order; only apt and the driver need sudo.
+
+```mermaid
+flowchart LR
+  CH["check<br/>OS · disk at least 30 GB · network"] --> DR["driver<br/>NVIDIA open driver 570 or newer<br/>reboot"]
+  DR --> AP["apt<br/>Gazebo Harmonic · gz python bindings"]
+  AP --> CO["conda<br/>flydrones · ardupilot · Python 3.11"]
+  CO --> FD["flydrones<br/>branch ecps295-sim<br/>MiniFly weights"]
+  FD --> AD["ardupilot<br/>Copter-4.7.0 plus patch<br/>SITL build"]
+  AD --> GZ["gzplugin<br/>ardupilot_gazebo 082a0fe"]
+  GZ --> HW["hw<br/>run tree in ~/sim/hw"]
+  HW --> LA["launchers<br/>gz_g4.sh · run_matrix*.sh"]
+  LA --> VE["verify_desktop.sh<br/>gates · anchors · RTF · Gazebo loop"]
+```
+
+*安装阶段和验收。The setup stages and the acceptance run. A finished stage is marked in `~/sim/.deploy/`, so the
+script can be repeated (`FORCE=1` redoes a stage). Sources: `setup_desktop.sh` (stage list) and the table above.*
+
 ## 验收（`verify_desktop.sh`）
 
 1. **版本和权重**：记录各组件版本；三个 MiniFly 权重的 SHA-256 必须与 `reference.json` 一致。

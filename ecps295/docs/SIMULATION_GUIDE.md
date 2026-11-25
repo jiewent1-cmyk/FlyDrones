@@ -81,6 +81,29 @@ hold-out generation is exported as a `minifly/*.yaml` for Gazebo. Archived runs 
 
 ## 4. Gazebo + SITL
 
+One Gazebo run is four processes on the machine: the simulator, the camera bridge, ArduPilot SITL and the control
+script `run_g4.py`.
+
+```mermaid
+flowchart LR
+  GZ["Gazebo Harmonic<br/>gz sim -s -r --headless-rendering<br/>world ecps295_*.sdf"]
+  CB["cam_bridge.py<br/>system Python"]
+  SHM["shared memory<br/>/dev/shm/ecps295_cam<br/>192×144 gray"]
+  SITL["ArduPilot SITL<br/>arducopter --model JSON<br/>Copter-4.7.0"]
+  RUN["run_g4.py<br/>retina, brain, decoder, pilot, shield<br/>20 Hz control loop"]
+  MON["monitor.py<br/>optional live dashboard"]
+  GZ -->|"camera topic /ecps295/camera"| CB
+  CB --> SHM
+  SHM --> RUN
+  GZ <-->|"FDM, UDP 9002"| SITL
+  SITL -->|"MAVLink2, TCP 5760"| RUN
+  RUN -->|"tick stream, UDP 5799"| MON
+```
+
+*Processes of one Gazebo run and the links between them. A parallel instance n has its own TCP 5760 + 10n, its own
+FDM port 9002 + 10n, its own shared-memory file and its own Gazebo partition. Sources: `../scripts/gz_g4.sh`,
+`../gazebo/cam_bridge.py`, `../gazebo/models/ecps295_quad/model.sdf`, `../run_g4.py`.*
+
 ```bash
 # wall suite (T1–T5) for one variant
 VARIANT=v2 DECODER=ecps PILOT=ecps RETINA=ecps bash scripts/g4_suite.sh
@@ -92,6 +115,43 @@ V=~/sim/hw/ecps295/sitl/variants
 NAV=flow EXTRA_PARM=$V/G_extnav_height.parm,$V/companion_fs.parm \
   nohup setsid bash run_matrix_par.sh <matrix> ~/sim/runs/matrix_<name>.log 3
 ```
+
+The steps of one run, in the order `gz_g4.sh` performs them:
+
+```mermaid
+sequenceDiagram
+  participant OP as Operator
+  participant S as gz_g4.sh
+  participant GZ as Gazebo
+  participant CB as cam_bridge.py
+  participant FC as ArduPilot SITL
+  participant R as run_g4.py
+  OP->>S: bash gz_g4.sh world tag args
+  S->>GZ: start gz sim -s -r --headless-rendering
+  S->>CB: start cam_bridge.py
+  GZ-->>CB: camera frames on /ecps295/camera
+  CB-->>R: latest frame in /dev/shm/ecps295_cam
+  S->>FC: start arducopter --model JSON --defaults params
+  FC->>GZ: FDM states over UDP 9002
+  S->>R: python run_g4.py --url tcp:127.0.0.1:5760
+  R->>FC: MAVLink2 connect, wait for the FC heartbeat
+  R->>FC: set GUIDED, arm, take off
+  loop every 20 Hz tick
+    R->>R: read frame, retina, brain, decoder, shield
+    R->>FC: velocity setpoint
+    R->>FC: VISION_POSITION_ESTIMATE z with --ext-height
+    FC-->>R: LOCAL_POSITION_NED, RANGEFINDER, SIM_STATE
+  end
+  R->>FC: LAND and wait for the disarmed state
+  R-->>S: run.json and the per-tick CSV
+  S->>S: whole-run RTF from the two stats messages
+  S->>FC: kill
+  S->>CB: kill
+  S->>GZ: kill
+```
+
+*One Gazebo run from the command line to the result files. Sources: `../scripts/gz_g4.sh`, `../run_g4.py`,
+`../mavlink_twin.py`.*
 
 Useful `run_g4.py` options: `--mode probe|hover|approach|patrol`, `--nav gps|flow`, `--config`,
 `--decoder/--pilot/--retina ecps`, `--fence-turn`, fault injection `--freeze-cam-at`, `--ext-drop-at`,

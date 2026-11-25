@@ -37,6 +37,15 @@
 | 15 | dataflash `OF` 字段 | flowX/flowY/bodyX/bodyY | flowX 0.49983，flowY −0.249915，bodyX 0.001483，bodyY −0.000551（qual 100） | `p1_arm_of` | 符合 |
 | 16 | 第二部分闭环飞行 | MAVLink 路径与 SITL 专用驱动对比 | 见第 3 节 | `p2_*` | 部分完成 |
 
+![配置发送频率与飞控记录频率](figures/fig1_flow_rate.png)
+*图 1. 光流配置发送频率与 dataflash 实测频率的对照。数据来源：results.csv；脚本：make_figures.py。*
+
+![选定运行中的传感器消息接收数](figures/fig2_rx_counts.png)
+*图 2. 三个选定运行中收到的光流和测距消息数。数据来源：results.csv；脚本：make_figures.py。*
+
+![不同发送频率下的光流分量](figures/fig3_flow_components.png)
+*图 3. 不同配置发送频率下，dataflash 光流分量相对发送值的误差。数据来源：results.csv 和 report.md §1 表（发送值）；脚本：make_figures.py。*
+
 ## 2. 逐项说明（源码引用 + 实测）
 
 ### 2.1 OPTICAL_FLOW 后端读了哪些字段、单位、换算

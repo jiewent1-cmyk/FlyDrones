@@ -24,6 +24,9 @@ ArduCopter 4.7.0 SITL，工具链复用 `/home/jacky/sim/val4/`（`run_one.sh`/`
 
 （异常格顺序：a 爬升 dn15 1 s / c 2 m dn15 3 s / g3 塌 0.1 m 3 s / g5 5 s / g10 10 s / gN 不恢复 / h 0.5 m 塌 0.1 m 不恢复。）
 
+![8 个配置 × 10 个任务格的完成次数热力图](figures/fig1_completion_heatmap.png)
+*Figure 1. 每个配置 × 每个任务格的完成次数（格内为“完成次数/总次数”，颜色为完成比例）：`RNGFND1_MIN ≥ 0.10` 的 6 个配置全部 0 次完成（未解锁）。来源：results.csv；脚本：make_figures.py。*
+
 **一句话**：把 `RNGFND1_MIN` 抬到 0.10 m 及以上（高于地面读数 0.03–0.07 m）时，飞机在地面就拿不到位置估计，**完全无法解锁**，8 个配置里有 6 个（min 0.10/0.20/0.30）根本没有飞行数据；清单设想的"空中读数变成超量程、EKF 退气压计、偏离远小于 min 0.01"在本配置下无法验证。
 
 ## 二、逐项说明
@@ -41,8 +44,14 @@ ArduCopter 4.7.0 SITL，工具链复用 `/home/jacky/sim/val4/`（`run_one.sh`/`
 | orig/0.01 | HOV | 5/5 | 完成x5 | 1.05 [1.05..1.06] | 0.145 [0.130..0.154] | 0.059 [0.048..0.061] | 0.55 | 5/5 | 0/5 | [2,4]/[] |
 | orig/0.10 / 0.20 / 0.30 | D3,SQ,HOV | 0/5 ×9 | 未解锁 x5（每格） | 无 | 无 | 无 | 无 | 0/5 | 0/5 | [2]/[] |
 
+![min 0.01 正常飞行的真值最高高度、离地高度误差与触地速度](figures/fig3_normal_flight.png)
+*Figure 3. `RNGFND1_MIN 0.01` 两个配置在 D3 / SQ / HOV 正常飞行上的真值最高高度（左）、离地时 EKF 高度误差 max（中）、触地速度（右），条为 5 次中位数、须为 5 次最小-最大范围。来源：results.csv；脚本：make_figures.py。*
+
 - **解锁**：`RNGFND1_MIN 0.01` 两组 15/15 正常解锁；`RNGFND1_MIN ≥ 0.10` 六组 90/90 次解锁被拒，STATUSTEXT 原文每次都是 `Arm: Need Position Estimate` 紧跟 `Arm: Fence requires position`（15 次重试全部拒绝，`runs/v6_*_f10_r1/run.log` 等）。
 - **测距状态**：地面静止读数 0.030–0.070 m（`v6_sq_f10_r1`，858 个 RFND 样本，**全部 `RFND.Stat=2` OutOfRangeLow**）；`min 0.01` 时地面读数 0.000–0.178 m（Stat 混合 2/4，150/151 为 4 = Good）；空中 2 m 时读数 1.85–2.11 m（Stat=4）。
+
+![各配置地面测距读数范围与 RNGFND1_MIN 下限的关系](figures/fig2_ground_readings.png)
+*Figure 2. 各配置地面静止时的测距读数范围（蓝竖条，含每次运行的最小-最大）与该配置的 `RNGFND1_MIN`（橙横线）：`min ≥ 0.10` 的 6 个配置读数（0.00–0.07 m）始终低于自己的下限，`RFND.Stat` 只有 2（OutOfRangeLow）。来源：results.csv；脚本：make_figures.py。*
 - **离地**：两个 min 0.01 组离地瞬间 EKF 高度误差 max 0.125–0.154 m（离地时刻测距刚离下限，读数还在 0.05 m 附近）。
 - **落地**：落地前 0.5 m 内 EKF 高度误差 max 0.034–0.061 m，触地速度 0.48–0.58 m/s，落地后正常上锁（5/5，`Disarming motors`）。
 - **HOV 低空悬停**（`--alt 0.5`）：悬停窗真值 0.48–0.51 m，`hov_alt_rms` 0.003–0.007 m，`hov_hgt_est_rms` 0.008–0.010 m，漂移 ≤0.042 m，EKF variance 0/10。全程真值最高 1.05–1.07 m（起飞段过冲，非悬停窗）。
@@ -68,6 +77,12 @@ ArduCopter 4.7.0 SITL，工具链复用 `/home/jacky/sim/val4/`（`run_one.sh`/`
 | orig/0.01 | 2m 塌 0.1m 10s | 0/3 | Max Alt fence breached | 2.97 | 4.97 | 2.62 | 0.114-3.072 / 0.114-3.081 / 0.117-3.08 | [4] | 10.8 | 0.61 | 1.96 / 2.01 / 2.08 |
 | orig/0.01 | 2m 塌 0.1m 不恢复 | 3/3 | 完成 + EKF variance | 2.98 | 4.98 | 2.63 | 0.104-3.088 / 0.116-3.07 / 0.114-3.084 | [4] | 37.0 | 0.51 | 0.57 / 0.67 / 0.15 |
 | orig/0.01 | 0.5m 塌 0.1m 不恢复 | 3/3 | 完成 + EKF variance | 2.91 | 4.90 | 2.54 | 0.098-0.32 / 0.172-0.442 / 0.18-0.446 | [4] | 39.7 | 0.50 | 0.26 / 0.20 / 0.10 |
+
+![各异常格的故障窗口真值最高高度与相对航线的基线偏离](figures/fig4_fault_deviation.png)
+*Figure 4. `RNGFND1_MIN 0.01` 两个配置在各异常格上的故障窗口真值最高高度（左）与基线偏离 `dev_base`（右），条为 3 次中位数、须为 3 次最小-最大范围。来源：results.csv；脚本：make_figures.py。*
+
+![各异常格的故障窗口 EKF 高度误差与注入期测距读数范围](figures/fig5_fault_ekf_and_readings.png)
+*Figure 5. 各异常格的故障窗口 EKF 高度误差 max（左，条为 3 次中位数）与注入期实测测距读数范围（右，每格 3 次运行的最小-最大）。来源：results.csv；脚本：make_figures.py。*
 
 - **a、c 格与 V4 复现一致**：FINAL 组 a 格 0/3（真值 3.60–3.67 m，围栏）、c 格 3/3（dev 0.02）；orig 组 a 格 3/3（dev 0.81）、c 格 0/3（真值 4.23–4.29 m，围栏）。与 `val4/report.md` 第一节数字一致。
 - **g 格（2 m 处读数塌到 0.1 m，`SIM_SONAR_POS_Z=1.9`）**：注入期实测读数 FINAL 组 0.04–0.14 m（Stat 全部 4=Good），orig 组 0.10–3.09 m（读数随真值升高而升高）。

@@ -89,6 +89,21 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改未�
 | q4jmp5_RNG（下跳 5 s） | 3 | 0/3 | Max Alt fence → LAND | **4.370** [4.370–4.384] | 0.887 | - | 0.034 | 0.093 | 2.646 [2.581–2.673] | 0.302 |
 | q4jmp5_B | 3 | 0/3 | Circle fence → LAND | **5.093** [5.063–5.143] | 1.122 | - | 3.922 | 6.107 | 8.559 [8.317–9.138] | 5.002 |
 
+![四种高度源的任务高度误差与 EKF 高度误差](figures/fig1_height_source.png)
+*图1. 四种高度源每次运行的任务高度误差 RMS（左）与 EKF 高度误差 RMS（右）：测距（b）最低，气压（c）约 4 倍于测距，气压+`RNG_USE_HGT` 混合（c+）最高。数据来源：results.csv（q2_B / q2_RNG / q2_BARO / q2_BRNG 各 3 次）；脚本：make_figures.py。*
+
+![光流比例误差与跟踪 RMS](figures/fig2_flow_scale.png)
+*图2. 光流比例误差从 −20% 到 +20% 每次运行的跟踪 RMS（黑线为中位数）：0% 附近 0.065–0.076 m，±10% 起恶化且 −10%（0.224 m）比 +10%（0.076 m）更差，−20% 达 0.436 m。数据来源：results.csv（q2_RNG 基线与 q4scale_* 各 3 次）；脚本：make_figures.py。*
+
+![测距噪声与高度误差](figures/fig3_rng_noise.png)
+*图3. 测距噪声幅值 0.02/0.05/0.10 m 下的任务高度误差 RMS（左）与悬停 EKF 高度误差 RMS（右）：两者都随噪声近似线性增大（0.005/0.014/0.028 与 0.014/0.025/0.052 m），任务全部完成。数据来源：results.csv（q4rnd_* 各 3 次）；脚本：make_figures.py。*
+
+![测距故障下两种高度源的真值最高高度](figures/fig4_rng_faults.png)
+*图4. 四种测距故障每次运行的真值最高高度（圆点按完成与否着色，横线为中位数：蓝 = 方案 a，橙 = 方案 b）：超量程 1 s 与下跳 1.5 m 1 s 时方案 a 无事而方案 b 冲高，5 s 故障两种方案都触发保护（q4oor5_B 有 1 次冲到 7.86 m）。数据来源：results.csv（q4oor1/oor5/jmp1/jmp5 × B/RNG 各 3 次）；脚本：make_figures.py。*
+
+![伴机停发高度后的任务高度误差](figures/fig5_companion_cut.png)
+*图5. AUTO 开始 15 s 后伴机停发高度（cut）及高度+心跳都停（cut+hb）时的任务高度误差 RMS（蓝 = 正常飞行基线）：停发只让任务高度误差增大到与所选高度源自身的品质相当（a/c 涨到 0.04–0.06 m，b/c+ 反而更小），任务都完成。数据来源：results.csv（q2cut_* / q2hb_B 各 3 次）；脚本：make_figures.py。*
+
 光流方向装错的发散速度（`diverge.py`，从解锁算起）：
 
 | 配置 | 真值偏 0.5 m | 真值偏 1 m | 真值偏 3 m | 此时 EKF 自认偏离（0.5 / 1 / 3 m 时） |
@@ -97,6 +112,9 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改未�
 | ORIENT_YAW 18000 ×3 | 10.0–11.3 s | 10.7–12.1 s | 11.9–13.3 s | 0.27–0.28 / 0.57–0.61 / 1.03–1.51 m |
 
 （解锁后约 4.5 s 爬到 1 m，然后松杆悬停。）
+
+![光流方向装错 90/180 度的 LOITER 飞走幅度](figures/fig6_orient_flyaway.png)
+*图6. 光流方向装错后每次运行在 LOITER 段的真值最大水平偏移（results.csv 的 hover_drift 列）：90° 为 8.9–34.4 m，180° 为 57.0–66.4 m，全部触发围栏且 AUTO 未能解锁；正文表中 14–51 / 97–107 m 是 diverge.py 对整段日志统计的最大半径，两者口径不同。数据来源：results.csv（q4orient_9000 / q4orient_18000 各 3 次）；脚本：make_figures.py。*
 
 完整逐次数据见 `results.csv`，汇总见 `summary_table.md`。
 

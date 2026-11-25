@@ -44,6 +44,28 @@ Check UART errors with Mission Planner → Config → MAVFtp → `@SYS/uarts.txt
 `MAV2_*` stream rates at 0; the companion requests its streams itself (`SET_MESSAGE_INTERVAL`), and `fhb_delta.parm`
 also sets `MAV2_POSITION 20`, `MAV2_EXTRA1 20`, `MAV2_EXT_STAT 2` as a fallback.
 
+### 2.1 RC mode switch
+
+The pilot's mode switch is on channel 6 of the ELRS receiver (`FLTMODE_CH 6`); the pilot flies in LOITER and hands
+the drone over in GUIDED, and switching away takes control back at once.
+
+```mermaid
+flowchart LR
+  RC["ELRS EP2 receiver<br/>mode switch on channel 6"]
+  RC --> G["GUIDED<br/>custom_mode 4"]
+  RC --> L["LOITER<br/>custom_mode 5"]
+  RC --> S["STABILIZE<br/>custom_mode 0"]
+  G -->|"only when --mode guided, FC armed,<br/>FC heartbeat younger than 2 s,<br/>altitude at least 0.3 m"| C["companion sends<br/>velocity setpoints"]
+  G -->|"switch away from GUIDED"| P["pilot has control back"]
+  L --> P
+  S --> P
+```
+
+*Mode switch and hand-over gate. The SITL bench parameter files put GUIDED on switch position 1 (`FLTMODE1 4`) and
+LOITER on position 4 (`FLTMODE4 5`), the other positions are `FLTMODE2 3 5 6 = 0` = STABILIZE; `../sitl/course_base.parm`
+has `FLTMODE1 6` = RTL instead. Sources: `../experiments/sitl_bench/val1/mtf01_sitl_rng.parm`,
+`../sitl/course_base.parm`, `../deploy/orangepi/companion/real_drone.py`, `../deploy/console/mac/Sources/MAVLink.swift`.*
+
 ## 3. Sensors and EKF3 without GPS
 
 | Parameter | SITL value | Real FC | Why |
@@ -61,6 +83,24 @@ also sets `MAV2_POSITION 20`, `MAV2_EXTRA1 20`, `MAV2_EXT_STAT 2` as a fallback.
 | `EK3_RNG_USE_HGT` | −1 | −1 | "baro primary + switch to rangefinder below 70 %" latched a 0.3–0.45 m height bias in S7c |
 | `ARMING_SKIPCHK` | 4104 | 4104 | skip GPS lock (bit 3) and GPS configuration (bit 12) |
 
+```mermaid
+flowchart LR
+  FLOW["3901-L0X optical flow<br/>FLOW_TYPE 7 MSP"] -->|"horizontal velocity"| EKF
+  RNG["3901-L0X downward ToF<br/>RNGFND1_TYPE 32 MSP"] -->|"range, SITL POSZ 2"| EKF
+  CMP["HGLRC M100 Pro compass<br/>I²C"] -->|"yaw"| EKF
+  OPI["Orange Pi companion<br/>VISION_POSITION_ESTIMATE z at 20 Hz"] -->|"height above floor, POSZ 6"| EKF
+  BARO["FC barometer"] -->|"fallback height"| EKF
+  IMU["FC IMU"] -->|"attitude"| EKF
+  GPS["HGLRC M100 Pro GPS<br/>GPS1_TYPE 0"] -.->|"not fused"| EKF
+  EKF["EKF3 source set 1<br/>POSXY 0 · VELXY 5 · YAW 1 · POSZ 6"]
+  EKF --> CTRL["position and velocity controller<br/>GUIDED and LOITER"]
+```
+
+*Where the GPS-free estimate comes from. `EK3_SRC1_POSXY 0` means there is no position source at all: the horizontal
+position is the integral of the flow-derived velocity, the height is route B (the companion's z) with the barometer as
+fallback, and the yaw comes from the compass. Sources: the tables in §3 and §4, `../sitl/fhb_delta.parm`,
+`../sitl/variants/G_extnav_height.parm`, `../deploy/orangepi/companion/real_drone.py`.*
+
 Note: an earlier procurement note suggested baro as primary height (`EK3_SRC1_POSZ 1`, `EK3_RNG_USE_HGT 70`). The
 S7c SITL runs replaced that with rangefinder-primary, and S7e replaced that with route B. Use route B.
 
@@ -74,7 +114,7 @@ From [`sitl/variants/G_extnav_height.parm`](../sitl/variants/G_extnav_height.par
 | `EK3_RNG_USE_HGT` | −1 | no automatic rangefinder height switching |
 | `VISO_TYPE` | 1 | MAVLink visual odometry input |
 | `VISO_POS_M_NSE` | 0.1 | observation noise of the companion height (m) |
-| `VISO_DELAY_MS` | 50 | companion pipeline delay; **re-measure on the Orange Pi** |
+| `VISO_DELAY_MS` | 50 (SITL), 40 in `deploy/orangepi/config/fc_flight.parm` | companion pipeline delay; **re-measure on the Orange Pi** |
 
 The Orange Pi sends z = −(height above floor) at 20 Hz. If the messages stop for 0.5 s, the EKF falls back to baro by
 itself, and the companion's own watchdog hovers and then lands after 3 s. Why route B is needed: report 2.
@@ -106,7 +146,7 @@ the flow-EKF position. The brain's own altitude window is 0.4–1.0 m (`min_alt_
 | `BATT_FS_LOW_ACT` | 0 | **1 (land)** in SITL; ask the TA before using it on the real drone | — |
 | `MAV_GCS_SYSID` / `MAV_GCS_SYSID_HI` | — | **254 / 255** | the companion (sysid 254) counts as a GCS |
 | `FS_GCS_ENABLE` | 0 | **5 (land)** | companion heartbeat lost → land |
-| `FS_GCS_TIMEOUT` | — | 2 s | — |
+| `FS_GCS_TIMEOUT` | — | 2 s (SITL `companion_fs.parm`), 5 s in `fc_flight.parm` | — |
 
 The companion failsafe (`companion_fs.parm`) was validated in SITL fault injection (report 2 §4, S8 E3: 10/10 safe
 landings). **On the real drone enable it only after a ground test**: Orange Pi powered, props off, armed in GUIDED,

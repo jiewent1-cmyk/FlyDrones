@@ -10,7 +10,8 @@
 > a local 3D map and a safety shield, 0/50 low-box worlds and 0/8 cage runs with contact.
 > Documentation · 文档：[`ecps295/docs/`](ecps295/docs/README.md) — [architecture](ecps295/docs/ARCHITECTURE.md),
 > [hardware](ecps295/docs/HARDWARE.md), [flight controller](ecps295/docs/FLIGHT_CONTROLLER.md),
-> [simulation guide](ecps295/docs/SIMULATION_GUIDE.md), [flight-test plan](ecps295/docs/FLIGHT_TEST_PLAN.md).
+> [simulation guide](ecps295/docs/SIMULATION_GUIDE.md), [flight-test plan](ecps295/docs/FLIGHT_TEST_PLAN.md),
+> [all figures and diagrams · 图表总览](ecps295/docs/FIGURES.md).
 > The upstream FlyDrones README follows below.
 
 <p align="center">

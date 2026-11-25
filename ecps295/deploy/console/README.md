@@ -26,6 +26,30 @@
 | `tools/gen_mavmeta.py` | 由 pymavlink 生成 `MavMeta.swift`（报文布局与 CRC_EXTRA） |
 | 机载端（在 `deploy/orangepi/`） | `companion/console_link.py`（链路 + 指引层，含 TRACK）、`companion/sitl_world.py`（仅 SITL 测试）、`ecps_companion.py --console`、`camera.py`（保留彩色帧）、`config/companion.yaml` 的 `console:` 段 |
 
+## 链路 / Message flow
+
+控制台到机载程序走 ECL1（UDP 14700），到飞控走 mavlink-router（UDP 14550）。The console reaches the companion over ECL1
+and the flight controller through the Pi's mavlink-router.
+
+```mermaid
+flowchart LR
+  CON["ECPS Console.app<br/>on the Mac"]
+  ECL["ECL1 over UDP 14700<br/>companion/console_link.py on the Pi"]
+  MR["mavlink-router on the Pi"]
+  CP["companion process<br/>ecps_companion.py"]
+  FC["Matek F405-WMO<br/>ArduCopter 4.7.0"]
+  CON -->|"HELLO heartbeat 5 Hz · CMD · ESTOP · PING"| ECL
+  ECL -->|"TICK 20 Hz · BRAIN · CAM · MAP 2 Hz · TOF · STATUS 2 Hz"| CON
+  CON -->|"MAVLink2 over UDP 14550"| MR
+  MR <-->|"MAVLink2 over UART /dev/ttyS2 115200"| FC
+  MR <-->|"UDP 14560 localhost"| CP
+  CP -.->|"through the router: velocity setpoints<br/>and route-B height, only while in control"| FC
+```
+
+*控制台 ↔ 机载程序 ↔ 飞控 的报文流。The message flow between console, companion and flight controller. Sources:
+`mac/Sources/ECLLink.swift`, `mac/Sources/FCLink.swift`, `companion/console_link.py`,
+`../orangepi/config/mavlink-router.conf`.*
+
 ## 构建与安装
 
 ```sh
@@ -83,6 +107,31 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 详见报告第 5.4 节。修复后的控制台测试里，应用升到最高档后没有再自动降档（报告第 9.5 节）。
 最高档的相机帧率 2026-10-20 起最多 20 fps（设置 → 相机帧率；默认仍是 5 fps），实测 20 fps 时总流量大脑视角约 113 kB/s、
 480 px 彩色约 307 kB/s（报告第 10 节）；机载端要用 c634ab97 及以后的 `console_link.py`，旧版最高 10 fps。
+
+两级急停的状态机。一级是紧急降落（LAND），二级是停桨（强制上锁）。The two-level emergency stop.
+
+```mermaid
+stateDiagram-v2
+  state "Idle" as Idle
+  state "Level 1, LAND sent every 200 ms" as Land
+  state "Level 1 confirmed" as LandOK
+  state "Level 2, force disarm every 150 ms" as Kill
+  state "Level 2 confirmed" as KillOK
+  state "Resending stopped, FC did not confirm" as Held
+  Idle --> Land : Esc or the red button
+  Idle --> Kill : hold 1.5 s
+  Land --> LandOK : FC reports LAND or disarmed, or COMMAND_ACK
+  Land --> Held : sending stopped, FC did not confirm
+  Kill --> KillOK : FC reports disarmed, or COMMAND_ACK
+  Kill --> Held : sending stopped, FC did not confirm
+  LandOK --> Idle : estop_reset, FC fresh and disarmed
+  KillOK --> Idle : estop_reset, FC fresh and disarmed
+  Held --> Idle : estop_reset, FC fresh and disarmed
+```
+
+*急停状态机：确认之前一直重发，确认之后不再重发（飞手重新切模式仍然优先），解除需要飞控状态新鲜且已上锁。The
+emergency-stop state machine: the command is repeated until the FC confirms, then the console stops sending and only
+the operator resets the stop. Sources: `mac/Sources/Safety.swift`, `companion/console_link.py`.*
 
 ## 测试
 

@@ -14,7 +14,7 @@
 | Tag | Meaning |
 |---|---|
 | ✅ sim | implemented on this branch and validated in the fast twin and Gazebo + ArduPilot SITL |
-| 🟡 pending push | implemented and validated on the experiment machines, not yet on this branch (S6/S7 map code, N3 round 2) |
+| 🟡 pending push | implemented and validated on the experiment machines, not yet on this branch (N3 round 2) |
 | ⬜ planned | design for the real drone; not implemented yet (companion runtime on the Orange Pi, ToF drivers) |
 
 ## Contents
@@ -90,9 +90,9 @@ flowchart TB
   IMU --> VEN
   VEN --> RET
   RET --> ENC --> LIF --> DN --> D1
-  D1 --> GOV --> PIL --> SH
+  D1 --> PIL --> SH --> GOV
   MAP --> SH
-  SH -->|"MAVLink: body-frame velocity, 20 Hz"| GUID
+  GOV -->|"MAVLink: body-frame velocity, 20 Hz"| GUID
   VEN -->|"MAVLink: route-B height above floor"| EKF
   FLOW --> EKF
   IMU --> EKF
@@ -103,10 +103,10 @@ flowchart TB
 | Layer | Runs on | Key code | Responsibility | Status |
 |---|---|---|---|---|
 | Sensing | sensors | — | camera frames, 2 × 64 range zones, downward flow + range, IMU / baro / compass | sim ✅ · real ⬜ |
-| Perception | Orange Pi | [`ecps_retina.py`](../ecps_retina.py), [`ecps_ventral.py`](../ecps_ventral.py), `ecps_map.py` | turn raw sensing into fly-like visual features, the ventral cue and a local map | ✅ sim · map 🟡 |
+| Perception | Orange Pi | [`ecps_retina.py`](../ecps_retina.py), [`ecps_ventral.py`](../ecps_ventral.py), `ecps_map.py` | turn raw sensing into fly-like visual features, the ventral cue and a local map | ✅ sim |
 | Model | Orange Pi | [`my_minifly.py`](../my_minifly.py), upstream `flydrones.brain` | spiking connectome; the only place where "decisions" are made from what is seen | ✅ sim |
 | Decision | Orange Pi | [`ecps_decoder.py`](../ecps_decoder.py) | read descending-neuron rates into a flight command; escape state machine | ✅ sim |
-| Safety | Orange Pi | upstream `flydrones.safety`, [`ecps_pilot.py`](../ecps_pilot.py), [`ecps_struct.py`](../ecps_struct.py) | make the command physically safe regardless of what the brain wants | ✅ sim · map-fed shield 🟡 |
+| Safety | Orange Pi | upstream `flydrones.safety`, [`ecps_pilot.py`](../ecps_pilot.py), [`ecps_struct.py`](../ecps_struct.py) | make the command physically safe regardless of what the brain wants | ✅ sim |
 | Flight control | F405-WMO | ArduCopter 4.7 + [`sitl/`](../sitl/) params | state estimation, stabilisation, last-resort failsafes | ✅ SITL · real ⬜ |
 
 ---
@@ -116,30 +116,40 @@ flowchart TB
 `EcpsPilot.tick()` runs at **20 Hz** (`control.hz` in `minifly/*.yaml`). The order below is exactly the order in
 [`ecps_pilot.py`](../ecps_pilot.py); every stage can only replace or attenuate the command of the stage before.
 
-```mermaid
-sequenceDiagram
-  autonumber
-  participant D as Drone backend<br/>(MAVLink link)
-  participant R as EcpsRetina
-  participant B as MiniFly brain
-  participant K as EcpsDecoder
-  participant G as SafetyGovernor
-  participant P as EcpsPilot watchdogs
-  participant S as Struct / RangeShield
-  participant FC as ArduPilot
+The steering layers and the shield act before the SafetyGovernor, and the camera / height-source watchdogs override
+the governor's output, so nothing after the governor can undo a clamp or a stop.
 
-  D->>R: camera frame, down-ToF + baro, front ToF zones (S5)
-  Note over R: inject previous yaw rate (centering)<br/>and previous forward cmd (C1 efference copy)
-  R->>B: Poisson rates per input neuron (InputEncoder)
-  B->>K: mean Hz per group (DNg02, DNp03, DNp01, MDN)
-  K->>G: FlightCommand (throttle, yaw, forward, escape)
-  G->>P: clamped, slew-limited, fenced command
-  Note over P: camera stale → hover → land<br/>route-B height stale → hover → land<br/>height guard · fence turn-back
-  P->>S: command
-  Note over S: S1–S3 rules, RangeShield projection,<br/>unstick turn
-  S->>FC: SET_POSITION_TARGET_LOCAL_NED (body velocity + yaw rate)
-  D->>FC: VISION_POSITION_ESTIMATE z (route B), same tick
+```mermaid
+flowchart TD
+  CAM["camera frame, 192×144 gray<br/>30 fps UVC, 60 Hz Gazebo"]
+  TEL["FC telemetry, 20 Hz<br/>pose, attitude, baro, RANGEFINDER"]
+  TOF["2 × 8×8 ToF frames, 15 Hz"]
+  RET["EcpsRetina.encode<br/>per-eye 6×8 grids: flow, looming, blank, near, ventral<br/>+ previous yaw rate and forward command"]
+  ENC["InputEncoder<br/>features to Poisson rates, haltere = yaw rate"]
+  BR["MiniFly brain.tick<br/>LIF, simulates one tick of time"]
+  DEC["EcpsDecoder.update<br/>DN rates to FlightCommand<br/>saccade, caution, retreat, efference copy"]
+  OP["console Operator.apply, optional<br/>HOLD, GOTO, MANUAL replace the raw command"]
+  LAY["EcpsPilot steering layers<br/>height guard, RTL, target, waypoints, fence turn"]
+  SH["StructGuard + RangeShield<br/>LocalMap sectors, unstick turn"]
+  GOV["SafetyGovernor.filter<br/>clamps, slew, ceiling, floor, geofence, brain age"]
+  WD["EcpsPilot watchdog override<br/>camera or height source stale: hover<br/>land_requested: LAND"]
+  GATE["drone.send<br/>RealDrone: hand-over gate + sensor guard"]
+  HGT["route-B height, VentralCue<br/>VISION_POSITION_ESTIMATE z, 20 Hz"]
+  FC["ArduPilot GUIDED"]
+  CAM --> RET
+  TEL --> RET
+  TOF -->|"front zones, S5"| RET
+  RET --> ENC --> BR -->|"mean Hz per DN group"| DEC
+  DEC --> OP --> LAY --> SH --> GOV --> WD --> GATE
+  TOF --> SH
+  TEL --> HGT
+  GATE -->|"SET_POSITION_TARGET_LOCAL_NED<br/>body velocity + yaw rate, 20 Hz"| FC
+  HGT -->|"sent from telemetry, every tick"| FC
 ```
+
+*One 20 Hz control tick in execution order, with sensor and output rates. From `ecps_pilot.py` (`EcpsPilot.tick`),
+`ecps_struct.py`, `ecps_decoder.py`, `deploy/orangepi/companion/console_link.py` (`Operator.apply`), `real_drone.py`,
+`mavlink_twin.py`, `deploy/orangepi/config/companion.yaml`, upstream `src/flydrones/safety.py`.*
 
 Timing measured on the ROG laptop: brain tick ≈ 9 ms p95, whole control tick 50.1 ms p95 (report 1 §1.1). The
 On the Orange Pi (Allwinner A733) the whole s7_w2map tick takes p50 22 ms / p99 26 ms on the A76 cores with the
@@ -233,6 +243,34 @@ Parameter variants with the same architecture (not new generations): `es2`/`es3`
 `h2_s1..8` (CMA on v4 with hardware caps; `h2_s3` accepted as conservative variant, report 5), `c4_s1..8` (bypass
 arm, report 6), N3 round 2 (CMA with the shield in the loop, running, §4).
 
+### 3.3 Decoder behaviour states
+
+The escape behaviour that v1 and v4 added lives in `EcpsDecoder.update`; values below are those of
+`minifly/s7_w2map.yaml`, the final hardware config.
+
+```mermaid
+stateDiagram-v2
+  state "Settling<br/>hover, measure resting DN rates" as Settle
+  state "Cruise<br/>forward = cruise, cut by brake memory" as Cruise
+  state "Saccade<br/>turn away 1.5 s, back off 0.3 for the first 0.6 s" as Sacc
+  state "Caution<br/>no cruise for 2 s, then ramp back over 2 s" as Caut
+  state "Retreat<br/>back up at 0.5, no yaw" as Ret
+  [*] --> Settle
+  Settle --> Cruise : settle_s elapsed
+  Cruise --> Sacc : DNp03 over 15 Hz, DNp01 over 20 Hz, or brake at least 0.6
+  Caut --> Sacc : new trigger
+  Sacc --> Caut : saccade over
+  Caut --> Cruise : ramp done
+  Cruise --> Ret : MDN over 20 Hz
+  Caut --> Ret : MDN over 20 Hz
+  Sacc --> Ret : MDN over 20 Hz, overrides the saccade
+  Ret --> Sacc : MDN quiet 1 s after at least 1.5 s, or 2 s cap
+```
+
+*Escape state machine of the decoder (giant-fibre and DNp03 triggers are low-pass filtered rates; a brake-triggered
+saccade is blocked for 1 s after the last one). From `ecps_decoder.py`, `minifly/s7_w2map.yaml`, upstream
+`src/flydrones/defaults.yaml` (DNp01 threshold).*
+
 ---
 
 ## 4. System generations: from the GPS cage to the final hardware
@@ -289,9 +327,9 @@ flowchart LR
   DT --> VC
   BARO --> VC
   VC --> RET
-  RET --> BR --> DE --> SG --> SH
+  RET --> BR --> DE --> SH --> SG
   MAP --> SL --> SH
-  SH -->|velocity| FCN
+  SG -->|velocity| FCN
   VC -->|route-B height| FCN
 ```
 
@@ -310,7 +348,7 @@ flowchart TB
   L2["<b>L2 command limits</b> — SafetyGovernor<br/>clamps, slew limit, ceiling fade, geofence, battery, brain-age watchdog"]
   L3["<b>L3 supervisory watchdogs</b> — EcpsPilot<br/>camera stale, route-B height stale, height guard, fence turn-back"]
   L4["<b>L4 geometric shield</b> — RangeShield + local map<br/>velocity projection onto safe half-planes, unstick"]
-  L5["<b>L5 flight-controller failsafes</b> — ArduPilot<br/>companion heartbeat lost → land 2 s, GUIDED timeout, RC loss → land, EKF failsafe, crash check"]
+  L5["<b>L5 flight-controller failsafes</b> — ArduPilot<br/>companion heartbeat lost → land, 2 s in SITL and 5 s on the real FC, GUIDED timeout, RC loss → land, EKF failsafe, crash check"]
   L1 --> L2 --> L3 --> L4 --> L5
 ```
 
@@ -320,7 +358,50 @@ flowchart TB
 | L2 | command out of bounds, brain tick older than `brain_timeout` | clamp / fade / hover / land | `SafetyGovernor.filter` | upstream tests; slew-sign fix `8b8eef9` |
 | L3 | no camera frame for `stale_s`, no route-B height for 0.5 s | hover; land after `land_after_s` / 3 s | `EcpsPilot.tick` | S8 E3 fault injection, 10/10 safe landings |
 | L4 | any range zone closer than allowed by v·uᵢ ≤ α(dᵢ − d_safe) | project the horizontal velocity; push back if dᵢ < d_safe; turn after 1 s stall | `ecps_struct.RangeShield` | report 7: lowbox 0/50 (Gazebo, cone ToF) |
-| L5 | companion heartbeat lost 2 s; GUIDED command silent `GUID_TIMEOUT`; RC lost | land / stop | ArduCopter | SITL `companion_fs.parm`; real drone ⬜ |
+| L5 | companion heartbeat lost 2 s (SITL `companion_fs.parm`) or 5 s (real FC, `fc_flight.parm`); GUIDED command silent `GUID_TIMEOUT`; RC lost | land / stop | ArduCopter | SITL `companion_fs.parm`; real drone ⬜ |
+
+What happens when a sensor fails, on the companion side. The companion's LAND goes out only while it is in control;
+otherwise the pilot is flying.
+
+```mermaid
+flowchart LR
+  CAM["camera: no new frame"] --> CW["EcpsPilot camera watchdog<br/>older than 0.3 s: hover<br/>older than 3 s: LAND"]
+  TOF["VL53L7CX frame older than 0.3 s<br/>or fewer than 8 valid zones"] --> TG["RealDrone sensor guard<br/>hover, LAND after 2 s"]
+  POSE["LOCAL_POSITION_NED or ATTITUDE<br/>older than 0.5 s or invalid"] --> TG
+  RNG["RANGEFINDER older than 0.5 s"] --> FB["route-B height from<br/>baro minus floor baseline"]
+  FB -->|"baro also stale"| NOH["no route-B height sent"]
+  NOH --> HW["EcpsPilot height-source watchdog<br/>older than 0.5 s: hover<br/>older than 3 s: LAND"]
+  NOH --> EKF["FC: ExtNav times out,<br/>EKF height falls back to baro"]
+  HG["height guard, off by default<br/>baro disagrees with rangefinder"] --> HGA["EKF source set 3, baro height<br/>LAND 0.5 s later, in or out of control"]
+  GATE["hand-over gate<br/>camera, ToF or pose not fresh"] --> REF["control not taken"]
+  CW --> LAND["companion sends LAND"]
+  TG --> LAND
+  HW --> LAND
+```
+
+*Sensor-fault decisions on the Orange Pi. From `ecps_pilot.py` (camera and height-source watchdogs),
+`deploy/orangepi/companion/real_drone.py` (`_guard`, `in_control`, `STALE_S`), `mavlink_twin.py` (`floor_height`,
+`send_ext_height`), `companion/height_guard.py`, `deploy/orangepi/config/companion.yaml`, `minifly/s7_w2map.yaml`.*
+
+When the link or the companion itself fails, the console layer and then the flight controller's own failsafes take
+over.
+
+```mermaid
+flowchart TD
+  CON["console link lost<br/>no HELLO for 1.5 s"] --> C1["GOTO, MANUAL, TRACK switch to HOLD<br/>PATROL continues"]
+  C1 -->|"rtl layer on, holding 5 s"| RTL["RTL: fly home, settle 2 s, LAND"]
+  C1 -->|"rtl layer off, holding 20 s"| CL["LAND where it is"]
+  FCL["FC heartbeat older than 2 s"] --> REL["companion releases control<br/>no velocity commands"]
+  MODE["pilot leaves GUIDED on the RC"] --> REL
+  BRN["brain tick older than 0.5 s"] --> BH["SafetyGovernor: hover"]
+  LOOP["control loop stops sending"] --> GT["FC: GUID_TIMEOUT, stop and hover"]
+  DEAD["companion process ends or Pi hangs"] -->|"no HEARTBEAT from sysid 254"| FSG["FC: FS_GCS_ENABLE 5, LAND<br/>FS_GCS_TIMEOUT 2 s SITL, 5 s fc_flight.parm"]
+  RCL["RC signal lost"] --> FST["FC: FS_THR_ENABLE 3, LAND"]
+```
+
+*Link and companion faults. From `deploy/orangepi/companion/console_link.py` (`on_tick`, `DEFAULTS`),
+`real_drone.py` (`in_control`, `FC_HB_TIMEOUT_S`), `ecps_pilot.py` (brain age), upstream `src/flydrones/safety.py`,
+`sitl/variants/companion_fs.parm`, `sitl/fhb_delta.parm`, `deploy/orangepi/config/fc_flight.parm`.*
 
 ### 5.2 The range shield (control-barrier-function filter)
 
@@ -336,7 +417,7 @@ never modified. If forward motion stays clamped below 20 % of the request for `u
 turn towards the more open side. The shield counts clamp / retreat / unstick ticks, and fitness v6 (N3 round 2)
 uses the share of clamped ticks as a hard constraint so the brain cannot lean on the filter.
 
-### 5.3 Local 3D map (S7, 🟡 pending push)
+### 5.3 Local 3D map (S7, ✅ sim)
 
 - Each ToF frame (2 × 64 zones) is ray-cast into 5 cm voxels in the flow-EKF frame (log-odds, forgotten with
   τ = 10 s).
@@ -444,7 +525,7 @@ flowchart LR
 | 3901-L0X → FC | UART4 (SERIAL4), replaces the GPS UART | MSP, 115200 (`SERIAL4_PROTOCOL 32`, `FLOW_TYPE 7`, `RNGFND1_TYPE 32`) | optical flow, downward range (max 1.2 m) | ⬜ needs custom firmware with MSP flow/range + `EK3_FEATURE_OPTFLOW_FUSION` |
 | VL53L7CX front → Orange Pi | I²C TWI0, own bus, address 0x29 | ST ULD driver, ≈ 84 KB firmware upload at boot; 8×8 zones, 15 Hz class | 64 ranges / frame | ⬜ bench test first |
 | VL53L7CX rear → Orange Pi | I²C TWI1, own bus, address 0x29 | same | 64 ranges / frame | ⬜ pin levels to verify |
-| USB camera → Orange Pi | USB-C ① | UVC, 640×480 MJPEG 60 fps (ELP) or 640×480 @ 120 fps mono (OV9281) | frames, down-sampled to 192×144 gray for the retina | ⬜ A/B bench comparison |
+| USB camera → Orange Pi | USB-C ① | UVC, 640×480 MJPEG, up to 60 fps (ELP; `companion.yaml` requests 30 fps) or 640×480 @ 120 fps mono (OV9281) | frames, down-sampled to 192×144 gray for the retina | ⬜ A/B bench comparison |
 | ELRS → FC | UART2 (SERIAL6) | CRSF | pilot RC, mode switch, kill | course setup |
 | Telemetry → GCS | UART5 (SERIAL3) → ESP32-C3 | MAVLink2 57600, Wi-Fi UDP | monitoring, parameters | course setup |
 | Compass → FC | I²C | — | heading (`COMPASS_DEC 0.197` fixed, no GPS) | course setup |
@@ -472,7 +553,7 @@ flowchart TB
       CAMT["camera thread<br/>V4L2 / UVC capture → latest frame"]
       TOFT["ToF threads ×2<br/>/dev/i2c-0, /dev/i2c-1 → latest 8×8 frames"]
       MAVT["MAVLink I/O<br/>pymavlink: telemetry cache, heartbeat 1 Hz"]
-      LOOP["20 Hz control loop<br/>Retina → MiniFly → Decoder → Governor → Watchdogs → Map → Shield"]
+      LOOP["20 Hz control loop<br/>Retina → MiniFly → Decoder → Steering layers → Map → Shield → Governor → Watchdogs"]
       HGT["route-B height sender, 20 Hz<br/>(VentralCue)"]
       LOG["run log<br/>per-tick CSV + run.json"]
       CAMT --> LOOP
@@ -528,13 +609,13 @@ Companion system id **254**, `MAV_TYPE_ONBOARD_CONTROLLER` (from [`mavlink_twin.
 
 | Direction | Message | Rate | Purpose |
 |---|---|---|---|
-| Pi → FC | `HEARTBEAT` | 1 Hz | liveness; FC treats sysid 254 as a GCS (`MAV_GCS_SYSID 254`, `FS_GCS_ENABLE 5`, timeout 2 s → land) |
+| Pi → FC | `HEARTBEAT` | 1 Hz | liveness; FC treats sysid 254 as a GCS (`MAV_GCS_SYSID 254`, `FS_GCS_ENABLE 5`, timeout 2 s in SITL, 5 s in `fc_flight.parm` → land) |
 | Pi → FC | `SET_POSITION_TARGET_LOCAL_NED`, `MAV_FRAME_BODY_OFFSET_NED`, velocity + yaw-rate mask | 20 Hz | the safe command from the shield |
-| Pi → FC | `VISION_POSITION_ESTIMATE` (z = −height above floor) | 20 Hz | route B (`VISO_DELAY_MS 50`, `VISO_POS_M_NSE 0.1`) |
+| Pi → FC | `VISION_POSITION_ESTIMATE` (z = −height above floor) | 20 Hz | route B (`VISO_DELAY_MS` 50 in SITL, 40 in `fc_flight.parm`; `VISO_POS_M_NSE 0.1`) |
 | Pi → FC | `COMMAND_LONG` | on demand | mode change, arm, land, `SET_MESSAGE_INTERVAL` stream requests |
 | Pi → FC | `SET_GPS_GLOBAL_ORIGIN` | once | EKF origin without GPS |
 | FC → Pi | `LOCAL_POSITION_NED`, `ATTITUDE`, `SCALED_PRESSURE` | 20 Hz (requested) | pose for fence turn, map frame, VentralCue |
-| FC → Pi | `RANGEFINDER` | 10 Hz | downward ToF for VentralCue |
+| FC → Pi | `RANGEFINDER` | 20 Hz (twin: 10 Hz) | downward ToF for VentralCue |
 | FC → Pi | `SYS_STATUS`, `EKF_STATUS_REPORT`, `RC_CHANNELS` | 2 Hz | battery, EKF health, pilot switches |
 | (sim only) | `SIM_STATE` | 20 Hz | ground truth for scoring and for ray-casting simulated ToF |
 | Mac console → FC (Wi-Fi, mavlink-router 14550) | `HEARTBEAT` (sysid 250); `COMMAND_LONG` `DO_SET_MODE` LAND / force disarm | 1 Hz; on an emergency stop | the console's direct emergency-stop path (§8.4); sysid 250 is outside the FS_GCS range, so it never masks a lost companion |
@@ -567,7 +648,90 @@ and the flight state. It talks to the companion over ECL1 (UDP 14700, `companion
 - **Emergency stop**, two levels: *land* (big button / Esc) sends LAND on both paths (FC directly and the companion);
   *kill* (hold 1.5 s) forces a disarm. Each path resends only until the FC confirms once (heartbeat or COMMAND_ACK),
   so the RC mode switch still wins afterwards; the companion latch keeps the brain out of control until reset.
-- **Link loss**: no console heartbeat for 1.5 s → go-to / manual → hold; still lost after 20 s while holding → land.
+- **Link loss**: no console heartbeat for 1.5 s → go-to / manual / track → hold; still lost after 5 s while holding →
+  return home and land (without the RTL layer: land after 20 s).
+
+Console modes on top of the brain, the pilot's hand-over and the two emergency-stop levels. The companion never arms or
+takes off; it only flies between the pilot's switch to GUIDED and the next mode change.
+
+```mermaid
+stateDiagram-v2
+  state "On ground, disarmed" as Ground
+  state "Pilot flies on RC<br/>LOITER or ALT_HOLD" as Pilot
+  state "LAND requested<br/>FC lands" as Land
+  state "E-stop level 1 latched<br/>LAND to the FC until confirmed" as Es1
+  state "E-stop level 2 latched<br/>force disarm until confirmed" as Es2
+  state InControl {
+    state "HOLD<br/>hover, shield still active" as Hold
+    state "PATROL<br/>brain cruises" as Patrol
+    state "GOTO or route<br/>planned path, waypoint layer" as Goto
+    state "TRACK<br/>search, approach, face marker" as Track
+    state "MANUAL<br/>console sticks" as Sticks
+    state "RTL<br/>RETURN then SETTLE 2 s" as Rtl
+    [*] --> Hold : hand-over mode hold, the default
+    [*] --> Patrol : hand-over mode patrol, or no console
+    Hold --> Patrol : patrol
+    Hold --> Goto : goto or route
+    Hold --> Track : track
+    Hold --> Sticks : manual on
+    Hold --> Rtl : rtl, or console lost 5 s
+    Patrol --> Rtl : battery below rtl.battery_pct
+    Goto --> Hold : arrived, route done, timeout, link lost
+    Track --> Hold : link lost
+    Sticks --> Hold : manual off, link lost
+  }
+  Ground --> Pilot : pilot arms and takes off
+  Pilot --> InControl : GUIDED, armed, 0.3 m up, sensors fresh
+  InControl --> Pilot : mode switch, or FC heartbeat older than 2 s
+  InControl --> Land : console land, watchdog, end of RTL
+  Land --> Ground : FC disarms
+  Pilot --> Es1 : console E-stop land
+  InControl --> Es1 : console E-stop land
+  Pilot --> Es2 : console E-stop kill
+  InControl --> Es2 : console E-stop kill
+  Es1 --> Es2 : kill
+  Es1 --> Ground : landed, estop_reset
+  Es2 --> Ground : disarmed, estop_reset
+```
+
+*Flight modes and behaviour states seen from the companion. Any console command switches between the modes inside
+InControl directly (only the hub transitions are drawn); after the FC confirms an E-stop, the RC still wins, and the
+latch keeps the brain out of control until `estop_reset`, which is refused while the FC is armed unless forced. From
+`deploy/orangepi/companion/console_link.py` (`Operator`, `_command`, `_estop_action`), `real_drone.py`
+(`in_control`), `ecps_pilot.py` (`rtl_start`, `_rtl`), `deploy/orangepi/config/companion.yaml`.*
+
+One go-to command from the console to the flight controller. The command only changes the goal; the brain keeps
+flying and every safety stage after it still applies.
+
+```mermaid
+sequenceDiagram
+  participant C as Mac console
+  participant L as ConsoleLink rx thread
+  participant O as Operator
+  participant P as RoutePlanner thread
+  participant T as Control loop, 20 Hz
+  participant D as RealDrone
+  participant F as Flight controller
+  C->>L: CMD goto x, y over ECL1, UDP 14700, HMAC-signed
+  L->>O: set_goal, checked inside geofence minus 0.4 m
+  O-->>L: accepted, mode GOTO, plan_start queued
+  L-->>C: ACK id, ok
+  loop every tick
+    T->>O: on_control, runs the queued calls
+    O->>P: request path on the LocalMap, every 1 s
+    P-->>O: A* path around mapped obstacles
+    O->>T: pilot.set_waypoints with the path
+    Note over T: brain, decoder, Operator passes the brain command,<br/>waypoint yaw bias, fence turn, shield, governor
+    T->>D: send command
+    D->>F: SET_POSITION_TARGET_LOCAL_NED via mavlink-router, only while in control
+    T-->>C: TICK telemetry
+  end
+  O->>O: last waypoint reached, mode HOLD
+```
+
+*Guidance path of a GOTO command. From `deploy/orangepi/companion/console_link.py` (`_handle`, `_command`,
+`Operator.set_route`, `on_control`, `_plan_progress`), `route_planner.py`, `ecps_companion.py`, `real_drone.py`
+(`send`), `ecps_pilot.py` (`_waypoint`).*
 
 ---
 
@@ -652,7 +816,7 @@ flowchart LR
 | Area | Files |
 |---|---|
 | Model | [`my_minifly.py`](../my_minifly.py) (v2–v4 builders), [`minifly/*.yaml`](../minifly/) (v0 … v4_eff, h2_*, c4_*, s*, sh5u, shfu, s5), upstream `src/flydrones/brain/` |
-| Perception | [`ecps_retina.py`](../ecps_retina.py), [`ecps_ventral.py`](../ecps_ventral.py), `ecps_map.py` 🟡 |
+| Perception | [`ecps_retina.py`](../ecps_retina.py), [`ecps_ventral.py`](../ecps_ventral.py), [`ecps_map.py`](../ecps_map.py) |
 | Decision | [`ecps_decoder.py`](../ecps_decoder.py) |
 | Safety | [`ecps_pilot.py`](../ecps_pilot.py), [`ecps_struct.py`](../ecps_struct.py), upstream `src/flydrones/safety.py` |
 | Drone backends | [`mavlink_twin.py`](../mavlink_twin.py) (route B, heartbeat, stream requests, ToF ray-cast), upstream `src/flydrones/drones/mavlink.py` |
@@ -661,6 +825,45 @@ flowchart LR
 | Fast twin / RL | [`rl/twin.py`](../rl/twin.py), [`rl/cmaes_run.py`](../rl/cmaes_run.py), [`rl/params.py`](../rl/params.py), [`rl/arms.py`](../rl/arms.py), [`rl/shield_screen.py`](../rl/shield_screen.py), [`rl/gates.py`](../rl/gates.py) |
 | Plasticity (negative) | [`mb.py`](../mb.py), [`rl/mb_life.py`](../rl/mb_life.py) |
 | Deployment | [`deploy/desktop/`](../deploy/desktop/) (Gazebo node); [`deploy/orangepi/`](../deploy/orangepi/) (companion runtime, PIL link, console link); [`pil_rog.py`](../pil_rog.py) (Gazebo side of PIL); [`deploy/console/`](../deploy/console/) (Mac ground console, its SITL rig and end-to-end test) |
+
+Who imports whom among the `ecps_*.py` modules. Three runners build the same pilot: `run_g4.py` (Gazebo),
+`ecps_companion.py` (Orange Pi) and the fast twin's `rl/episode.py`.
+
+```mermaid
+flowchart LR
+  RG4["run_g4.py<br/>Gazebo runner"]
+  COMP["ecps_companion.py + real_drone.py<br/>Orange Pi runtime"]
+  EPI["rl/episode.py + rl/twin.py<br/>fast twin"]
+  PIL["ecps_pilot.py"]
+  RET["ecps_retina.py"]
+  DEC["ecps_decoder.py"]
+  STR["ecps_struct.py"]
+  MAP["ecps_map.py"]
+  VEN["ecps_ventral.py"]
+  TGT["ecps_target.py"]
+  LMK["ecps_landmark.py"]
+  GPS["ecps_gps_anchor.py"]
+  MT["mavlink_twin.py"]
+  MB["mb.py"]
+  UP["upstream flydrones<br/>Pilot, Retina, MotorDecoder, MavlinkDrone"]
+  RG4 --> PIL & RET & DEC & LMK
+  RG4 -->|"via gz_camera_drone.py"| MT
+  COMP --> PIL & RET & DEC & LMK & GPS & TGT
+  COMP -->|"RealDrone"| MT
+  EPI --> PIL & RET & DEC & MB
+  EPI --> MAP
+  PIL --> STR & TGT & LMK & GPS
+  STR --> MAP
+  RET --> VEN
+  MT --> VEN & MAP
+  PIL -.->|"subclass"| UP
+  RET -.->|"subclass"| UP
+  DEC -.->|"subclass"| UP
+  MT -.->|"subclass"| UP
+```
+
+*Import graph, solid = imports, dashed = subclasses an upstream class. From the `import` statements of the listed
+files; `mb.py` imports no `ecps_*` module and is wired in by `rl/episode.py`.*
 
 ---
 
