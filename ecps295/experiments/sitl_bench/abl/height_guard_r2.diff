@@ -1,0 +1,10 @@
+112a113,121
+>         # EXPERIMENT (ablation round 2, not in b3a6691): trip when the range is invalid for oor_s while clearly airborne
+>         oor = float(self.cfg.get("oor_s", 0.0))
+>         if oor > 0 and armed and self.active and (self.mon.h_b or 0.0) > 0.5 \
+>                 and not (float(self.cfg["rng_min_m"]) <= rng.distance <= float(self.cfg["rng_max_m"])):
+>             self._oor_t = getattr(self, "_oor_t", None) or now
+>             if now - self._oor_t >= oor:
+>                 s = {**s, "trigger": True, "reason": "range lost"}
+>         else:
+>             self._oor_t = None

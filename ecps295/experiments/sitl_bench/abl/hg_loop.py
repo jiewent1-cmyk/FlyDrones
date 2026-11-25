@@ -12,7 +12,8 @@ import time
 
 from pymavlink import mavutil
 
-sys.path.insert(0, sys.argv[0].rsplit("/", 1)[0] + "/companion")
+_cfg = json.loads(sys.argv[sys.argv.index("--cfg") + 1]) if "--cfg" in sys.argv else {}
+sys.path.insert(0, sys.argv[0].rsplit("/", 1)[0] + "/" + _cfg.get("_dir", "companion"))  # "_dir": experimental copy of the guard
 from height_guard import HeightGuard  # noqa: E402
 
 ap = argparse.ArgumentParser()
@@ -69,7 +70,8 @@ mav = mavutil.mavlink
 
 
 def streams():
-    for mid in (mav.MAVLINK_MSG_ID_RANGEFINDER, mav.MAVLINK_MSG_ID_ATTITUDE, mav.MAVLINK_MSG_ID_SCALED_PRESSURE):
+    for mid in (mav.MAVLINK_MSG_ID_RANGEFINDER, mav.MAVLINK_MSG_ID_ATTITUDE, mav.MAVLINK_MSG_ID_SCALED_PRESSURE) + \
+            ((mav.MAVLINK_MSG_ID_DISTANCE_SENSOR,) if _cfg.get("synth") else ()):
         m.mav.command_long_send(m.target_system, m.target_component, mav.MAV_CMD_SET_MESSAGE_INTERVAL, 0, mid, 50000, 0, 0, 0, 0, 0)
     m.mav.command_long_send(m.target_system, m.target_component, mav.MAV_CMD_SET_MESSAGE_INTERVAL, 0, 0, 200000, 0, 0, 0, 0, 0)
 

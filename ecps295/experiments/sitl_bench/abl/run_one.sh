@@ -1,9 +1,9 @@
 #!/bin/bash
 # usage: run_one.sh <tag> <instance 30..33> <speedup> <base parm> <home yaw deg> <overlay K=V,K=V|-> [opt2_sim.py args...]
-# Copy of /home/jacky/sim/opt_flow2/run_one.sh for /home/jacky/sim/abl, instances 30..33 (ports 6060..6090).
-D=/home/jacky/sim/abl
-AP=/home/jacky/sim/ardupilot
-PY=/home/jacky/miniconda3/envs/flydrones/bin/python
+# Copy of ~/sim/opt_flow2/run_one.sh for ~/sim/abl, instances 30..33 (ports 6060..6090).
+D=~/sim/abl
+AP=~/sim/ardupilot
+PY=~/miniconda3/envs/flydrones/bin/python
 tag=$1; inst=$2; spd=$3; parm=$4; yaw=$5; ovl=$6; shift 6
 port=$((5760 + 10 * inst))
 rd=$D/runs/$tag

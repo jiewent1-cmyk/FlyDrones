@@ -482,7 +482,7 @@ flowchart LR
 
   subgraph OPI["Orange Pi Zero 3W (A733, 2 × A76, 6 GB)"]
     direction TB
-    GP["GPIO UART<br/>RX3 / TX3 / GND"]
+    GP["GPIO UART2, /dev/ttyS2<br/>pin 11 TX, pin 13 RX, pin 6 GND"]
     TWI0["I²C TWI0<br/>pins 3 / 5"]
     TWI1["I²C TWI1<br/>pins 38 / 40"]
     USBC["USB-C ① (host / OTG)"]
@@ -521,7 +521,7 @@ flowchart LR
 
 | Link | Physical | Protocol / rate | Carries | Status |
 |---|---|---|---|---|
-| Orange Pi ↔ FC | GPIO UART ↔ UART3 (SERIAL2), 3 wires | MAVLink2; course 460800 baud, **115200 recommended** (UART3 has no DMA) | see §8.2 | wired per course ⬜ |
+| Orange Pi ↔ FC | Pi UART2 (`/dev/ttyS2`: pin 11 TX → FC RX3, pin 13 RX ← FC TX3, pin 6 GND; not pins 8/10 = U-Boot console) ↔ FC UART3 (SERIAL2), 3 wires | MAVLink2; course 460800 baud, **115200 recommended** (UART3 has no DMA) | see §8.2 | wired per course ⬜ |
 | 3901-L0X → FC | UART4 (SERIAL4), replaces the GPS UART | MSP, 115200 (`SERIAL4_PROTOCOL 32`, `FLOW_TYPE 7`, `RNGFND1_TYPE 32`) | optical flow, downward range (max 1.2 m) | ⬜ needs custom firmware with MSP flow/range + `EK3_FEATURE_OPTFLOW_FUSION` |
 | VL53L7CX front → Orange Pi | I²C TWI0, own bus, address 0x29 | ST ULD driver, ≈ 84 KB firmware upload at boot; 8×8 zones, 15 Hz class | 64 ranges / frame | ⬜ bench test first |
 | VL53L7CX rear → Orange Pi | I²C TWI1, own bus, address 0x29 | same | 64 ranges / frame | ⬜ pin levels to verify |

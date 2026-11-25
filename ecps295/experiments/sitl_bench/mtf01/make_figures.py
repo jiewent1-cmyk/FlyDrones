@@ -165,8 +165,10 @@ plt.close(fig)
 
 # ---------------------------------------------------------------- fig6: flow orientation fly-away
 # Report section 2 table rows q4orient_9000 / q4orient_18000 (0/3 completed).
-# The CSV records hover_drift (max true offset during the LOITER segment); the
-# report table quotes larger full-log radii from diverge.py, see report text.
+# The CSV records hover_drift (max true offset within the LOITER hover window, from the
+# window start); the report table quotes larger radii: analyze.py's
+# loiter_true_radius_max (whole LOITER segment, from the arming point), which is not in
+# the CSV. diverge.py only reports threshold-crossing times, not a maximum radius.
 ORIENT = [("q4orient_9000", "ORIENT_YAW\n9000 (90 deg)"), ("q4orient_18000", "ORIENT_YAW\n18000 (180 deg)")]
 fig, ax = plt.subplots(figsize=(6, 3.8))
 for i, (p, lab) in enumerate(ORIENT):
@@ -174,7 +176,7 @@ for i, (p, lab) in enumerate(ORIENT):
 ax.set_xticks(range(len(ORIENT)), [lab for _, lab in ORIENT], fontsize=8)
 ax.set_ylabel("true horizontal drift (m)")
 ax.set_title("Flow rotated 90/180 deg: LOITER diverges, AUTO never arms (0/3)\n"
-             "max true offset during LOITER segment (results.csv hover_drift)")
+             "max true offset within the LOITER hover window (results.csv hover_drift)")
 fig.tight_layout()
 fig.savefig(OUT / "fig6_orient_flyaway.png")
 plt.close(fig)

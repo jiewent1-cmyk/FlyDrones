@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Run jobs 'tag|parm|speedup|yaw|overlay|args' on SITL instances 30..33 (at most 4 at a time). Skips tags with metrics.json unless FORCE=1."""
 import subprocess, sys, time, os
-D = "/home/jacky/sim/abl"
+D = "~/sim/abl"
 jobs = [l.strip() for f in sys.argv[1:] for l in open(f) if l.strip() and not l.startswith("#")]  # several job files run in order
 if not os.environ.get("FORCE"):
     jobs = [j for j in jobs if not os.path.exists(f"{D}/runs/{j.split('|')[0]}/metrics.json")]
-free = list(range(30, 30 + int(os.environ.get("NINST", "4"))))
+B0 = int(os.environ.get("BASE", "30"))
+free = list(range(B0, B0 + int(os.environ.get("NINST", "4"))))
 running = []
 while jobs or running:
     while jobs and free:

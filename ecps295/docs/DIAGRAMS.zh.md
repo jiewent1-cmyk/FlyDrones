@@ -533,7 +533,7 @@ flowchart LR
 
   subgraph OPI["Orange Pi Zero 3W (A733, 2 × A76, 6 GB)"]
     direction TB
-    GP["GPIO UART<br/>RX3 / TX3 / GND"]
+    GP["GPIO UART2，/dev/ttyS2<br/>11 脚 TX、13 脚 RX、6 脚 GND"]
     TWI0["I²C TWI0<br/>引脚 3 / 5"]
     TWI1["I²C TWI1<br/>引脚 38 / 40"]
     USBC["USB-C ①（host / OTG）"]

@@ -1,6 +1,6 @@
 # Figures and diagrams
 
-One page with every picture in the `ecps295/` documents: 130 data figures and photos, 42 diagrams, from 41 documents. Each entry links to the document that explains it.
+One page with every picture in the `ecps295/` documents: 147 data figures and photos, 46 diagrams, from 47 documents. Each entry links to the document that explains it.
 
 Data figures are made by the `make_figures.py` script next to each `figures/` directory, from the result files in the same directory. Diagrams are Mermaid blocks inside the documents; GitHub draws them.
 
@@ -343,15 +343,69 @@ Document: [`experiments/gps_hover_20261123/report.md`](../experiments/gps_hover_
 | <a href="../experiments/gps_hover_20261123/figures/fig7_faults.png"><img src="../experiments/gps_hover_20261123/figures/fig7_faults.png" width="320" alt="故障测试的逐次分布"></a> | 图7. 六种故障下四个方案每次运行的最大偏移（n=8/格）：只有 G 在两种 GPS 丢失故障下整体抬高（16/16 未完成），伴机慢修正与 F 的分布重叠；罗盘干扰对四个方案影响都不大。数据来源：results_ft_.csv；脚本：make_figures.py。 |
 | <a href="../experiments/gps_hover_20261123/figures/fig8_compass.png"><img src="../experiments/gps_hover_20261123/figures/fig8_compass.png" width="320" alt="罗盘方案航向变化与位置偏移"></a> | 图8. 四个罗盘方案的悬停航向变化（左，n=30/方案）与最大偏移（右，按光流噪声分三组）：无罗盘 F0 的航向变化中位约 103°（各次 30–180°），有罗盘的三个方案位置偏移分布与 F0 重叠。数据来源：results_h15_.csv（F0/F/FM2/FM6）；脚本：make_figures.py。 |
 
+### Gazebo console verification: planner on / off (2026-10-22)
+
+Document: [`experiments/gzc/README.md`](../experiments/gzc/README.md)
+
+| Figure | What it shows |
+|---|---|
+| <a href="../experiments/gzc/figures/fig1_routes_completed.png"><img src="../experiments/gzc/figures/fig1_routes_completed.png" width="320" alt="Routes completed and not completed per route kind, planner off and on"></a> | Figure 1. Routes finished according to the console log, per route kind, planner off (hatched) and on; the label is finished / flown. Source: verify/pv_result.json; script: make_figures.py. |
+| <a href="../experiments/gzc/figures/fig2_min_clearance.png"><img src="../experiments/gzc/figures/fig2_min_clearance.png" width="320" alt="Minimum Gazebo-truth clearance of every route, per route kind and condition"></a> | Figure 2. Minimum truth clearance to a box during each route, per route kind (left: planner off, right: planner on); routes with a contact episode are marked. Source: verify/pv_result.json; script: make_figures.py. |
+| <a href="../experiments/gzc/figures/fig3_planning_time.png"><img src="../experiments/gzc/figures/fig3_planning_time.png" width="320" alt="Planner call time: median, 99th percentile and maximum of every planner-on session"></a> | Figure 3. Planner call time of each planner-on session (median, 99th percentile, maximum), log scale. Source: verify/pv_result.json; script: make_figures.py. |
+| <a href="../experiments/gzc/figures/fig4_truth_waypoints.png"><img src="../experiments/gzc/figures/fig4_truth_waypoints.png" width="320" alt="Share of route waypoints reached by the truth-based rule, per route kind and condition"></a> | Figure 4. Share of route waypoints the EKF position came within 0.5 m of (or of the nearest safe point), per route kind and condition; the label is reached / waypoints. Source: verify/pv_truth.json; script: make_figures.py. |
+| <a href="../experiments/gzc/figures/fig5_reach_vs_fence.png"><img src="../experiments/gzc/figures/fig5_reach_vs_fence.png" width="320" alt="Share of waypoints reached against the distance of the waypoint to the fence"></a> | Figure 5. Share of waypoints reached, grouped by the waypoint's distance to the fence. Source: verify/pv_truth.json; script: make_figures.py. |
+
+### misc: a thermal logger and two low-box job lists
+
+Document: [`experiments/misc/README.md`](../experiments/misc/README.md)
+
+| Diagram | Type | Section |
+|---|---|---|
+| — | flowchart | [How the scripts chain](../experiments/misc/README.md#how-the-scripts-chain) |
+
+| Figure | What it shows |
+|---|---|
+| <a href="../experiments/misc/figures/fig1_planned_groups.png"><img src="../experiments/misc/figures/fig1_planned_groups.png" width="320" alt="Planned runs per tag group for the two job lists"></a> | Figure 1. Planned runs per tag group in the two job lists (the plan, not results). Source: h1_lowbox30_49.txt, h3_rog_lowbox.txt; script: make_figures.py. |
+
+### rl_h2: Gazebo job lists, chain scripts and patch scripts (hover / hold / PIL work)
+
+Document: [`experiments/rl_h2/README.md`](../experiments/rl_h2/README.md)
+
+| Diagram | Type | Section |
+|---|---|---|
+| — | flowchart | [How the scripts chain](../experiments/rl_h2/README.md#how-the-scripts-chain) |
+| — | flowchart | [How the scripts chain](../experiments/rl_h2/README.md#how-the-scripts-chain) |
+
+| Figure | What it shows |
+|---|---|
+| <a href="../experiments/rl_h2/figures/fig1_planned_runs.png"><img src="../experiments/rl_h2/figures/fig1_planned_runs.png" width="320" alt="Planned runs per job list and world family as a heat map"></a> | Figure 1. Planned runs per job list and world family (the plan, not results). Textured and texture-free lowbox worlds are the bulk; cage20 appears as 8 runs per batch. Source: *_matrix.txt, n3a/*, hv/*; script: make_figures.py. |
+
+### rl_trk: TargetTrack matrix scripts that were not already under `gazebo/`
+
+Document: [`experiments/rl_trk/README.md`](../experiments/rl_trk/README.md)
+
+| Diagram | Type | Section |
+|---|---|---|
+| — | flowchart | [How the scripts chain](../experiments/rl_trk/README.md#how-the-scripts-chain) |
+
+### ECPS295 新硬件架构安全性消融仿真报告
+
+Document: [`experiments/sitl_bench/abl/report.md`](../experiments/sitl_bench/abl/report.md)
+
+| Figure | What it shows |
+|---|---|
+| <a href="../experiments/sitl_bench/abl/heat_unsafe.png"><img src="../experiments/sitl_bench/abl/heat_unsafe.png" width="320" alt="不安全比例"></a> | 不安全比例 |
+| <a href="../experiments/sitl_bench/abl/box_lat_alt.png"><img src="../experiments/sitl_bench/abl/box_lat_alt.png" width="320" alt="横向偏移与高度"></a> | 横向偏移与高度 |
+
 ### ablation tables
 
 Document: [`experiments/sitl_bench/abl/tables.md`](../experiments/sitl_bench/abl/tables.md)
 
 | Figure | What it shows |
 |---|---|
-| <a href="../experiments/sitl_bench/abl/figures/fig1_arm_outcomes.png"><img src="../experiments/sitl_bench/abl/figures/fig1_arm_outcomes.png" width="320" alt="各控制器配置的结果类别比例"></a> | Figure 1. Run outcome mix by controller arm across all recorded faults. Source: all_runs.csv; script: make_figures.py. |
-| <a href="../experiments/sitl_bench/abl/figures/fig2_unsafe_rate.png"><img src="../experiments/sitl_bench/abl/figures/fig2_unsafe_rate.png" width="320" alt="各控制器配置的不安全结果率"></a> | Figure 2. Fraction of runs classified UNSAFE for each controller arm. Source: all_runs.csv; script: make_figures.py. |
-| <a href="../experiments/sitl_bench/abl/figures/fig3_altitude_spread.png"><img src="../experiments/sitl_bench/abl/figures/fig3_altitude_spread.png" width="320" alt="主要配置的最大高度逐次分布"></a> | Figure 3. Per-run maximum altitude for FULL, NOGUARD, and BARE arms; black marks show medians. Source: all_runs.csv; script: make_figures.py. |
+| <a href="../experiments/sitl_bench/abl/figures/fig1_arm_outcomes.png"><img src="../experiments/sitl_bench/abl/figures/fig1_arm_outcomes.png" width="320" alt="各控制器配置的结果类别比例"></a> | 图 1. 各控制器配置在全部故障下的结果类别比例（正常 / 不安全 / 降级 / 中止 / 地面已解锁）。数据来源：all_runs.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/abl/figures/fig2_unsafe_rate.png"><img src="../experiments/sitl_bench/abl/figures/fig2_unsafe_rate.png" width="320" alt="各控制器配置的不安全结果率"></a> | 图 2. 各控制器配置被判为“不安全”的运行占比，柱上为运行次数。数据来源：all_runs.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/abl/figures/fig3_altitude_spread.png"><img src="../experiments/sitl_bench/abl/figures/fig3_altitude_spread.png" width="320" alt="主要配置的最大高度逐次分布"></a> | 图 3. FULL、NOGUARD、BARE 三个配置每次运行的最大高度，黑线为中位数。数据来源：all_runs.csv；脚本：make_figures.py。 |
 
 ### 任务 C：用 ArUco 绝对位置消除光流漂移（abs_fix，2026-11-19，ROG 本机）
 
@@ -362,6 +416,16 @@ Document: [`experiments/sitl_bench/abs_fix/report.md`](../experiments/sitl_bench
 | <a href="../experiments/sitl_bench/abs_fix/figures/fig2_hover_correction.png"><img src="../experiments/sitl_bench/abs_fix/figures/fig2_hover_correction.png" width="320" alt="不同修正方法下的悬停漂移"></a> | 图 1. 无修正和不同修正条件下，悬停 120 秒期间的最大偏离。数据来源：report.md §1.2 表“实测：两种方法把漂移从多少降到多少”；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/abs_fix/figures/fig1_uncorrected_altitude.png"><img src="../experiments/sitl_bench/abs_fix/figures/fig1_uncorrected_altitude.png" width="320" alt="不同高度下无修正的悬停与正方形误差"></a> | 图 2. 不同飞行高度下悬停最大偏离和正方形航线跟踪 RMS；标记为中位数，误差线两端为表中的最小值和最大值（每个高度 3 次，因中位数偏向一端，误差线上下不对称）。数据来源：report.md §1.6 表；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/abs_fix/figures/fig3_square_tracking.png"><img src="../experiments/sitl_bench/abs_fix/figures/fig3_square_tracking.png" width="320" alt="正方形路线各修正条件的跟踪 RMS"></a> | 图 3. 基线、四角 ExtNav 和四角 ExtPos 条件下正方形航线的逐次跟踪 RMS。数据来源：results.csv；脚本：make_figures.py。 |
+
+### Rehearsal of the 2026-11-19 no-GPS AUTO mission (SITL, runs r3 - r6)
+
+Document: [`experiments/sitl_bench/field1119/README.md`](../experiments/sitl_bench/field1119/README.md)
+
+| Figure | What it shows |
+|---|---|
+| <a href="../experiments/sitl_bench/field1119/figures/fig1_waypoints_xy.png"><img src="../experiments/sitl_bench/field1119/figures/fig1_waypoints_xy.png" width="320" alt="Position when waypoints 2 to 5 were reported reached, four runs, against the 1 m square"></a> | Figure 1. Position (x ahead, y right of the start point) when mission items 2-5 were reported REACHED, one marker per run and item, against the commanded 1 m square. All 16 points lie within 0.1 m of a corner; the four runs overlap. Source: run_r3.log ... run_r6.log; script: make_figures.py. |
+| <a href="../experiments/sitl_bench/field1119/figures/fig2_altitude_per_item.png"><img src="../experiments/sitl_bench/field1119/figures/fig2_altitude_per_item.png" width="320" alt="Altitude at each mission item for the four runs"></a> | Figure 2. Altitude when each mission item was reported reached. The takeoff item reports 1.09-1.12 m although 0.6 m or 0.8 m was commanded; the four waypoints then sit 0.07-0.11 m above the commanded altitude. r4 and r5 (same settings of altitude and speed) overlap. Source: run_r3.log ... run_r6.log; script: make_figures.py. |
+| <a href="../experiments/sitl_bench/field1119/figures/fig3_loiter_test.png"><img src="../experiments/sitl_bench/field1119/figures/fig3_loiter_test.png" width="320" alt="LOITER take-off test before the AUTO mission"></a> | Figure 3. Manual LOITER take-off test of each run: altitude after the climb phase, peak altitude with the stick centred, altitude at the end of the 15 s hover. r3 did not arm (no peak logged). Source: run_r3.log ... run_r6.log; script: make_figures.py. |
 
 ### 加装 GPS + 罗盘后的定位架构：SITL 研究报告（2026-11-19，ROG，实例 I20–I23）
 
@@ -384,7 +448,7 @@ Document: [`experiments/sitl_bench/mtf01/report.md`](../experiments/sitl_bench/m
 | <a href="../experiments/sitl_bench/mtf01/figures/fig3_rng_noise.png"><img src="../experiments/sitl_bench/mtf01/figures/fig3_rng_noise.png" width="320" alt="测距噪声与高度误差"></a> | 图3. 测距噪声幅值 0.02/0.05/0.10 m 下的任务高度误差 RMS（左）与悬停 EKF 高度误差 RMS（右）：两者都随噪声近似线性增大（0.005/0.014/0.028 与 0.014/0.025/0.052 m），任务全部完成。数据来源：results.csv（q4rnd_* 各 3 次）；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/mtf01/figures/fig4_rng_faults.png"><img src="../experiments/sitl_bench/mtf01/figures/fig4_rng_faults.png" width="320" alt="测距故障下两种高度源的真值最高高度"></a> | 图4. 四种测距故障每次运行的真值最高高度（圆点按完成与否着色，横线为中位数：蓝 = 方案 a，橙 = 方案 b）：超量程 1 s 与下跳 1.5 m 1 s 时方案 a 无事而方案 b 冲高，5 s 故障两种方案都触发保护（q4oor5_B 有 1 次冲到 7.86 m）。数据来源：results.csv（q4oor1/oor5/jmp1/jmp5 × B/RNG 各 3 次）；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/mtf01/figures/fig5_companion_cut.png"><img src="../experiments/sitl_bench/mtf01/figures/fig5_companion_cut.png" width="320" alt="伴机停发高度后的任务高度误差"></a> | 图5. AUTO 开始 15 s 后伴机停发高度（cut）及高度+心跳都停（cut+hb）时的任务高度误差 RMS（蓝 = 正常飞行基线）：停发只让任务高度误差增大到与所选高度源自身的品质相当（a/c 涨到 0.04–0.06 m，b/c+ 反而更小），任务都完成。数据来源：results.csv（q2cut_* / q2hb_B 各 3 次）；脚本：make_figures.py。 |
-| <a href="../experiments/sitl_bench/mtf01/figures/fig6_orient_flyaway.png"><img src="../experiments/sitl_bench/mtf01/figures/fig6_orient_flyaway.png" width="320" alt="光流方向装错 90/180 度的 LOITER 飞走幅度"></a> | 图6. 光流方向装错后每次运行在 LOITER 段的真值最大水平偏移（results.csv 的 hover_drift 列）：90° 为 8.9–34.4 m，180° 为 57.0–66.4 m，全部触发围栏且 AUTO 未能解锁；正文表中 14–51 / 97–107 m 是 diverge.py 对整段日志统计的最大半径，两者口径不同。数据来源：results.csv（q4orient_9000 / q4orient_18000 各 3 次）；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/mtf01/figures/fig6_orient_flyaway.png"><img src="../experiments/sitl_bench/mtf01/figures/fig6_orient_flyaway.png" width="320" alt="光流方向装错 90/180 度的 LOITER 飞走幅度"></a> | 图6. 光流方向装错后每次运行在 LOITER 悬停窗内的真值最大水平偏移（相对窗口起点）（results.csv 的 hover_drift 列）：90° 为 8.9–34.4 m，180° 为 57.0–66.4 m，全部触发围栏且 AUTO 未能解锁；正文表中 14–51 / 97–107 m 不是这一列，而是 analyze.py 的 loiter_true_radius_max（整个 LOITER 解锁段、相对解锁点，未收入 results.csv；diverge.py 只算越过 0.5/1/3 m 的时刻，不统计最大半径），两者口径不同。数据来源：results.csv（q4orient_9000 / q4orient_18000 各 3 次）；脚本：make_figures.py。 |
 
 ### MTF-01 光流+测距定位 参数优化报告（2026-11-19，ROG 本机）
 
@@ -468,7 +532,7 @@ Document: [`experiments/sitl_bench/val6/report.md`](../experiments/sitl_bench/va
 |---|---|
 | <a href="../experiments/sitl_bench/val6/figures/fig1_completion_heatmap.png"><img src="../experiments/sitl_bench/val6/figures/fig1_completion_heatmap.png" width="320" alt="8 个配置 × 10 个任务格的完成次数热力图"></a> | Figure 1. 每个配置 × 每个任务格的完成次数（格内为“完成次数/总次数”，颜色为完成比例）：`RNGFND1_MIN ≥ 0.10` 的 6 个配置全部 0 次完成（未解锁）。来源：results.csv；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/val6/figures/fig3_normal_flight.png"><img src="../experiments/sitl_bench/val6/figures/fig3_normal_flight.png" width="320" alt="min 0.01 正常飞行的真值最高高度、离地高度误差与触地速度"></a> | Figure 3. `RNGFND1_MIN 0.01` 两个配置在 D3 / SQ / HOV 正常飞行上的真值最高高度（左）、离地时 EKF 高度误差 max（中）、触地速度（右），条为 5 次中位数、须为 5 次最小-最大范围。来源：results.csv；脚本：make_figures.py。 |
-| <a href="../experiments/sitl_bench/val6/figures/fig2_ground_readings.png"><img src="../experiments/sitl_bench/val6/figures/fig2_ground_readings.png" width="320" alt="各配置地面测距读数范围与 RNGFND1_MIN 下限的关系"></a> | Figure 2. 各配置地面静止时的测距读数范围（蓝竖条，含每次运行的最小-最大）与该配置的 `RNGFND1_MIN`（橙横线）：`min ≥ 0.10` 的 6 个配置读数（0.00–0.07 m）始终低于自己的下限，`RFND.Stat` 只有 2（OutOfRangeLow）。来源：results.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val6/figures/fig2_ground_readings.png"><img src="../experiments/sitl_bench/val6/figures/fig2_ground_readings.png" width="320" alt="各配置地面测距读数范围与 RNGFND1_MIN 下限的关系"></a> | Figure 2. 各配置真值离地 <0.15 m 时的测距读数范围（蓝竖条，`rfnd_dist_gnd_min/max` 在该配置全部运行上的最小-最大，含起降过渡段与地面上的注入）与该配置的 `RNGFND1_MIN`（橙横线）：`min ≥ 0.10` 的 6 个配置读数（0.00–0.07 m）始终低于自己的下限，`RFND.Stat` 只有 2（OutOfRangeLow）。来源：results.csv；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/val6/figures/fig4_fault_deviation.png"><img src="../experiments/sitl_bench/val6/figures/fig4_fault_deviation.png" width="320" alt="各异常格的故障窗口真值最高高度与相对航线的基线偏离"></a> | Figure 4. `RNGFND1_MIN 0.01` 两个配置在各异常格上的故障窗口真值最高高度（左）与基线偏离 `dev_base`（右），条为 3 次中位数、须为 3 次最小-最大范围。来源：results.csv；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/val6/figures/fig5_fault_ekf_and_readings.png"><img src="../experiments/sitl_bench/val6/figures/fig5_fault_ekf_and_readings.png" width="320" alt="各异常格的故障窗口 EKF 高度误差与注入期测距读数范围"></a> | Figure 5. 各异常格的故障窗口 EKF 高度误差 max（左，条为 3 次中位数）与注入期实测测距读数范围（右，每格 3 次运行的最小-最大）。来源：results.csv；脚本：make_figures.py。 |
 
@@ -479,7 +543,7 @@ Document: [`experiments/sitl_bench/val7/report.md`](../experiments/sitl_bench/va
 | Figure | What it shows |
 |---|---|
 | <a href="../experiments/sitl_bench/val7/figures/fig1_false_positive_grid.png"><img src="../experiments/sitl_bench/val7/figures/fig1_false_positive_grid.png" width="320" alt="T=1.0 s 时 24 组参数（R=0.6 m 与 R=0.4 m 各 12 组）的每小时误报数热力图"></a> | Figure 1. 参数网格中每小时误报数（左 `R=0.6 m`、右 `R=0.4 m`，均取 `T=1.0 s` 的 12 组，即 `fc`×`tau`×`E` 的全部组合；格内数字为次/小时）：只有 `fc=0.5 Hz` 且 `E=0.7 m` 的组合能压到 2.03 次/小时，`R=0.4 m` 时全部 ≥ 10 次/小时。来源：fp_grid.md；脚本：make_figures.py。 |
-| <a href="../experiments/sitl_bench/val7/figures/fig2_false_positive_conditions.png"><img src="../experiments/sitl_bench/val7/figures/fig2_false_positive_conditions.png" width="320" alt="各气压条件下选中的参数组与两个变体的误报次数"></a> | Figure 2. 220 次第 1 步飞行按气压条件的误报次数（离线重放）：选中的参数组（蓝，2.03 次/小时）、加 `b_hold=0.5 s`（黄，0.20 次/小时）、把 `E` 降到 0.5 m（绿，6.70 次/小时，误报全部落在 ±1.2 m/min 慢漂条件）。来源：fp_sel.csv、fp_bh05.csv、fp_e05.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val7/figures/fig2_false_positive_conditions.png"><img src="../experiments/sitl_bench/val7/figures/fig2_false_positive_conditions.png" width="320" alt="各气压条件下选中的参数组与两个变体的误报次数"></a> | Figure 2. 220 次第 1 步飞行按气压条件的误报次数（离线重放）：选中的参数组（蓝，2.03 次/小时）、加 `b_hold=0.5 s`（黄，0.20 次/小时）、把 `E` 降到 0.5 m（绿，6.70 次/小时，66 次误报中 40 次在 ±1.2 m/min 慢漂条件、26 次在气压阶跃条件）。来源：fp_sel.csv、fp_bh05.csv、fp_e05.csv；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/val7/figures/fig3_detection_delay.png"><img src="../experiments/sitl_bench/val7/figures/fig3_detection_delay.png" width="320" alt="第 2 步各异常格的检出延迟与判定时刻的真值偏离"></a> | Figure 3. 选中的参数组在 11 个异常格上的检出延迟（左，条为 5 次中位数、须为最小-最大范围）与判定时刻的真值高度偏离（右，条为报告上表的范围中点，绿色带为 ±0.5 m）：只有 `i`（慢变）检出慢（9.49 s）、`h`/`k` 因注入在爬升途中而偏离超过 0.5 m。来源：det_s2.csv（延迟）、report.md 第 6 节表（真值偏离）；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/val7/figures/fig4_closed_loop_height.png"><img src="../experiments/sitl_bench/val7/figures/fig4_closed_loop_height.png" width="320" alt="闭环时各异常格在四种处置下的真值最高高度"></a> | Figure 4. 第 4 步闭环（任务 `SQ`）下每个异常格 × 处置（A1/A2/A3/无监视器对照）的真值最高高度：横粗线为 5 次中位数、点为每次运行，虚线为无异常基线 2.070 m。来源：results.csv；脚本：make_figures.py。 |
 | <a href="../experiments/sitl_bench/val7/figures/fig5_action_latency.png"><img src="../experiments/sitl_bench/val7/figures/fig5_action_latency.png" width="320" alt="闭环时的注入到动作延迟与 A3 的任务完成率"></a> | Figure 5. 左：闭环时注入到监视器动作的延迟（横粗线为 5 次中位数、点为每次运行）；右：动作 A3（只切源组、不切模式）各异常格的任务完成数（满格 5/5）。来源：results.csv；脚本：make_figures.py。 |
@@ -494,4 +558,9 @@ Document: [`experiments/sitl_bench/val8/README.md`](../experiments/sitl_bench/va
 | Figure | What it shows |
 |---|---|
 | <a href="../experiments/sitl_bench/val8/figures/fig1_fault_schedule.png"><img src="../experiments/sitl_bench/val8/figures/fig1_fault_schedule.png" width="320" alt="各条件的 SIM_SONAR_POS_Z 设定值时间线：横轴为进入 AUTO 后的仿真秒，纵轴为 --fault 写入的 SIM_SONAR_POS_Z"></a> | Figure 1. 各条件的 `SIM_SONAR_POS_Z` 设定值时间线（横轴：进入 AUTO 后的仿真时间 s；纵轴：`--fault` 写入的参数值 m；D3 条件与 SQ 条件使用相同阶梯故以虚线叠加）。这是任务清单里的计划，不是实测。来源：jobs_v8.txt；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val8/figures/fig2_guard_trips.png"><img src="../experiments/sitl_bench/val8/figures/fig2_guard_trips.png" width="320" alt="每个条件 guard 跳闸次数的横向条形图，clean 0/10，a 4/5，i 2/5，其余 5/5"></a> | Figure 2. 各条件 guard 是否跳闸的次数（条后标注“跳闸/运行数”）。绿色：故障运行中 guard 跳闸；斜线绿色：clean 运行中 guard 未跳闸（期望结果）；橙色：故障运行中 guard 未跳闸（`a` 1 次、`i` 3 次）。来源：results.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val8/figures/fig3_true_max_height.png"><img src="../experiments/sitl_bench/val8/figures/fig3_true_max_height.png" width="320" alt="每次运行的真值最大高度，按条件分列，并画出任务高度 2 m 与围栏 2.5 m"></a> | Figure 3. 每次运行的真值最大高度 `truth_max_all`（点：单次运行；黑线：条件中位数；虚线：任务高度 2.0 m；点线：围栏 2.5 m）。绿色圆点：clean 完成任务 / 故障运行 guard 跳闸；橙色菱形：故障运行 guard 未跳闸。竖线左侧为 SQ 任务，右侧为 D3 任务。来源：results.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val8/figures/fig4_guard_delay.png"><img src="../experiments/sitl_bench/val8/figures/fig4_guard_delay.png" width="320" alt="guard 从第一次改写测距参数到首次跳闸状态行的延迟，按条件分列"></a> | Figure 4. guard 跳闸延迟：首次出现 `tripped=1` 的状态行时刻 − 第一次 `SIM_SONAR_POS_Z` 改动时刻。两个时钟的对齐方法见 `make_figures.py` 文件头：用同一次解锁→上锁事件的 `guard_disarm_log_t − s1` 得到偏移（56 次运行，范围 −0.115…0.170 s，中位数 0.022 s），对所有运行扣除中位偏移。状态行约 1 Hz，所以这是**上界，粒度约 1 s**；延迟从阶梯的**第一步**算起，不是从读数偏差超过阈值那一刻算起。未跳闸的 4 次没有点。来源：results.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val8/figures/fig5_touchdown_speed.png"><img src="../experiments/sitl_bench/val8/figures/fig5_touchdown_speed.png" width="320" alt="每次运行的着陆速度，按条件分列"></a> | Figure 5. 每次运行的着陆速度 `touchdown_mps`（点：单次运行；黑线：条件中位数）。颜色含义同 Figure 3。来源：results.csv；脚本：make_figures.py。 |
+| <a href="../experiments/sitl_bench/val8/figures/fig6_guard_e_traces.png"><img src="../experiments/sitl_bench/val8/figures/fig6_guard_e_traces.png" width="320" alt="每个条件一个示例运行的 guard 水平差 e 随时间变化，12 个子图"></a> | Figure 6. guard 水平差 `e` 随时间变化（每个条件取第 1 次重复作示例；横轴：自第一次改写测距参数起的时间 s，`clean` 为自解锁起；点线：示例运行的首次跳闸状态行；虚线：±`e_m` = 0.7 m）。`a`、`i` 子图中橙色线为 guard 未跳闸的运行（`i` 的 3 次都未跳闸，示例 `i_r1` 本身即是）。状态行约 1 Hz，短脉冲的峰值可能被漏掉。来源：guard_status.csv、results.csv；脚本：make_figures.py。 |
 

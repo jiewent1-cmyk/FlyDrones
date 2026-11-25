@@ -49,9 +49,10 @@ ArduCopter 4.7.0 SITL，工具链复用 `/home/jacky/sim/val4/`（`run_one.sh`/`
 
 - **解锁**：`RNGFND1_MIN 0.01` 两组 15/15 正常解锁；`RNGFND1_MIN ≥ 0.10` 六组 90/90 次解锁被拒，STATUSTEXT 原文每次都是 `Arm: Need Position Estimate` 紧跟 `Arm: Fence requires position`（15 次重试全部拒绝，`runs/v6_*_f10_r1/run.log` 等）。
 - **测距状态**：地面静止读数 0.030–0.070 m（`v6_sq_f10_r1`，858 个 RFND 样本，**全部 `RFND.Stat=2` OutOfRangeLow**）；`min 0.01` 时地面读数 0.000–0.178 m（Stat 混合 2/4，150/151 为 4 = Good）；空中 2 m 时读数 1.85–2.11 m（Stat=4）。
+  （注：`results.csv` 的 `rfnd_dist_gnd_min/max` 是 `analyze6.py:178` 在飞行段（未解锁时为整段日志）内取真值离地 <0.15 m 的全部样本，含起飞/落地过渡段和在地面上注入的读数偏移，所以 `f01`/`o01` 为 0.000–0.224 / 0.000–0.230 m，`min ≥ 0.10` 六组为 0.000–0.070 m（0.000 只出现在这六组的 126 次异常格运行中，90 次正常飞行全部为 0.030–0.070 m，即本条与第一节所说的无注入地面静止读数）；`min 0.01` 的“0.000–0.178 m、150/151”在本目录的 csv 和脚本里找不到出处，按 csv 口径这两组 30 次正常飞行为 0.000–0.227 m。）
 
 ![各配置地面测距读数范围与 RNGFND1_MIN 下限的关系](figures/fig2_ground_readings.png)
-*Figure 2. 各配置地面静止时的测距读数范围（蓝竖条，含每次运行的最小-最大）与该配置的 `RNGFND1_MIN`（橙横线）：`min ≥ 0.10` 的 6 个配置读数（0.00–0.07 m）始终低于自己的下限，`RFND.Stat` 只有 2（OutOfRangeLow）。来源：results.csv；脚本：make_figures.py。*
+*Figure 2. 各配置真值离地 <0.15 m 时的测距读数范围（蓝竖条，`rfnd_dist_gnd_min/max` 在该配置全部运行上的最小-最大，含起降过渡段与地面上的注入）与该配置的 `RNGFND1_MIN`（橙横线）：`min ≥ 0.10` 的 6 个配置读数（0.00–0.07 m）始终低于自己的下限，`RFND.Stat` 只有 2（OutOfRangeLow）。来源：results.csv；脚本：make_figures.py。*
 - **离地**：两个 min 0.01 组离地瞬间 EKF 高度误差 max 0.125–0.154 m（离地时刻测距刚离下限，读数还在 0.05 m 附近）。
 - **落地**：落地前 0.5 m 内 EKF 高度误差 max 0.034–0.061 m，触地速度 0.48–0.58 m/s，落地后正常上锁（5/5，`Disarming motors`）。
 - **HOV 低空悬停**（`--alt 0.5`）：悬停窗真值 0.48–0.51 m，`hov_alt_rms` 0.003–0.007 m，`hov_hgt_est_rms` 0.008–0.010 m，漂移 ≤0.042 m，EKF variance 0/10。全程真值最高 1.05–1.07 m（起飞段过冲，非悬停窗）。

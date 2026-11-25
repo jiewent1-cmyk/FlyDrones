@@ -63,13 +63,13 @@ flowchart LR
     TOFT["tof_vl53l7cx.py threads ×2<br/>ST ULD + i2c-dev, 8×8 @ 15 Hz"]
     LOOP["ecps_companion.py 20 Hz loop (cpu6-7)<br/>EcpsRetina → MiniFly v4 → EcpsDecoder → SafetyGovernor<br/>→ EcpsPilot watchdogs → RangeShield + LocalMap"]
     GATE["real_drone.RealDrone<br/>gate: GUIDED + armed + FC heartbeat &lt; 2 s + alt ≥ 0.3 m"]
-    MR["mavlink-router (systemd)<br/>/dev/ttyS0 115200 ↔ UDP 14560 (companion) / 14550 + TCP 5760 (GCS)"]
+    MR["mavlink-router (systemd)<br/>/dev/ttyS2 115200 ↔ UDP 14560 (companion) / 14550 + TCP 5760 (GCS)"]
     CAMT --> LOOP
     TOFT --> LOOP
     LOOP --> GATE --> MR
   end
   FC["Matek F405-WMO · ArduCopter 4.7<br/>UART3 = SERIAL2"]
-  MR <-->|"header pins 8 / 10 / 6 (PB9 TX, PB10 RX, GND)"| FC
+  MR <-->|"header pins 11 / 13 / 6 (PB0 TX, PB1 RX, GND)"| FC
   TF["VL53L7CX front"] -->|"TWI0: pins 3 / 5, /dev/i2c-0"| TOFT
   TR["VL53L7CX rear"] -->|"TWI1: pins 38 / 40, /dev/i2c-1"| TOFT
   UC["USB camera"] -->|USB-C| CAMT
@@ -80,7 +80,7 @@ flowchart LR
 | Item | Content | Status |
 |---|---|---|
 | Device tree | `overlays=i2c0 i2c1` in `/boot/armbianEnv.txt` (backup `/root/ecps_backup/armbianEnv.txt.pre_ecps`). After reboot `/dev/i2c-0` = TWI0 (PB2/PB3) and `/dev/i2c-1` = TWI1 (PB7/PB8); pinmux checked; bus clock 400 kHz | ✅ (no devices on the buses yet: sensors not connected) |
-| Serial | existing `uart0-pb9-pb10` overlay kept (`/dev/ttyS0`, pins 8/10); `serial-getty@ttyS0` disabled | ✅ (FC not connected) |
+| Serial | FC on UART2: overlay `uart2`, `/dev/ttyS2`, header pins 11 (PB0 TX → FC RX3) / 13 (PB1 RX ← FC TX3) / 6 (GND). **Corrected 2026-10-31**: this report first named `uart0-pb9-pb10` (`/dev/ttyS0`, pins 8/10); that is U-Boot's console, the flight controller's stream stops autoboot and the Pi does not start. **Do not use pins 8/10** | ✅ (FC not connected on 10-15) |
 | System packages | i2c-tools, meson, ninja-build, libsystemd-dev, pkg-config, build-essential | ✅ |
 | Python | `/opt/ecps295/venv` (Python 3.14): numpy 2.4.6, scipy 1.17.1, cma 4.5.0, PyYAML 6.0.3, pymavlink 2.4.50, opencv-python-headless 5.0.0.93, pyserial, smbus2, psutil; numpy / scipy match the simulation machines | ✅ |
 | Onboard code | `ecps295/` = ROG `~/sim/rl_h2/ecps295` (S7 `ecps_map.py`, map shield, route B), `src/flydrones` | ✅ |
@@ -373,7 +373,7 @@ Data: `data/*_bench_P*` (`ticks.csv` / `system.csv` / `run.json` per run) and `d
 
 | Program / service | At boot | Role | Resources / ports |
 |---|---|---|---|
-| `mavlink-router.service` (`/usr/bin/mavlink-routerd`) | ✅ | MAVLink switch: FC UART `/dev/ttyS0` (115200, pins 8/10) ↔ UDP 14560 (companion), UDP 14550 and TCP 5760 (Mission Planner). Idle while no FC is wired | CPU ≈ 0, RSS 3.5 MB |
+| `mavlink-router.service` (`/usr/bin/mavlink-routerd`) | ✅ | MAVLink switch: FC UART `/dev/ttyS2` (115200, pins 11/13; `/dev/ttyS0` before 10-31, see the Serial row in §2) ↔ UDP 14560 (companion), UDP 14550 and TCP 5760 (Mission Planner). Idle while no FC is wired | CPU ≈ 0, RSS 3.5 MB |
 | `ecps-companion.service` | ❌ (installed, not enabled) | the flight program (`companion/ecps_companion.py`), shadow mode by default, pinned to cpu6-7, A76 performance governor while running. Starts and stops cleanly since the 10-16 fix (`systemctl stop` 0.34 s, Result=success) | — |
 | `netbird.service` | ✅ | NetBird remote access (added 10-16), 100.112.163.133; ssh management only, realtime data stays on the LAN | RSS 65 MB, UDP 51820 |
 | `ssh.service` | ✅ | remote login (Mac key, root / ming) | TCP 22 |

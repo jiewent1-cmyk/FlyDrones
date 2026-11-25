@@ -94,7 +94,7 @@ flowchart LR
 
 | Orange Pi | Connects to | Notes |
 |---|---|---|
-| GPIO UART (RX3 / TX3 / GND, 3-pin Dupont) | FC UART3 | crossed TX/RX; mavlink-router on the Pi must use the same baud as `SERIAL2_BAUD` |
+| GPIO UART2, `/dev/ttyS2` (3-pin Dupont): pin 11 (PB0, TX) → FC RX3, pin 13 (PB1, RX) ← FC TX3, pin 6 GND. **Not pins 8/10** (UART0 is U-Boot's console: the FC's stream stops the Pi from booting) | FC UART3 | crossed TX/RX; mavlink-router on the Pi must use the same baud as `SERIAL2_BAUD` |
 | GPIO 5 V | FC Vx | the Pi's USB-C power input stays free |
 | **TWI0: SDA pin 3, SCL pin 5** | front VL53L7CX | own bus, default address 0x29, enabled by a device-tree overlay |
 | **TWI1: SDA pin 38, SCL pin 40** | rear VL53L7CX | own bus, address 0x29 · pin numbers from third-party sources **[unverified]** |

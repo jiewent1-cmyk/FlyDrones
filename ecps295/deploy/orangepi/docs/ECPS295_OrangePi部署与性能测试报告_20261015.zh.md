@@ -58,13 +58,13 @@ flowchart LR
     TOFT["tof_vl53l7cx.py 线程 ×2<br/>ST ULD + i2c-dev，8×8 @ 15 Hz"]
     LOOP["ecps_companion.py 20 Hz 主循环（cpu6-7）<br/>EcpsRetina → MiniFly v4 → EcpsDecoder → SafetyGovernor<br/>→ EcpsPilot 看门狗 → RangeShield + LocalMap"]
     GATE["real_drone.RealDrone<br/>控制门：GUIDED + 已解锁 + 心跳 &lt; 2 s + 高度 ≥ 0.3 m"]
-    MR["mavlink-router（systemd）<br/>/dev/ttyS0 115200 ↔ UDP 14560（机载）/ 14550 + TCP 5760（地面站）"]
+    MR["mavlink-router（systemd）<br/>/dev/ttyS2 115200 ↔ UDP 14560（机载）/ 14550 + TCP 5760（地面站）"]
     CAMT --> LOOP
     TOFT --> LOOP
     LOOP --> GATE --> MR
   end
   FC["Matek F405-WMO · ArduCopter 4.7<br/>UART3 = SERIAL2"]
-  MR <-->|"排针 8 / 10 / 6（PB9 TX、PB10 RX、GND）"| FC
+  MR <-->|"排针 11 / 13 / 6（PB0 TX、PB1 RX、GND）"| FC
   TF["VL53L7CX 前"] -->|"TWI0：排针 3 / 5，/dev/i2c-0"| TOFT
   TR["VL53L7CX 后"] -->|"TWI1：排针 38 / 40，/dev/i2c-1"| TOFT
   UC["USB 相机"] -->|USB-C| CAMT
@@ -75,7 +75,7 @@ flowchart LR
 | 项目 | 内容 | 状态 |
 |---|---|---|
 | 设备树 | `/boot/armbianEnv.txt` 加 `overlays=i2c0 i2c1`（备份 `/root/ecps_backup/armbianEnv.txt.pre_ecps`）。重启后 `/dev/i2c-0` = TWI0（PB2/PB3），`/dev/i2c-1` = TWI1（PB7/PB8），pinmux 已核对；总线 400 kHz | ✅（两条总线目前扫不到设备：传感器未接） |
-| 串口 | 沿用已有的 `uart0-pb9-pb10` overlay（`/dev/ttyS0`，排针 8/10），`serial-getty@ttyS0` 已禁用 | ✅（未接飞控） |
+| 串口 | 飞控接 UART2：overlay `uart2`，`/dev/ttyS2`，排针 11（PB0 TX → 飞控 RX3）/ 13（PB1 RX ← 飞控 TX3）/ 6（GND）。**2026-10-31 更正**：本报告原先写的是 `uart0-pb9-pb10`（`/dev/ttyS0`，排针 8/10），那是 U-Boot 控制台，飞控上电后持续发送的数据会打断自动启动，Pi 开不了机，**不要接排针 8/10** | ✅（10-15 时未接飞控） |
 | 系统包 | i2c-tools、meson、ninja-build、libsystemd-dev、pkg-config、build-essential | ✅ |
 | Python | `/opt/ecps295/venv`（Python 3.14）：numpy 2.4.6、scipy 1.17.1、cma 4.5.0、PyYAML 6.0.3、pymavlink 2.4.50、opencv-python-headless 5.0.0.93、pyserial、smbus2、psutil；numpy / scipy 与各仿真机同版本 | ✅ |
 | 机载代码 | `ecps295/` = ROG `~/sim/rl_h2/ecps295`（含 S7 `ecps_map.py`、地图安全层、route B），`src/flydrones` | ✅ |
@@ -346,7 +346,7 @@ python3 deploy/orangepi/scripts/analyze_profile.py 项目文档/07_机载部署/
 
 | 程序 / 服务 | 开机启动 | 职责 | 资源 / 端口 |
 |---|---|---|---|
-| `mavlink-router.service`（`/usr/bin/mavlink-routerd`） | ✅ | MAVLink 交换机：飞控串口 `/dev/ttyS0`（115200，排针 8/10）↔ UDP 14560（给机载程序）、UDP 14550 和 TCP 5760（给地面站 Mission Planner）。未接飞控时空转 | CPU ≈ 0，RSS 3.5 MB |
+| `mavlink-router.service`（`/usr/bin/mavlink-routerd`） | ✅ | MAVLink 交换机：飞控串口 `/dev/ttyS2`（115200，排针 11/13；10-31 前为 `/dev/ttyS0`，见 §2 串口一行）↔ UDP 14560（给机载程序）、UDP 14550 和 TCP 5760（给地面站 Mission Planner）。未接飞控时空转 | CPU ≈ 0，RSS 3.5 MB |
 | `ecps-companion.service` | ❌（已安装，未设开机启动） | 上飞时的主程序（`companion/ecps_companion.py`），默认 shadow 模式，固定 cpu6-7，运行期间大核 performance。10-16 修复后启停正常（`systemctl stop` 0.34 s，Result=success） | — |
 | `netbird.service` | ✅ | NetBird 远程访问（10-16 加入），地址 100.112.163.133。只用于 ssh 管理；实时数据走局域网 | RSS 65 MB，UDP 51820 |
 | `ssh.service` | ✅ | 远程登录（Mac 密钥，root / ming） | TCP 22 |

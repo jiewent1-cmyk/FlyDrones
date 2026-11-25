@@ -1,0 +1,26 @@
+{'off': 28, 'on': 28} pairs 28
+off contacts 1 fc_land 0 dur min 235 runs with non-ARRIVED rows 26 lost frac med 0.013 max 0.088 fixes med 0.0 rejected 0
+on contacts 0 fc_land 0 dur min 235 runs with non-ARRIVED rows 1 lost frac med 0.000 max 0.191 fixes med 2054.0 rejected 880
+drift  t= 30s off med 0.173 p90 0.287 max 0.349 | on med 0.197 p90 0.496 max 1.250 | on better 12/28 p=0.157
+drift  t= 60s off med 0.278 p90 0.397 max 0.591 | on med 0.315 p90 0.592 max 0.695 | on better 14/28 p=0.567
+drift  t=120s off med 0.377 p90 0.595 max 0.699 | on med 0.395 p90 0.640 max 0.986 | on better 16/28 p=0.582
+drift  t=180s off med 0.364 p90 0.552 max 0.771 | on med 0.362 p90 0.762 max 0.881 | on better 11/28 p=0.264
+drift  t=230s off med 0.352 p90 0.673 max 0.952 | on med 0.384 p90 0.755 max 0.878 | on better 13/28 p=0.762
+dmax   t= 30s off med 0.371 p90 0.462 max 0.493 | on med 0.384 p90 0.643 max 1.284 | on better 12/28 p=0.465
+dmax   t= 60s off med 0.411 p90 0.561 max 0.642 | on med 0.416 p90 0.736 max 1.284 | on better 14/28 p=0.582
+dmax   t=120s off med 0.478 p90 0.656 max 0.755 | on med 0.471 p90 0.828 max 1.284 | on better 15/28 p=0.937
+dmax   t=180s off med 0.558 p90 0.779 max 1.044 | on med 0.515 p90 0.947 max 1.284 | on better 17/28 p=0.362
+dmax   t=230s off med 0.571 p90 0.909 max 1.055 | on med 0.553 p90 0.952 max 1.284 | on better 18/28 p=0.438
+ekf    t= 30s off med 0.128 p90 0.250 max 0.420 | on med 0.180 p90 0.299 max 0.461 | on better 10/28 p=0.0774
+ekf    t= 60s off med 0.151 p90 0.387 max 0.446 | on med 0.213 p90 0.456 max 0.632 | on better 9/28 p=0.0167
+ekf    t=120s off med 0.437 p90 0.621 max 0.693 | on med 0.419 p90 0.633 max 0.739 | on better 12/28 p=0.955
+ekf    t=180s off med 0.367 p90 0.576 max 0.595 | on med 0.441 p90 0.699 max 0.777 | on better 12/28 p=0.104
+ekf    t=230s off med 0.401 p90 0.605 max 0.740 | on med 0.409 p90 0.653 max 0.767 | on better 9/28 p=0.0946
+used   t= 30s off med 0.128 p90 0.250 max 0.420 | on med 0.127 p90 0.242 max 0.247 | on better 14/28 p=0.21
+used   t= 60s off med 0.151 p90 0.387 max 0.446 | on med 0.143 p90 0.237 max 0.248 | on better 18/28 p=0.00822
+used   t=120s off med 0.437 p90 0.621 max 0.693 | on med 0.116 p90 0.196 max 0.257 | on better 25/28 p=3.2e-07
+used   t=180s off med 0.367 p90 0.576 max 0.595 | on med 0.125 p90 0.227 max 0.251 | on better 25/28 p=3.2e-07
+used   t=230s off med 0.401 p90 0.605 max 0.740 | on med 0.122 p90 0.221 max 0.238 | on better 26/28 p=1.42e-07
+  lost lowbox_s6_k0 {'ARRIVED': 5057, 'APPROACH': 152, 'LOST': 22, 'SEARCH': 315} {'ARRIVED': 4650}
+  lost lowbox_s6_k1 {'ARRIVED': 5080, 'APPROACH': 117, 'LOST': 39, 'SEARCH': 305} {'ARRIVED': 4650}
+  lost lowbox_s9_k1 {'ARRIVED': 5290, 'APPROACH': 138} {'ARRIVED': 4301, 'SEARCH': 858, 'APPROACH': 101, 'LOST': 58}

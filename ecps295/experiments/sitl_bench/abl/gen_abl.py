@@ -29,7 +29,7 @@ ARMS = {
 }
 Z = "SIM_SONAR_POS_Z="
 H = " ".join(f"--fault {t}:{Z}{v}" for t, v in ((2.5, .53), (3.0, .81), (3.5, 1.04), (4.0, 1.29), (4.5, 1.53), (5.0, 1.77), (5.5, 1.93)))
-K_SRC = open("/home/jacky/sim/val7/jobs_v7_s4.txt").read().split("v7_s4_k_none_r1|")[1].split("\n")[0]
+K_SRC = open("~/sim/val7/jobs_v7_s4.txt").read().split("v7_s4_k_none_r1|")[1].split("\n")[0]
 K = K_SRC[K_SRC.index("--fault"):].strip()
 I = " ".join(f"--fault {6 + n}:{Z}{0.05 + 0.1 * n:.2f}" for n in range(11))
 # fault: (extra overlay, extra args)
@@ -61,10 +61,20 @@ FAULTS = {
 SQ = "SQ --alt 2.0 --side 2.0 --laps 1 --hold 2.0 --no-loiter-test --thr-auto 1500 --settle 20 --seconds 120"
 D3 = "D3 --alt 2.0 --side 2.0 --hold 2.0 --thr-auto 1500 --settle 20 --seconds 180"
 YAWS = [(18 * i + 9) % 360 for i in range(20)]
+import sys
+R2 = len(sys.argv) > 1 and sys.argv[1] == "r2"
+if R2:  # round 2: mitigations for the lateral run-away during the LAND started by the guard (set 2 = baro height, no flow)
+    T0 = TIGHT + ",SURFTRAK_MODE=0"
+    FAST = ",LAND_ALT_LOW_M=1,LAND_SPD_HIGH_MS=1.5"
+    ARMS = {"X_NOFLOW": (T0, {"source_set": 2}, 3), "X_FAST": (T0 + FAST, ON, 3), "X_OOR": (T0, {"oor_s": 0.3}, 3),
+            "X_OOR_NOFLOW": (T0, {"oor_s": 0.3, "source_set": 2}, 3),
+            "X_ALL": (T0 + FAST, {"oor_s": 0.3, "source_set": 2}, 3), "X_NOFLOW_FAST": (T0 + FAST, {"source_set": 2}, 3)}
+    FAULTS = {k: FAULTS[k] for k in ("none", "wind3", "r_a", "r_c", "r_g5", "r_gN", "r_h", "r_k", "r_i", "r_j2", "r_oor3",
+                                     "x_gN_noise", "x_h_drn", "x_h_drp", "x_k_st2n")}
 jobs = []
 for rep in range(1, 21):
     for arm, (ovl, hg, tier) in ARMS.items():
-        if rep > (20 if tier == 1 else 8):
+        if rep > {1: 20, 2: 8, 3: 10}[tier]:
             continue
         for fault, (fo, fa) in FAULTS.items():
             yaw = YAWS[rep - 1]
@@ -73,7 +83,7 @@ for rep in range(1, 21):
             o = ",".join(x for x in (HARSH, ovl, fo, f"SIM_WIND_DIR={wdir}") if x)
             jobs.append((rep, "|".join([tag, "mtf01_sitl_rng.parm", "1", str(yaw), o, (SQ + " " + fa).strip()])))
             json.dump(hg, open(f"{D}/hg/{tag}.json", "w"))
-    if rep <= 10:  # manual LOITER take-off first (D3), key arms and faults only
+    if rep <= 10 and not R2:  # manual LOITER take-off first (D3), key arms and faults only
         for arm in ("FULL", "NOGUARD", "BARE"):
             ovl, hg, _ = ARMS[arm]
             for fault in ("none", "r_h", "r_k", "r_gN", "b_st2n"):
@@ -84,5 +94,5 @@ for rep in range(1, 21):
                 o = ",".join(x for x in (HARSH, ovl, fo, f"SIM_WIND_DIR={wdir}") if x)
                 jobs.append((rep, "|".join([tag, "mtf01_sitl_rng.parm", "1", str(yaw), o, (D3 + " " + fa).strip()])))
                 json.dump(hg, open(f"{D}/hg/{tag}.json", "w"))
-open(D + "/jobs_abl.txt", "w").write("\n".join(j for _, j in jobs) + "\n")   # rep 1 of every cell first: partial results stay balanced
+open(D + ("/jobs_r2.txt" if R2 else "/jobs_abl_regen.txt"), "w").write("\n".join(j for _, j in jobs) + "\n")   # rep 1 of every cell first: partial results stay balanced
 print(len(jobs), "jobs;", len(ARMS), "arms;", len(FAULTS), "faults")

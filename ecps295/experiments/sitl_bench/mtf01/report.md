@@ -89,6 +89,8 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改未�
 | q4jmp5_RNG（下跳 5 s） | 3 | 0/3 | Max Alt fence → LAND | **4.370** [4.370–4.384] | 0.887 | - | 0.034 | 0.093 | 2.646 [2.581–2.673] | 0.302 |
 | q4jmp5_B | 3 | 0/3 | Circle fence → LAND | **5.093** [5.063–5.143] | 1.122 | - | 3.922 | 6.107 | 8.559 [8.317–9.138] | 5.002 |
 
+（注：q4orient 两行的“真值最大半径 14–51 / 97–107 m”来自 `analyze.py` 的 `loiter_true_radius_max`（整个 LOITER 解锁段、相对解锁点；2026-11-24 在原始运行目录的 `metrics.json` 里核实：90° 三次为 14.1 / 45.1 / 51.1 m，180° 三次为 97.0 / 97.0 / 106.9 m），这一列没有被 `collect.py` 收进 `results.csv`。`results.csv` 的 `radius_max` 只统计 AUTO 段（这 6 次 AUTO 未解锁，所以为空），`hover_drift`（8.9–34.4 / 57.0–66.4 m，即图6）只统计 LOITER 悬停窗内相对窗口起点的偏移，`diverge.py` 只输出越过 0.5/1/3 m 的时刻。）
+
 ![四种高度源的任务高度误差与 EKF 高度误差](figures/fig1_height_source.png)
 *图1. 四种高度源每次运行的任务高度误差 RMS（左）与 EKF 高度误差 RMS（右）：测距（b）最低，气压（c）约 4 倍于测距，气压+`RNG_USE_HGT` 混合（c+）最高。数据来源：results.csv（q2_B / q2_RNG / q2_BARO / q2_BRNG 各 3 次）；脚本：make_figures.py。*
 
@@ -114,7 +116,7 @@ ArduCopter 4.7.0 SITL（`~/sim/ardupilot/build/sitl/bin/arducopter`，未改未�
 （解锁后约 4.5 s 爬到 1 m，然后松杆悬停。）
 
 ![光流方向装错 90/180 度的 LOITER 飞走幅度](figures/fig6_orient_flyaway.png)
-*图6. 光流方向装错后每次运行在 LOITER 段的真值最大水平偏移（results.csv 的 hover_drift 列）：90° 为 8.9–34.4 m，180° 为 57.0–66.4 m，全部触发围栏且 AUTO 未能解锁；正文表中 14–51 / 97–107 m 是 diverge.py 对整段日志统计的最大半径，两者口径不同。数据来源：results.csv（q4orient_9000 / q4orient_18000 各 3 次）；脚本：make_figures.py。*
+*图6. 光流方向装错后每次运行在 LOITER 悬停窗内的真值最大水平偏移（相对窗口起点）（results.csv 的 hover_drift 列）：90° 为 8.9–34.4 m，180° 为 57.0–66.4 m，全部触发围栏且 AUTO 未能解锁；正文表中 14–51 / 97–107 m 不是这一列，而是 analyze.py 的 loiter_true_radius_max（整个 LOITER 解锁段、相对解锁点，未收入 results.csv；diverge.py 只算越过 0.5/1/3 m 的时刻，不统计最大半径），两者口径不同。数据来源：results.csv（q4orient_9000 / q4orient_18000 各 3 次）；脚本：make_figures.py。*
 
 完整逐次数据见 `results.csv`，汇总见 `summary_table.md`。
 

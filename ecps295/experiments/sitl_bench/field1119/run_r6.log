@@ -1,0 +1,133 @@
+[   1.4] FC mode STABILIZE disarmed  (alt -0.00 m, x 0.00 y 0.00)
+[   1.7] FC text: Barometer 1 calibration complete
+[   1.7] FC text: Barometer 2 calibration complete
+[   1.9] waiting for the EKF and the origin
+[   2.2] FC text: ArduPilot Ready
+[   2.2] FC text: AHRS: DCM active
+[   2.4] mission item 0 active
+[   2.4] FC mode GUIDED disarmed  (alt -0.00 m, x 0.00 y 0.00)
+[   2.5] FC text: RC7: SaveWaypoint LOW
+[   4.2] FC text: EKF3 IMU0 initialised
+[   4.2] FC text: EKF3 IMU1 initialised
+[   4.2] FC text: AHRS: EKF3 active
+[   4.3] FC text: EKF3 IMU1 fusing optical flow
+[   4.3] FC text: EKF3 IMU0 fusing optical flow
+[   4.4] FC text: EKF3 IMU1 tilt alignment complete
+[   4.4] FC text: EKF3 IMU1 started relative aiding
+[   4.4] FC text: EKF3 IMU0 tilt alignment complete
+[   4.4] FC text: EKF3 IMU0 started relative aiding
+[   4.9] FC text: EKF3 IMU0 origin set
+[   4.9] FC text: EKF3 IMU1 origin set
+[   4.9] FC text: Field Elevation Set: 20m
+[   5.5] origin True, EKF flags 0x16f, rangefinder 0.06 m
+[   5.5] param RTL_ALT_M      15.0 -> 0.0
+[   5.6] param WP_SPD         10.0 -> 0.4000000059604645
+[   5.7] param WP_SPD_UP      2.5 -> 0.5
+[   5.8] param WP_SPD_DN      1.5 -> 0.4000000059604645
+[   5.9] param WP_RADIUS_M    2.0 -> 0.20000000298023224
+[   6.0] param WP_ACC         2.5 -> 1.0
+[   6.1] param LOIT_SPEED_MS  12.5 -> 1.0
+[   6.2] param FENCE_MARGIN   2.0 -> 0.30000001192092896
+[  31.3] === LOITER: arm, throttle up, hover, land
+[  31.3] FC mode LOITER disarmed  (alt 0.09 m, x -0.00 y 0.00)
+[  33.3] FC text: Arming motors
+[  33.4] FC mode LOITER ARMED  (alt 0.09 m, x -0.00 y 0.00)
+[  38.0] LOITER climb: alt 0.79 m after 2.7 s
+[  42.0] LOITER stick centred: peak alt 0.90 m
+[  57.0] LOITER hover: {'armed': True, 'alt_m': 0.85, 'hover_drift_m': 0.02}
+[  58.5] FC text: SIM Hit ground at 1.011943 m/s
+[  85.1] FC text: Disarming motors
+[  85.4] FC mode LOITER disarmed  (alt 0.10 m, x 0.01 y 0.00)
+[  87.1] === AUTO mission D3
+[  87.2] uploading D3: 7 items, alt 0.80 m, side 1.00 m, nose yaw 2 deg, reference 33.6430000 -117.8420000
+[  87.8]   item 1 TAKEOFF  x +0.00 y +0.00 alt 0.80 hold 0 s
+[  87.8]   item 2 WAYPOINT x +1.00 y +0.00 alt 0.80 hold 2 s
+[  87.8]   item 3 WAYPOINT x +1.00 y +1.00 alt 0.80 hold 2 s
+[  87.8]   item 4 WAYPOINT x +0.00 y +1.00 alt 0.80 hold 2 s
+[  87.8]   item 5 WAYPOINT x +0.00 y +0.00 alt 0.80 hold 2 s
+[  87.8]   item 6 LAND     x +0.00 y +0.00 alt 0.00 hold 0 s
+[  87.8] mission D3 read back OK
+[  89.8] FC text: Arming motors
+[  89.9] FC mode LOITER ARMED  (alt 0.09 m, x 0.01 y 0.00)
+[  91.8] armed True in LOITER; switching to AUTO
+[  91.8] FC mode AUTO ARMED  (alt 0.09 m, x 0.01 y 0.00)
+[  91.8] FC text: Mission: 1 Takeoff
+[  91.9] mission item 1 active
+[  96.9] mission item 1 REACHED  (x 0.01 y -0.01 alt 1.10)
+[  96.9] FC text: Mission: 2 WP
+[  96.9] mission item 2 active
+[ 103.3] mission item 2 REACHED  (x 1.03 y 0.02 alt 0.89)
+[ 103.3] FC text: Reached command #2
+[ 103.3] FC text: Mission: 3 WP
+[ 103.4] mission item 3 active
+[ 109.8] mission item 3 REACHED  (x 0.97 y 1.08 alt 0.89)
+[ 109.8] FC text: Reached command #3
+[ 109.8] FC text: Mission: 4 WP
+[ 109.9] mission item 4 active
+[ 116.5] mission item 4 REACHED  (x -0.08 y 1.01 alt 0.88)
+[ 116.5] FC text: Reached command #4
+[ 116.5] FC text: Mission: 5 WP
+[ 116.9] mission item 5 active
+[ 123.2] mission item 5 REACHED  (x -0.01 y -0.04 alt 0.89)
+[ 123.2] FC text: Reached command #5
+[ 123.2] FC text: Mission: 6 Land
+[ 123.4] mission item 6 active
+[ 125.1] FC text: SIM Hit ground at 0.515083 m/s
+[ 127.2] FC text: Disarming motors
+[ 127.2] FC text: Mission: 1 Takeoff
+[ 127.4] FC mode AUTO disarmed  (alt 0.09 m, x 0.00 y -0.00)
+[ 127.4] mission item 1 active
+{
+ "loiter": {
+  "armed": true,
+  "alt_m": 0.85,
+  "hover_drift_m": 0.02
+ },
+ "auto": {
+  "flew": true,
+  "seconds": 34.5,
+  "alt_max_m": 1.12,
+  "radius_max_m": 1.44,
+  "landing_offset_m": 0.0,
+  "items_reached": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "modes": [
+   "AUTO"
+  ],
+  "disarmed": true,
+  "batt_v": 12.6
+ },
+ "texts": [
+  "EKF3 IMU0 fusing optical flow",
+  "EKF3 IMU1 tilt alignment complete",
+  "EKF3 IMU1 started relative aiding",
+  "EKF3 IMU0 tilt alignment complete",
+  "EKF3 IMU0 started relative aiding",
+  "EKF3 IMU0 origin set",
+  "EKF3 IMU1 origin set",
+  "Field Elevation Set: 20m",
+  "Arming motors",
+  "SIM Hit ground at 1.011943 m/s",
+  "Disarming motors",
+  "Arming motors",
+  "Mission: 1 Takeoff",
+  "Mission: 2 WP",
+  "Reached command #2",
+  "Mission: 3 WP",
+  "Reached command #3",
+  "Mission: 4 WP",
+  "Reached command #4",
+  "Mission: 5 WP",
+  "Reached command #5",
+  "Mission: 6 Land",
+  "SIM Hit ground at 0.515083 m/s",
+  "Disarming motors",
+  "Mission: 1 Takeoff"
+ ]
+}
+rehearsal exit 0
