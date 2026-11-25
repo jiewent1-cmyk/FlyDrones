@@ -11,7 +11,7 @@ Nothing under `src/flydrones/` is modified; everything here subclasses or drives
 
 <p align="center"><img src="../assets/art/sim.jpg" alt="A quadcopter weaving through obstacles in a GPS-free simulation" width="80%"></p>
 > Documentation (architecture, hardware, FC parameters, simulation guide, flight-test plan, glossary): [`docs/`](docs/README.md)
-> All figures and diagrams on one page · 全部图表总览：[`docs/FIGURES.md`](docs/FIGURES.md)
+> All figures and diagrams on one page · 全部图表总览：[`docs/FIGURES.md`](docs/FIGURES.md) · 中文系统图册：[`docs/DIAGRAMS.zh.md`](docs/DIAGRAMS.zh.md)
 
 ## At a glance · 概览
 

@@ -19,7 +19,7 @@ GROUPS = [
     ("Gazebo result sets", ["results/", "gazebo/", "scripts/"]),
     ("ArduPilot SITL bench studies", ["experiments/"]),
 ]
-SKIP = ("report_backup.md", "report_source.md", "docs/FIGURES.md")
+SKIP = ("report_backup.md", "report_source.md", "docs/FIGURES.md", "docs/DIAGRAMS.zh.md")
 
 
 def slug(h):
@@ -113,6 +113,7 @@ o.append(
 o.append("")
 o.append(
     "Where a report exists in English and Chinese, this page lists the English one. "
+    "The diagrams with Chinese labels are in [DIAGRAMS.zh.md](DIAGRAMS.zh.md) · 中文图册. "
     "This page is generated: `ecps295/docs/gen_figures_index.py`."
 )
 o.append("")

@@ -4,7 +4,7 @@ One page with every picture in the `ecps295/` documents: 130 data figures and ph
 
 Data figures are made by the `make_figures.py` script next to each `figures/` directory, from the result files in the same directory. Diagrams are Mermaid blocks inside the documents; GitHub draws them.
 
-Where a report exists in English and Chinese, this page lists the English one. This page is generated: `ecps295/docs/gen_figures_index.py`.
+Where a report exists in English and Chinese, this page lists the English one. The diagrams with Chinese labels are in [DIAGRAMS.zh.md](DIAGRAMS.zh.md) · 中文图册. This page is generated: `ecps295/docs/gen_figures_index.py`.
 
 ## Contents
 
