@@ -134,8 +134,9 @@ dyn.update(cfg.get("ecps_drone", {}) or {})
 stop = {"flag": False}  # set by SIGTERM / SIGINT; checked while waiting for the FC as well as by the control loop
 signal.signal(signal.SIGTERM, lambda *_: stop.update(flag=True))
 signal.signal(signal.SIGINT, lambda *_: stop.update(flag=True))
-# SITL fault injection only. Guided mode leaves SIGUSR1 at its normal process-termination behavior.
-if a.mode != "guided":
+# SITL fault injection only. Guided mode leaves SIGUSR1 at its normal process-termination behavior, except in simulator
+# tests that ask for it (--sitl and ECPS_TEST_SIGUSR1_TOF=1: scripts/sitl_hil_rog.py T9 / T10, front ToF frozen)
+if a.mode != "guided" or (a.sitl and os.environ.get("ECPS_TEST_SIGUSR1_TOF") == "1"):
     signal.signal(signal.SIGUSR1, lambda *_: [getattr(x, "_stop", None) and x._stop.set() for x in [tofs.get(0)] if x is not None])
 
 # ------------------------------------------------------------------ sensors
