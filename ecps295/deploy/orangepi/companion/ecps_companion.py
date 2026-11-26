@@ -182,6 +182,7 @@ else:
     drone = RealDrone(url, cam, tofs, allow_cmd=(a.mode == "guided"), ext_height=bool(mv.get("ext_height", True)),
                       fc_sysid=int(mv.get("fc_sysid", 1)), stream_hz=float(mv.get("stream_hz", 20)),
                       handover_alt_m=float(mv.get("handover_alt_m", 0.3)),
+                      home_frame=bool(mv.get("home_frame", True)),
                       rangefinder_hz=float(mv.get("rangefinder_hz", 20)), guard=hw.get("guard", {}),
                       max_flight_s=max_flight_s, stop_check=lambda: stop["flag"],
                       ekf_origin=tuple(mv.get("ekf_origin", (33.6430, -117.8420, 20.0))), **dyn)

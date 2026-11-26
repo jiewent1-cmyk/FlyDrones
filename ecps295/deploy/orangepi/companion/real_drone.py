@@ -19,6 +19,7 @@ BenchDrone  no flight controller: fixed hover telemetry, commands recorded only 
 
 from __future__ import annotations
 
+import dataclasses
 import math
 import os
 import threading
@@ -109,6 +110,7 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
 
     def __init__(self, url: str, cam, tofs: dict, *, allow_cmd: bool = False, ext_height: bool = True,
                  handover_alt_m: float = 0.3, rangefinder_hz: float = 20.0, guard: dict | None = None,
+                 home_frame: bool = True,
                  max_flight_s: float = 120.0, stop_check=lambda: False,
                  ekf_origin: tuple[float, float, float] = (33.6430, -117.8420, 20.0), **kw):
         self.rangefinder_hz = rangefinder_hz  # set before the base __init__, which connects and requests the streams
@@ -120,6 +122,8 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         self._init_sensors(cam, tofs)
         self.allow_cmd = allow_cmd  # --mode guided
         self.handover_alt_m = handover_alt_m
+        self.home_frame = bool(home_frame)  # 2026-11-25: pilot x / y relative to the arming point (_to_home_frame)
+        self._home_xy: tuple[float, float] | None = None
         self._latched = False
         self.passive = False
         self.frozen = False
@@ -438,7 +442,29 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
         self._keep_origin()
         self.height_guard.tick(self)  # own path, like the E-stop: acts whether or not we are in control
         t.flying = self.armed()
-        return t
+        return self._to_home_frame(t)
+
+    def _to_home_frame(self, t: Telemetry) -> Telemetry:
+        """x / y relative to where the FC armed (the take-off point) instead of the EKF origin (2026-11-25).
+
+        The FC's flow-only position starts at the EKF origin when it boots, but it runs away while the drone sits on
+        the ground and moves when the drone is carried to the take-off spot (2026-11-25: 9 m, later 63 m before
+        take-off). Everything in the pilot that uses x / y is centred on (0, 0): the geofence turn, console go-to
+        limits, waypoints, return home, the route planner. The sim drones arm at the origin, so this is a no-op there.
+        Only the pose handed to the pilot moves: the FC position targets (ECPS_HOLD=pos) and the route-B height echo
+        keep reading LOCAL_POSITION_NED in the FC's own frame. Map voxels written before arming end up shifted by the
+        home offset and decay within a few seconds (ecps_map tau_s); hand-over needs a take-off first anyway."""
+        if not self.home_frame:
+            return t
+        if not self.armed():
+            self._home_xy = None
+            return t
+        if t.x_m is None or t.y_m is None:
+            return t
+        if self._home_xy is None:
+            self._home_xy = (t.x_m, t.y_m)
+            self._gevent(f"home frame: take-off point = EKF ({t.x_m:+.2f}, {t.y_m:+.2f}) m")
+        return dataclasses.replace(t, x_m=t.x_m - self._home_xy[0], y_m=t.y_m - self._home_xy[1])
 
 
 class BenchDrone(_Sensors):
