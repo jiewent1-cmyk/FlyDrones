@@ -5,7 +5,12 @@ from pymavlink.dialects.v20 import ardupilotmega as m
 NAMES = ["HEARTBEAT", "SYS_STATUS", "SYSTEM_TIME", "SET_MODE", "SCALED_PRESSURE", "ATTITUDE", "LOCAL_POSITION_NED",
          "GLOBAL_POSITION_INT", "RC_CHANNELS", "VFR_HUD", "COMMAND_LONG", "COMMAND_ACK", "OPTICAL_FLOW",
          "VISION_POSITION_ESTIMATE", "SIM_STATE", "DISTANCE_SENSOR", "BATTERY_STATUS", "RANGEFINDER",
-         "EKF_STATUS_REPORT", "VIBRATION", "STATUSTEXT", "POWER_STATUS", "POSITION_TARGET_LOCAL_NED", "MEMINFO"]
+         "EKF_STATUS_REPORT", "VIBRATION", "STATUSTEXT", "POWER_STATUS", "POSITION_TARGET_LOCAL_NED", "MEMINFO",
+         # GPS map page (2026-11-25): the GPS fix, the EKF origin, the home point and the mission protocol
+         # (read only: the console never uploads a mission)
+         "GPS_RAW_INT", "GPS_GLOBAL_ORIGIN", "HOME_POSITION",
+         "MISSION_COUNT", "MISSION_CURRENT", "MISSION_ITEM", "MISSION_ACK",
+         "MISSION_REQUEST", "MISSION_REQUEST_INT", "MISSION_REQUEST_LIST"]
 SZ = {"float": 4, "double": 8, "char": 1, "int8_t": 1, "uint8_t": 1, "uint8_t_mavlink_version": 1, "int16_t": 2,
       "uint16_t": 2, "int32_t": 4, "uint32_t": 4, "int64_t": 8, "uint64_t": 8}
 TY = {"float": "f32", "double": "f64", "char": "char", "int8_t": "i8", "uint8_t": "u8", "uint8_t_mavlink_version": "u8",

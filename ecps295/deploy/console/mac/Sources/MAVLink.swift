@@ -202,6 +202,36 @@ final class MavEncoder {
         p.append(contentsOf: [target, 1])
         return frame(11, p)
     }
+
+    // ------------------------------------------------------------------ mission protocol (read only)
+    // The console only *downloads* the mission: it asks for the list and then for the items, one by one.
+    // It never sends MISSION_ITEM or MISSION_SET_CURRENT: the FC's mission is never changed from here.
+    /// MISSION_REQUEST_LIST (43): target_system, target_component, mission_type (0 = the mission).
+    func missionRequestList(target: UInt8, comp: UInt8, missionType: UInt8 = 0) -> Data {
+        var p = Data()
+        p.append(contentsOf: [target, comp, missionType])
+        return frame(43, p)
+    }
+    /// MISSION_REQUEST_INT (51): seq, target_system, target_component, mission_type.
+    func missionRequestInt(target: UInt8, comp: UInt8, seq: UInt16, missionType: UInt8 = 0) -> Data {
+        var p = Data()
+        p.appendLE(seq)
+        p.append(contentsOf: [target, comp, missionType])
+        return frame(51, p)
+    }
+    /// MISSION_REQUEST (40): the MAVLink 1 form of the same request (older FCs answer only this one).
+    func missionRequest(target: UInt8, comp: UInt8, seq: UInt16, missionType: UInt8 = 0) -> Data {
+        var p = Data()
+        p.appendLE(seq)
+        p.append(contentsOf: [target, comp, missionType])
+        return frame(40, p)
+    }
+    /// MISSION_ACK (47): ends the download transaction (type 0 = accepted).
+    func missionAck(target: UInt8, comp: UInt8, missionType: UInt8 = 0) -> Data {
+        var p = Data()
+        p.append(contentsOf: [target, comp, 0, missionType])
+        return frame(47, p)
+    }
 }
 
 /// ArduCopter custom_mode numbers.

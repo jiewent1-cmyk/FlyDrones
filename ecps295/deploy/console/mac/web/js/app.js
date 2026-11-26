@@ -4,6 +4,7 @@ import { BrainView, behaviour } from "./brain.js";
 import { EyesView } from "./eyes.js";
 import { MapView } from "./map3d.js";
 import { FlightView } from "./flight.js";
+import { GpsView } from "./gps.js";
 import { L, lang, setLang, onLang, baseTitle } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
@@ -12,6 +13,12 @@ const brain = new BrainView($("brain"), $("raster"), $("motor"), $("tip"));
 const eyes = new EyesView($("eyes"), $("camInfo"));
 const flight = new FlightView($("adi"), $("tiles"), $("health"), $("chAlt"), $("chTick"));
 const map = new MapView($("map3d"), $("mapwrap"), $("mapLegend"), onPick);
+const gps = new GpsView($("gpsMap"), link, {
+  base: $("gpsBase"), follow: $("gpsFollow"), home: $("gpsHome"), clear: $("gpsClear"), mission: $("gpsMission"),
+  tracks: $("gpsTracks"), missionOn: $("gpsMissionOn"), values: $("gpsValues"), fix: $("gpsFix"),
+  tiles: $("gpsTiles"), chip: $("gpsChip"), missionInfo: $("gpsMissionInfo"), missionList: $("gpsMissionList")
+});
+let tab = "main";
 
 const MODES = { PATROL: ["大脑巡逻", "Brain patrol"], HOLD: ["悬停", "Hold"], GOTO: ["前往目标", "Go to goal"], MANUAL: ["手动", "Manual"], TRACK: ["跟踪目标", "Track target"], RTL: ["返航降落", "Return & land"], LAND: ["降落", "Land"] };
 // target tracking (2026-10-18): the pilot's target layer states, and how the TICK reports them (trk, mk)
@@ -40,6 +47,7 @@ link.addEventListener("state", (e) => {
   const fc = S.fc || {};
   if (fc.texts) for (const t of fc.texts) addLog(t[2] <= 3 ? "critical" : t[2] <= 4 ? "warn" : "info", t[1], t[3]);
   flight.push(fc, freshTick());
+  gps.setState(fc);
   mapText();
   onState();
 });
@@ -52,7 +60,7 @@ link.addEventListener("map", (e) => { map.onMap(e.detail); mapHdr = e.detail.hdr
 link.addEventListener("tof", (e) => map.onTof(e.detail));
 link.addEventListener("ack", (e) => {
   const a = e.detail;
-  if (!a.c || a.c === "stick" || a.c === "lang") return;
+  if (!a.c || a.c === "stick" || a.c === "lang" || a.c === "tab") return;
   const what = a.op || a.c;
   if (a.op === "handover" && !a.ok && hoAsked === "track") sendHandover("hold");  // TRACK refused here: the safe choice
   $("ackTxt").textContent = L(`${what}：${a.ok ? "✓ 已确认" : "✕ " + (a.msg || "失败")}`, `${what}: ${a.ok ? "✓ acknowledged" : "✕ " + (a.msg || "failed")}`);
@@ -318,6 +326,19 @@ function setCam(mode, send = true) {
 }
 document.querySelectorAll("[data-cam]").forEach((b) => (b.onclick = () => setCam(b.dataset.cam)));
 
+// ---------------------------------------------------------------- pages: 主界面 / GPS 地图
+function applyTab(name) {
+  tab = name === "gps" ? "gps" : "main";
+  $("pageMain").classList.toggle("on", tab === "main");
+  $("pageGps").classList.toggle("on", tab === "gps");
+  document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "gps") gps.show(); else gps.hide();
+}
+document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { applyTab(b.dataset.tab); link.send({ c: "tab", name: b.dataset.tab }); }));
+// the native side (menu 显示 → GPS 地图) tells the page which page is up
+link.addEventListener("tab", (e) => applyTab(e.detail && e.detail.name));
+applyTab("main");
+
 // kill: hold 1.5 s
 (() => {
   const btn = $("bKill"), ring = $("killRing");
@@ -465,7 +486,7 @@ document.querySelectorAll("[data-lang]").forEach((b) => (b.onclick = () => {
 // what the static switch in i18n.js does not reach: texts the scripts wrote, charts, the map legend
 function relabel() {
   document.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("on", b.dataset.lang === lang));
-  topoText(); mapText(); setCam(eyes.mode, false); map.drawLegend(); flight.relabel();
+  topoText(); mapText(); setCam(eyes.mode, false); map.drawLegend(); flight.relabel(); gps.relabel();
   $("ackTxt").textContent = "";
   if (T) tickText();
   if (S && !uiDown) onState();

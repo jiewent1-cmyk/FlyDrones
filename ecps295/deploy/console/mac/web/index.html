@@ -16,6 +16,7 @@
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.min.js", "three/addons/controls/OrbitControls.js": "./vendor/OrbitControls.js" } }
 </script>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -39,7 +40,12 @@
 <div class="estopBar" id="estopBar"><span id="estopText"></span><button class="icon" id="bStopSend"></button><button class="icon" id="bReset"></button></div>
 <div class="freezeBar" id="freezeBar"></div>
 
-<main class="grid">
+<nav class="tabs" id="tabs">
+  <button data-tab="main" class="on" data-en="Main">主界面</button>
+  <button data-tab="gps" data-en="GPS map">GPS 地图</button>
+</nav>
+
+<main class="grid on" id="pageMain">
   <section class="col left">
     <div class="panel eyesP">
       <div class="ph"><span><b data-en="Camera">相机</b> · <span id="camLabel" data-en="Brain view">大脑视角</span></span>
@@ -123,6 +129,42 @@
   </section>
 </main>
 
+<!-- GPS map page (2026-11-25): the live GPS fix, the FC's flow position, the home point and the FC's mission.
+     Leaflet is vendored (mac/web/vendor/leaflet): the page works without a network (metric grid + scale bar). -->
+<section class="gpsPage" id="pageGps">
+  <div class="gpsMapWrap"><div id="gpsMap"></div>
+    <div class="gpsChip" id="gpsChip"></div>
+  </div>
+  <aside class="gpsSide">
+    <div class="panel gpsBox">
+      <div class="ph"><span><b data-en="GPS">GPS</b></span><span id="gpsFix"></span></div>
+      <div class="tiles" id="gpsValues"></div>
+    </div>
+    <div class="panel gpsBox">
+      <div class="ph"><span><b data-en="Map layers">底图</b></span><span id="gpsTiles"></span></div>
+      <div class="seg wide" id="gpsBase">
+        <button data-base="osm" class="on" data-en="Street">街道</button>
+        <button data-base="sat" data-en="Satellite">卫星</button>
+        <button data-base="none" data-en="No tiles (grid)">无底图（网格）</button>
+      </div>
+      <div class="btnRow">
+        <button class="g" id="gpsFollow" data-en="Follow">跟随飞机</button>
+        <button class="g" id="gpsHome" data-en="Centre on home">回到起点</button>
+        <button class="g" id="gpsClear" data-en="Clear tracks">清除轨迹</button>
+        <button class="g" id="gpsMission" data-en="Reload mission">重读任务</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="gpsTracks" checked>
+        <span data-en="Draw the tracks (the last 10 minutes)">画轨迹（最近 10 分钟）</span></label>
+      <label class="chk"><input type="checkbox" id="gpsMissionOn" checked>
+        <span data-en="Draw the FC's mission">画飞控任务</span></label>
+    </div>
+    <div class="panel gpsBox">
+      <div class="ph"><span><b data-en="Mission">任务</b></span><span id="gpsMissionInfo"></span></div>
+      <div class="gpsMission" id="gpsMissionList"></div>
+    </div>
+  </aside>
+</section>
+
 <div class="modal" id="settings">
   <div class="panel box">
     <div class="ph"><span><b data-en="Connection settings">连接设置</b></span><button class="link" id="bSetClose" data-en="Close">关闭</button></div>
@@ -155,6 +197,7 @@
   window.addEventListener("error", function (e) { __showErr((e.message || "error") + " @ " + String(e.filename || "").split("/").pop() + ":" + e.lineno + ":" + e.colno); });
   window.addEventListener("unhandledrejection", function (e) { var r = e.reason; __showErr("promise: " + (r && (r.stack || r.message) || r)); });
 </script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script type="module" src="js/app.js" onerror="__showErr(__en() ? 'cannot load js/app.js' : '无法载入 js/app.js')"></script>
 </body>
 </html>
