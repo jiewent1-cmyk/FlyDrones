@@ -285,7 +285,9 @@ class RealDrone(_Sensors, Ecps295MavlinkDrone):
 
     def sensors_ready(self) -> str:
         """'' when the camera and all ToF sensors are fresh and the FC streams its EKF position, otherwise the reason."""
-        if self.cam is not None and self.frame_age_s() > self.cam_ready_s:
+        if self.cam is None:  # 2026-11-26: --camera off used to pass here, then the pilot's camera watchdog landed at once
+            return "no camera"
+        if self.frame_age_s() > self.cam_ready_s:
             return f"camera stale ({getattr(self.cam, 'status', '?')})"
         why = self.pose_stale()
         if why:

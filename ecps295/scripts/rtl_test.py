@@ -14,6 +14,8 @@ def make_pilot(rtl=None):
     p.watchdog_events = []
     p.wp_on, p.wp_points, p.wp_radius = False, [], 0.4
     p.wp_gain, p.wp_brain_w, p.wp_slow_r, p.wp_min_fwd = 1.0, 1.0, 0.8, 0.3
+    # point-mass model without altitude: the waypoint altitude floor (wp_alt_floor_test.py) is off here
+    p.wp_min_alt, p.wp_alt_gain, p.wp_alt_max_climb, p.wp_alt_ticks = 0.0, 1.5, 0.3, 0
     p.wp_post_escape, p.wp_stuck_s, p.wp_stuck_dm = 1.0, 20.0, 0.25
     p.wp_idx, p.wp_active, p.wp_log, p.wp_done_t, p.wp_ticks = 0, True, [], None, 0
     p._wp_best, p._wp_best_t, p._wp_escape_t = float("inf"), 0.0, -1e9
