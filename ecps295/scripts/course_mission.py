@@ -9,11 +9,26 @@ Sub-commands
     plan       build the mission: a Mission Planner .waypoints file (QGC WPL 110) + a JSON sidecar
     params     compare the FC with the field parameter set, optionally write it (--apply --yes)
     upload     upload the .waypoints file with the MAVLink mission protocol and read it back
-    preflight  read-only checks, PASS / FAIL per line
+    preflight  read-only checks, PASS / FAIL / WARN per line (incl. the DataFlash logging parameters)
     start      switch LOITER -> AUTO, but only if the pilot has already armed in LOITER
     monitor    one line per second until the vehicle disarms, plus a CSV
+    logs       the FC's DataFlash logs: list / get (download over MAVLink) / check (quick review of a .bin)
 
-The tool NEVER arms, NEVER takes off by command and NEVER touches the fence parameters.
+The tool NEVER arms, NEVER takes off by command, NEVER touches the fence parameters and NEVER erases a log
+(no LOG_ERASE is ever sent).
+
+The deliverable of the flight is the FC's DataFlash .bin log of the AUTO flight:
+  * preflight / params check that the log is recorded (LOG_BACKEND_TYPE has the File = SD card backend,
+    LOG_BITMASK has what a mission review needs, LOG_DISARMED / LOG_FILE_DSRMROT reported).
+  * after the landing and the disarm: `logs list`, then `logs get --last --out DIR`; `logs get` refuses while
+    armed (the FC itself also refuses: "Disarm for log download"). While a download runs the FC does not log.
+  * the newest log is the highest id. With LOG_DISARMED 1 / 2 every power-on writes a log, so power-cycling
+    after the flight makes a newer log that is NOT the flight: use `logs list` + `logs check` and pick by time.
+  * USB is much faster than Wi-Fi: connect the FC's USB to the laptop and use --url /dev/ttyACM0 (Linux) or
+    --url /dev/tty.usbmodem* (macOS; the serial device of the FC), instead of the Pi's Wi-Fi tap. Over USB the
+    FC sends up to 250 LOG_DATA packets per loop, over a UART / Wi-Fi link 1-10 (AP_Logger_MAVLinkLogTransfer).
+  * the same logs are files on the FC's SD card (APM/LOGS/*.BIN): with the FC unpowered, take the card out and
+    copy the file if the download is too slow or fails.
 Arming is the pilot's job with the RC (the flight manual: RC to LOITER, arm with the RC, then the
 computer sets AUTO). The fence is the user's decision; `params` only reports it.
 
@@ -29,6 +44,9 @@ Examples
     course_mission.py preflight --file ~/sim/mission/course_s15.waypoints
     course_mission.py start
     course_mission.py monitor --csv ~/sim/mission/flight.csv
+    course_mission.py logs list --url /dev/ttyACM0
+    course_mission.py logs get --last --out ~/flight_logs --url /dev/ttyACM0
+    course_mission.py logs check ~/flight_logs/12_20261126_101500.bin
 """
 from __future__ import annotations
 
@@ -66,8 +84,11 @@ MAV_CMD = {16: "WAYPOINT", 17: "LOITER_UNLIM", 18: "LOITER_TURNS", 19: "LOITER_T
            93: "DO_DELAY"}
 
 ORIGIN_MAX_M = 0.5    # review 2026-11-25: max distance of the vehicle from the EKF origin at the start (see start)
+FRAME_GLOBAL = 0                     # .waypoints frame column of the home row (absolute altitude)
 FRAME_GLOBAL_RELATIVE_ALT = 3        # Mission Planner .waypoints frame column
 FRAME_GLOBAL_RELATIVE_ALT_INT = 6    # MAV_FRAME_GLOBAL_RELATIVE_ALT_INT
+# the .waypoints frame -> the MAV_FRAME of MISSION_ITEM_INT: GLOBAL 0 -> GLOBAL_INT 5, RELATIVE_ALT 3 -> 6, TERRAIN 10 -> 11
+FRAME_TO_INT = {0: 5, 3: FRAME_GLOBAL_RELATIVE_ALT_INT, 10: 11}
 
 # the field parameter set this mission needs. name: (value, where the value comes from)
 # checked against ArduCopter 4.7.0 (~/sim/ap-fw470): the 4.7 renames are applied below.
@@ -113,6 +134,35 @@ REPORT_ONLY = {
 # parameters of the flight itself that the tool needs but does not write
 CONTEXT_ONLY = ("EK3_SRC1_POSXY", "EK3_SRC1_VELXY", "EK3_SRC1_POSZ", "FS_GCS_ENABLE", "FS_OPTIONS",
                 "FS_GCS_TIMEOUT", "FLOW_FYSCALER")
+
+# DataFlash logging (ArduCopter 4.7.0, ~/sim/ap-fw470): checked and reported, never written by this tool.
+# LOG_BACKEND_TYPE bitmask (libraries/AP_Logger/AP_Logger.cpp): 0 File (SD card), 1 MAVLink, 2 Block (flash chip).
+LOG_BACKEND_FILE = 1
+# LOG_DISARMED values (AP_Logger.cpp). AP_Logger::should_log() only consults it while DISARMED: an armed flight is
+# logged with every value.
+LOG_DISARMED_VALUES = {
+    0: "log only while armed (the log starts at arming)",
+    1: "log while disarmed too: big logs, and every power-on makes a new log",
+    2: "log while disarmed, except with USB connected",
+    3: "log while disarmed; a log in which the vehicle never armed is discarded on the next boot",
+}
+# LOG_BITMASK bits (ArduCopter/defines.h MASK_LOG_*) that a review of the mission needs: bit -> (name, log messages)
+LOG_BITS_NEEDED = {
+    2: ("GPS", "GPS (+ the GPS-time base of the log)"),
+    4: ("CTUN", "CTUN altitude / throttle"),
+    5: ("NTUN", "PSCN/PSCE/PSCD position controller (the NTUN bit)"),
+    6: ("RCIN", "RCIN pilot sticks"),
+    7: ("IMU", "IMU / VIBE"),
+    8: ("CMD", "MISE mission items as they start executing"),
+    10: ("RCOUT", "RCOU motor outputs"),
+    11: ("OPTFLOW", "OF optical flow (this vehicle navigates on it)"),
+}
+# useful but not required (missing -> listed in the WARN detail as 'also off')
+LOG_BITS_USEFUL = {1: "ATTITUDE_MED", 3: "PM", 9: "CURRENT", 12: "PID", 17: "MOTBATT"}
+# always written once logging runs, whatever LOG_BITMASK says: MODE (Write_Mode), the EKF (XKF*, AHRS Log_Write at
+# 10 Hz in Copter::ten_hz_logging_loop), ARM / EV, MSG, PARM.
+MAV_SYS_STATUS_LOGGING = 0x01000000
+LOG_DATA_LEN = 90                    # bytes per MAVLink LOG_DATA packet
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -253,17 +303,22 @@ class Mission:
         ]
         return lines
 
-    def to_wpl(self):
+    def to_wpl(self, comments=False):
         """The QGC WPL 110 text (importable in the Mission Planner PLAN page).
 
         QGC WPL 110 columns: seq, current, frame, command, param1..param4, x(lat), y(lon), z(alt),
-        autocontinue.
+        autocontinue, tab separated. Row 0 is the home position: current 1, frame 0 (MAV_FRAME_GLOBAL, absolute
+        altitude = the origin altitude), as Mission Planner writes it. The format has no comment lines, so the
+        '#' header is only written with comments=True (plan --comments); the JSON sidecar carries the same notes.
         """
-        lines = ["QGC WPL 110"] + self.header_comment()
+        lines = ["QGC WPL 110"] + (self.header_comment() if comments else [])
         for seq, (cmd, x, y, alt, hold) in enumerate(self.items):
             lat, lon = self.global_xy(x, y)
+            frame = FRAME_GLOBAL_RELATIVE_ALT
+            if seq == 0:
+                frame, alt = FRAME_GLOBAL, self.origin[2]
             lines.append("%d\t%d\t%d\t%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.7f\t%.7f\t%.3f\t1" % (
-                seq, 1 if seq == 0 else 0, FRAME_GLOBAL_RELATIVE_ALT, cmd,
+                seq, 1 if seq == 0 else 0, frame, cmd,
                 hold, 0.0, 0.0, 0.0, lat, lon, alt))
         return "\n".join(lines) + "\n"
 
@@ -293,9 +348,9 @@ def build_mission(args):
     return m, pts
 
 
-def write_waypoints_file(m, path):
+def write_waypoints_file(m, path, comments=False):
     with open(path, "w") as f:
-        f.write(m.to_wpl())
+        f.write(m.to_wpl(comments))
 
 
 def parse_wpl_file(path):
@@ -402,6 +457,8 @@ class FC:
             st["flow_q"] = msg.quality
             st["flow_dist"] = msg.distance
         elif k == "SYS_STATUS":
+            st["sensors"] = (msg.onboard_control_sensors_present, msg.onboard_control_sensors_enabled,
+                             msg.onboard_control_sensors_health)
             if msg.voltage_battery:
                 st["volt"] = msg.voltage_battery / 1000.0
             if msg.current_battery:
@@ -520,14 +577,134 @@ class FC:
             if seq >= len(items):
                 continue
             it = items[seq]
-            # the .waypoints frame column: 3 = relative to home, 1 = absolute AMSL
-            frame = FRAME_GLOBAL_RELATIVE_ALT_INT if it.get("frame", 3) == 3 else 10
+            # the .waypoints frame column: 3 = relative to home, 0 = absolute AMSL (the home row), 10 = terrain
+            frame = FRAME_TO_INT.get(it.get("frame", 3), it.get("frame", 3))
             self.m.mav.mission_item_int_send(
                 1, 1, seq, frame, it["command"], 0, 1,
                 it["p1"], it["p2"], it["p3"], it["p4"],
                 int(round(it["lat"] * 1e7)), int(round(it["lon"] * 1e7)), it["alt"], 0)
             sent += 1
         return False, "timeout after %d of %d items" % (sent, len(items))
+
+    # -- DataFlash logs (MAVLink log transfer, AP_Logger_MAVLinkLogTransfer.cpp) -----------------------------
+    def _recv(self, types, timeout):
+        """recv_match for `types`; every other message still updates the state."""
+        end = time.time() + timeout
+        while True:
+            left = end - time.time()
+            if left <= 0:
+                return None
+            msg = self.m.recv_match(blocking=True, timeout=min(left, 0.1))
+            if msg is None:
+                continue
+            k = msg.get_type()
+            if k in types:
+                return msg
+            self._handle(msg)
+
+    def log_list(self, first=1, last=0xFFFF, timeout=3.0, tries=3):
+        """LOG_REQUEST_LIST -> {id: (size, time_utc)} for the ids first..last (the FC numbers its list 1..num_logs,
+        oldest first); entries that went missing are asked for again. None if the FC never answers."""
+        entries = {}
+        num = None
+        lo, hi = first, last
+        for _ in range(tries):
+            self.m.mav.log_request_list_send(1, 1, lo, hi)
+            while True:
+                msg = self._recv(("LOG_ENTRY",), timeout)
+                if msg is None:
+                    break
+                num = msg.num_logs
+                if num == 0 or msg.id == 0:
+                    return {}
+                entries[msg.id] = (msg.size, msg.time_utc)
+                if msg.id >= min(hi, num):
+                    break
+            if num is None:
+                continue
+            want = [i for i in range(first, min(last, num) + 1) if i not in entries]
+            if not want:
+                break
+            lo, hi = want[0], want[-1]
+        return entries if num is not None else None
+
+    def log_request_data(self, log_id, ofs, count):
+        self.m.mav.log_request_data_send(1, 1, log_id, ofs, count)
+
+    def log_request_end(self):
+        self.m.mav.log_request_end_send(1, 1)
+
+
+def logging_checks(fc):
+    """The DataFlash logging checks -> list of (state, name, detail); state is PASS / FAIL / WARN / INFO.
+    Read only: nothing is written."""
+    out = []
+    backend, _ = fc.param_get("LOG_BACKEND_TYPE")
+    if backend is None:
+        out.append(("FAIL", "LOG_BACKEND_TYPE", "parameter not found"))
+    else:
+        b = int(backend)
+        names = [n for bit, n in ((0, "File"), (1, "MAVLink"), (2, "Block")) if b & (1 << bit)] or ["none"]
+        out.append(("PASS" if b & LOG_BACKEND_FILE else "FAIL", "LOG_BACKEND_TYPE has File (SD card)",
+                    "%d = %s%s (takes effect at the next boot)" % (
+                        b, "+".join(names), "" if b & LOG_BACKEND_FILE else ": NO .bin is written to the SD card")))
+    dis, _ = fc.param_get("LOG_DISARMED")
+    if dis is None:
+        out.append(("FAIL", "LOG_DISARMED", "parameter not found"))
+    else:
+        d = int(dis)
+        if d not in LOG_DISARMED_VALUES:
+            out.append(("FAIL", "LOG_DISARMED", "%d is not a 4.7.0 value (0-3)" % d))
+        else:
+            # every value 0-3 logs the armed flight: AP_Logger::should_log() only looks at it while disarmed
+            out.append(("WARN" if d in (1, 2) else "PASS", "LOG_DISARMED",
+                        "%d = %s; the armed flight is logged with 0-3%s" % (
+                            d, LOG_DISARMED_VALUES[d],
+                            " (WARN: big logs; a power-on after the flight makes a NEWER log that is not the "
+                            "flight)" if d in (1, 2) else "")))
+    mask, _ = fc.param_get("LOG_BITMASK")
+    if mask is None:
+        out.append(("FAIL", "LOG_BITMASK", "parameter not found"))
+    else:
+        mk = int(mask)
+        missing = ["%s (bit %d: %s)" % (n, bit, what) for bit, (n, what) in LOG_BITS_NEEDED.items()
+                   if not mk & (1 << bit)]
+        also = [n for bit, n in LOG_BITS_USEFUL.items() if not mk & (1 << bit)]
+        if mk == 0:
+            out.append(("FAIL", "LOG_BITMASK", "0: nothing but MODE / EKF / events is logged"))
+        elif missing:
+            out.append(("WARN", "LOG_BITMASK has the mission review set", "%d, missing: %s%s" % (
+                mk, "; ".join(missing), (". Also off: " + ", ".join(also)) if also else "")))
+        else:
+            out.append(("PASS", "LOG_BITMASK has the mission review set",
+                        "%d: GPS IMU RCIN RCOUT CTUN NTUN(PSC) CMD OPTFLOW on; MODE and EKF (XKF*) are always "
+                        "logged%s" % (mk, (". Also off: " + ", ".join(also)) if also else "")))
+    rot, _ = fc.param_get("LOG_FILE_DSRMROT")
+    if rot is not None:
+        out.append(("INFO", "LOG_FILE_DSRMROT", "%d = %s" % (
+            int(rot), "a new log file at every disarm (one flight per file)" if int(rot) else
+            "the log file stays open after the disarm until power-off (several flights may share one file)")))
+    ratemax, _ = fc.param_get("LOG_FILE_RATEMAX")
+    if ratemax is not None:
+        out.append(("INFO", "LOG_FILE_RATEMAX", "%g Hz = %s" % (
+            ratemax, "no rate limit on the SD card log" if ratemax <= 0 else
+            "each streaming message (ATT, IMU, PSC, ...) is written to the SD card at most at this rate")))
+    mbfree, _ = fc.param_get("LOG_FILE_MB_FREE")
+    maxf, _ = fc.param_get("LOG_MAX_FILES")
+    out.append(("INFO", "free log space", "not reported over MAVLink by ArduCopter 4.7.0. LOG_FILE_MB_FREE %s MB: "
+                "the FC DELETES the OLDEST logs to keep that much free; LOG_MAX_FILES %s: then the log numbers "
+                "wrap. Download the flight log right after the flight." % (
+                    "%d" % mbfree if mbfree is not None else "?", "%d" % maxf if maxf is not None else "?")))
+    sensors = fc.state.get("sensors")
+    if sensors is not None:
+        present, enabled, health = (bool(s & MAV_SYS_STATUS_LOGGING) for s in sensors)
+        if not present:
+            out.append(("FAIL", "logger running (SYS_STATUS)", "no logging backend present"))
+        else:
+            out.append(("PASS" if health else "FAIL", "logger healthy (SYS_STATUS)",
+                        "present, %s, %s" % ("enabled" if enabled else "not logging now (disarmed)",
+                                             "healthy" if health else "UNHEALTHY: SD card missing / full / failing")))
+    return out
 
 
 def compare_mission(want, got, home_tol_m=2.0):
@@ -577,7 +754,7 @@ def cmd_plan(args):
     base = args.out
     wpl_path = base + ".waypoints"
     json_path = base + ".json"
-    write_waypoints_file(m, wpl_path)
+    write_waypoints_file(m, wpl_path, args.comments)
     with open(json_path, "w") as f:
         json.dump(m.to_json(), f, indent=1)
     print("mission: %d items, altitude %.2f m, hold %.1f s, ends with %s" %
@@ -586,8 +763,9 @@ def cmd_plan(args):
     print("heading at arming used: %.1f deg clockwise from north" % m.heading_deg)
     for seq, (cmd, x, y, alt, hold) in enumerate(m.items):
         lat, lon = m.global_xy(x, y)
-        print("  item %d %-8s offset x %+.2f y %+.2f m -> %.7f %.7f  alt %.2f m  hold %.1f s" %
-              (seq, MAV_CMD.get(cmd, str(cmd)), x, y, lat, lon, alt, hold))
+        alt_text = "alt %.2f m" % alt if seq else "alt %.2f m AMSL (home row, frame 0)" % m.origin[2]
+        print("  item %d %-8s offset x %+.2f y %+.2f m -> %.7f %.7f  %s  hold %.1f s" %
+              (seq, MAV_CMD.get(cmd, str(cmd)), x, y, lat, lon, alt_text, hold))
     print("wrote %s" % wpl_path)
     print("wrote %s" % json_path)
     return 0
@@ -627,6 +805,12 @@ def cmd_params(args):
         else:
             state = "OK" if abs(cur - want) <= 1e-4 else "note"
             print("%-16s %-12s %-12s %-8s %s" % (name, cur, want, state, why))
+    print("-" * 110)
+    print("DataFlash logging (reported only, never written; the flight's .bin log is the deliverable):")
+    fc.request_streams()
+    fc.pump(1.0)
+    for state, name, detail in logging_checks(fc):
+        print("%-4s %-34s %s" % (state, name, detail))
 
     if not args.apply:
         print("\nnothing written (use --apply --yes to write the mission parameter set)")
@@ -704,6 +888,16 @@ def cmd_preflight(args):
     def note(name, detail=""):
         print("%-4s %-34s %s" % ("INFO", name, detail))
 
+    warns = []
+
+    def report(state, name, detail=""):
+        if state in ("PASS", "FAIL"):
+            check(state == "PASS", name, detail)
+            return
+        print("%-4s %-34s %s" % (state, name, detail))
+        if state == "WARN":
+            warns.append(name)
+
     if not fc.wait_heartbeat(timeout=args.timeout):
         print("FAIL  heartbeat from the FC on %s" % args.url)
         return 1
@@ -775,6 +969,10 @@ def cmd_preflight(args):
         ok = cur is not None and abs(cur - want) <= max(1e-4, abs(want) * 1e-4)
         check(ok, "%s" % name, "FC %s, wanted %s" % (cur, want))
 
+    # the DataFlash log of the flight is the deliverable: is it recorded?
+    for state, name, detail in logging_checks(fc):
+        report(state, name, detail)
+
     # the mission on the FC
     if args.file:
         want = parse_wpl_file(args.file)
@@ -800,9 +998,11 @@ def cmd_preflight(args):
     for t in texts:
         print("     FC: %s" % t)
 
-    print("\n%d checks failed" % len(fails))
+    print("\n%d checks failed, %d warnings" % (len(fails), len(warns)))
     for f in fails:
         print("  FAIL %s" % f)
+    for w in warns:
+        print("  WARN %s" % w)
     return 1 if fails else 0
 
 
@@ -921,6 +1121,303 @@ def cmd_monitor(args):
     return 0
 
 
+def utc_text(t):
+    """LOG_ENTRY time_utc -> text; 0 / before 2001 = the FC had no UTC time (no GPS, no SYSTEM_TIME)."""
+    if not t or t < 978307200:
+        return "unknown"
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(t))
+
+
+def _logs_connect(args):
+    try:
+        fc = FC(args.url)
+    except (OSError, ValueError) as e:     # no such serial device / nothing listening on the TCP port
+        print("FAIL: cannot open %s: %s" % (args.url, e))
+        return None
+    except ImportError as e:               # pymavlink opens serial ports (USB) with pyserial
+        print("FAIL: cannot open %s: %s. A serial / USB --url needs pyserial (pip install pyserial)" % (args.url, e))
+        return None
+    if not fc.wait_heartbeat(timeout=args.timeout):
+        print("FAIL: no heartbeat on %s" % args.url)
+        return None
+    return fc
+
+
+def cmd_logs_list(args):
+    fc = _logs_connect(args)
+    if fc is None:
+        return 1
+    if fc.state["armed"]:
+        print("refusing: the vehicle is ARMED; the FC does not transfer logs while armed. Land and disarm first.")
+        return 1
+    entries = fc.log_list()
+    fc.log_request_end()
+    if entries is None:
+        print("FAIL: no LOG_ENTRY answer from the FC")
+        return 1
+    if not entries:
+        print("the FC has no logs")
+        return 0
+    newest = max(entries)
+    print("%5s %12s  %-19s" % ("id", "size (B)", "UTC time"))
+    for i in sorted(entries):
+        size, t = entries[i]
+        print("%5d %12d  %-19s%s" % (i, size, utc_text(t), "  <- newest" if i == newest else ""))
+    missing = [i for i in range(1, newest + 1) if i not in entries]
+    if missing:
+        print("WARN: no LOG_ENTRY for ids %s" % missing)
+    print("%d logs, %.1f MB in total; the newest is id %d" %
+          (len(entries), sum(s for s, _ in entries.values()) / 1e6, newest))
+    return 0
+
+
+def download_log(fc, log_id, size, retries=20, idle_s=1.0):
+    """Download log `log_id` (`size` bytes) with LOG_REQUEST_DATA; the gaps are requested again.
+    Returns (bytes or None, statistics dict)."""
+    nchunks = (size + LOG_DATA_LEN - 1) // LOG_DATA_LEN
+    buf = bytearray(size)
+    have = bytearray(nchunks)
+    got = 0
+    stats = {"packets": 0, "duplicates": 0, "gap_requests": 0}
+    t0 = time.time()
+    last_print = 0.0
+    tty = sys.stdout.isatty()
+
+    def progress(final=False):
+        nonlocal last_print
+        now = time.time()
+        if not final and now - last_print < (0.5 if tty else 5.0):
+            return
+        last_print = now
+        done = got * LOG_DATA_LEN if got < nchunks else size
+        rate = done / max(now - t0, 1e-3)
+        line = "  %5.1f %%  %d / %d B  %.1f kB/s" % (100.0 * done / max(size, 1), min(done, size), size, rate / 1e3)
+        if tty:
+            sys.stdout.write("\r" + line + ("\n" if final else ""))
+            sys.stdout.flush()
+        else:
+            print(line, flush=True)
+
+    def receive(until_chunk=None):
+        """Receive LOG_DATA until the FC goes quiet for idle_s (or until chunk `until_chunk` is in)."""
+        nonlocal got
+        while True:
+            msg = fc._recv(("LOG_DATA",), idle_s)
+            if msg is None:
+                return
+            if msg.id != log_id:
+                continue
+            stats["packets"] += 1
+            ci = msg.ofs // LOG_DATA_LEN
+            if msg.ofs % LOG_DATA_LEN or ci >= nchunks:
+                continue
+            n = min(msg.count, size - msg.ofs)
+            if have[ci]:
+                stats["duplicates"] += 1
+            elif n > 0:
+                buf[msg.ofs:msg.ofs + n] = bytes(msg.data[:n])
+                have[ci] = 1
+                got += 1
+            progress()
+            if got >= nchunks or (until_chunk is not None and have[until_chunk]):
+                return
+
+    fc.log_request_data(log_id, 0, size)
+    receive()
+    # every request costs a round trip: gaps closer than what the link moves in ~0.1 s are asked for as one range
+    # (fast USB / TCP: whole regions again; slow Wi-Fi: about one request per gap)
+    merge = max(8, int(got / max(time.time() - t0, 1e-3) * 0.1))
+    stats["merge_chunks"] = merge
+    for _ in range(retries):
+        if got >= nchunks:
+            break
+        # the gaps as runs of missing chunks; the FC serves one request at a time, so one run after the other
+        runs = []
+        i = 0
+        while i < nchunks:
+            if have[i]:
+                i += 1
+                continue
+            j = i
+            while j < nchunks and not have[j]:
+                j += 1
+            if runs and i - runs[-1][1] <= merge:
+                runs[-1] = (runs[-1][0], j)
+            else:
+                runs.append((i, j))
+            i = j
+        # a request that arrives while the FC still thinks a transfer is running on this link is dropped
+        # silently (AP_Logger::handle_log_request_data), so end any stalled transfer first
+        fc.log_request_end()
+        fc.pump(0.1)
+        for a, b in runs:
+            stats["gap_requests"] += 1
+            fc.log_request_data(log_id, a * LOG_DATA_LEN, min(b * LOG_DATA_LEN, size) - a * LOG_DATA_LEN)
+            receive(until_chunk=b - 1)
+    progress(final=True)
+    stats["seconds"] = time.time() - t0
+    stats["missing_chunks"] = nchunks - got
+    return (bytes(buf) if got >= nchunks else None), stats
+
+
+def cmd_logs_get(args):
+    fc = _logs_connect(args)
+    if fc is None:
+        return 1
+    fc.pump(0.5)
+    if fc.state["armed"]:
+        print("refusing: the vehicle is ARMED. Logs are downloaded after the landing and the disarm "
+              "(the FC itself refuses: 'Disarm for log download').")
+        return 1
+    entries = fc.log_list()
+    if not entries:
+        print("FAIL: %s" % ("no LOG_ENTRY answer from the FC" if entries is None else "the FC has no logs"))
+        return 1
+    log_id = args.id if args.id else max(entries)
+    if log_id not in entries:
+        print("FAIL: no log id %d on the FC (ids %d-%d)" % (log_id, min(entries), max(entries)))
+        return 1
+    # the first LOG_DATA read closes the log if it is the one being written (AP_Logger_File::get_log_data ->
+    # stop_logging), so read one packet, then list that id again for the final size
+    fc.log_request_data(log_id, 0, LOG_DATA_LEN)
+    fc._recv(("LOG_DATA",), 2.0)
+    fc.pump(0.3)
+    again = fc.log_list(log_id, log_id)
+    size, t_utc = again[log_id] if again and log_id in again else entries[log_id]
+    if size == 0:
+        fc.log_request_end()
+        print("FAIL: log %d is empty" % log_id)
+        return 1
+    stamp = time.strftime("%Y%m%d_%H%M%S", time.gmtime(t_utc)) if utc_text(t_utc) != "unknown" else None
+    print("log %d: %d B, UTC %s%s" % (log_id, size, utc_text(t_utc),
+                                      "  (the newest)" if log_id == max(entries) else ""))
+    if stamp is None:
+        stamp = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+        print("  the FC has no UTC time for this log: the file name uses the download time (UTC)")
+    os.makedirs(args.out, exist_ok=True)
+    path = os.path.join(args.out, "%d_%s.bin" % (log_id, stamp))
+    data, stats = download_log(fc, log_id, size, retries=args.retries)
+    fc.log_request_end()
+    secs = stats["seconds"]
+    print("received %d packets (%d duplicates), %d gap requests (gaps within %d chunks merged), %.1f s, %.1f kB/s" %
+          (stats["packets"], stats["duplicates"], stats["gap_requests"], stats.get("merge_chunks", 0), secs,
+           size / max(secs, 1e-3) / 1e3))
+    if data is None:
+        print("FAIL: %d of %d chunks still missing after %d retries; nothing written. Retry, use USB, or copy "
+              "the file from the SD card." % (stats["missing_chunks"], (size + LOG_DATA_LEN - 1) // LOG_DATA_LEN,
+                                               args.retries))
+        return 1
+    if len(data) != size:
+        print("FAIL: size %d, expected %d" % (len(data), size))
+        return 1
+    with open(path, "wb") as f:
+        f.write(data)
+    print("size verified: %d B = the FC's LOG_ENTRY size" % size)
+    print("wrote %s" % path)
+    if args.no_check:
+        return 0
+    print()
+    return check_log_file(path)
+
+
+def check_log_file(path):
+    """Quick review of a DataFlash .bin: message counts, MODE AUTO, CMD items, the flight time."""
+    try:
+        log = mavutil.mavlink_connection(path)
+    except Exception as e:
+        print("FAIL: cannot read %s: %s" % (path, e))
+        return 1
+    counts = {}
+    raw = getattr(log, "counts", None)
+    names = getattr(log, "id_to_name", {}) or {}
+    if isinstance(raw, list) and names:
+        counts = {names[i]: n for i, n in enumerate(raw) if n and i in names}
+    elif isinstance(raw, dict) and raw:
+        counts = {names.get(k, k): n for k, n in raw.items() if n}
+    modes, cmds, mise, arm = [], {}, {}, []
+    log.rewind()
+    while True:
+        m = log.recv_match(type=["MODE", "CMD", "MISE", "ARM", "EV"])
+        if m is None:
+            break
+        k = m.get_type()
+        t = getattr(m, "TimeUS", 0) / 1e6      # seconds since the FC booted
+        if k == "MODE":
+            modes.append((t, MODES.get(getattr(m, "ModeNum", m.Mode), str(m.Mode))))
+        elif k == "CMD":
+            # 4.7.0: CMD = the stored mission (written at the log start and on upload, LoggerMessageWriter);
+            # MISE = an item that starts executing (AP_Mission::start_command, LOG_BITMASK bit 8)
+            cmds.setdefault(m.CNum, (t, m))
+        elif k == "MISE":
+            mise.setdefault(m.CNum, (t, m))
+        elif k == "ARM":
+            arm.append((t, bool(m.ArmState)))
+        elif k == "EV" and m.Id in (10, 11):    # 10 ARMED, 11 DISARMED
+            arm.append((t, m.Id == 10))
+    if not counts:   # no index from the reader: count by reading the whole log
+        log.rewind()
+        while True:
+            m = log.recv_match()
+            if m is None:
+                break
+            counts[m.get_type()] = counts.get(m.get_type(), 0) + 1
+    # the armed intervals: ARM and EV 10 / 11 both report it; keep the transitions only
+    arm.sort()
+    spans, t_on = [], None
+    for t, on in arm:
+        if on and t_on is None:
+            t_on = t
+        elif not on and t_on is not None:
+            spans.append((t_on, t))
+            t_on = None
+    auto_s = 0.0
+    for i, (t, name) in enumerate(modes):
+        if name == "AUTO":
+            t_end = modes[i + 1][0] if i + 1 < len(modes) else (spans[-1][1] if spans else t)
+            auto_s += max(0.0, t_end - t)
+    total = sum(counts.values())
+    top = sorted(counts.items(), key=lambda kv: -kv[1])[:12]
+    print("log %s: %.2f MB, %d messages, %d types" % (path, os.path.getsize(path) / 1e6, total, len(counts)))
+    print("  most frequent: " + ", ".join("%s %d" % kv for kv in top))
+    print("  needed for the review: " + ", ".join("%s %d" % (k, counts.get(k, 0)) for k in
+                                                   ("GPS", "IMU", "RCIN", "RCOU", "CTUN", "PSCN", "PSCD", "MODE",
+                                                    "CMD", "MISE", "XKF1", "OF", "RFND")))
+    print("  modes: " + (", ".join("%s@%.1fs" % (n, t) for t, n in modes) or "none"))
+    fails = 0
+    has_auto = any(n == "AUTO" for _, n in modes)
+    print("%-4s MODE AUTO in the log           %s" % ("PASS" if has_auto else "FAIL",
+                                                     "%.1f s in AUTO" % auto_s if has_auto else "no MODE AUTO message"))
+    fails += 0 if has_auto else 1
+    t_auto = [t for t, n in modes if n == "AUTO"]
+    t_auto0 = t_auto[0] if t_auto else float("inf")
+    print("%-4s CMD messages (mission items)   %d items stored, %d started in AUTO (MISE)" % (
+        "PASS" if cmds else "FAIL", len(cmds), len(mise)))
+    fails += 0 if cmds else 1
+    for n in sorted(set(cmds) | set(mise)):
+        t, c = cmds.get(n, mise.get(n))
+        started = "started at %6.1f s" % mise[n][0] if n in mise else "not started      "
+        print("       item %d %-8s %s  p1 %.1f  lat %.7f lon %.7f alt %.2f m" % (
+            n, MAV_CMD.get(c.CId, str(c.CId)), started, c.Prm1, c.Lat, c.Lng, c.Alt))
+    if spans:
+        fl = sum(b - a for a, b in spans)
+        print("PASS armed flight time               %.1f s in %d armed interval(s): %s" % (
+            fl, len(spans), ", ".join("%.1f-%.1f s" % s for s in spans)))
+        for a, b in spans:
+            if a <= t_auto0 <= b:
+                print("       the AUTO flight: armed %.1f-%.1f s = %.1f s, AUTO from %.1f s" % (a, b, b - a, t_auto0))
+    elif t_on is not None:
+        print("WARN armed flight time               armed at %.1f s, no disarm in the log (log cut?)" % t_on)
+    else:
+        print("FAIL armed flight time               no arming in the log")
+        fails += 1
+    print("%d checks failed" % fails)
+    return 1 if fails else 0
+
+
+def cmd_logs_check(args):
+    return check_log_file(args.file)
+
+
 # --------------------------------------------------------------------------------------------------------------
 
 def main():
@@ -944,6 +1441,8 @@ def main():
     p.add_argument("--heading-deg", type=float, default=0.0,
                    help="the vehicle's heading at arming, clockwise from north (0 = the square is north aligned)")
     p.add_argument("--out", default="course_mission", help="output file base name")
+    p.add_argument("--comments", action="store_true",
+                   help="also write the '#' header notes into the .waypoints (not part of QGC WPL 110)")
     p.set_defaults(func=cmd_plan)
 
     p = sub.add_parser("params", help="compare / write the field parameter set")
@@ -977,6 +1476,24 @@ def main():
     p.add_argument("--csv", default="", help="write a CSV here")
     p.add_argument("--seconds", type=float, default=600.0, help="give up after this long, s")
     p.set_defaults(func=cmd_monitor)
+
+    p = sub.add_parser("logs", help="the FC's DataFlash logs: list / get / check (never erases)")
+    logsub = p.add_subparsers(dest="logs_cmd", required=True)
+    q = logsub.add_parser("list", help="LOG_REQUEST_LIST: id, size, UTC time")
+    common(q)
+    q.set_defaults(func=cmd_logs_list)
+    q = logsub.add_parser("get", help="download a log (refuses while armed)")
+    common(q)
+    g = q.add_mutually_exclusive_group()
+    g.add_argument("--id", type=int, default=0, help="the log id (see logs list)")
+    g.add_argument("--last", action="store_true", help="the newest log (the default)")
+    q.add_argument("--out", default=".", help="the directory for <id>_<YYYYmmdd_HHMMSS>.bin")
+    q.add_argument("--retries", type=int, default=20, help="rounds of re-requesting the missing chunks")
+    q.add_argument("--no-check", action="store_true", help="skip the quick check of the downloaded file")
+    q.set_defaults(func=cmd_logs_get)
+    q = logsub.add_parser("check", help="quick review of a .bin: counts, MODE AUTO, CMD items, flight time")
+    q.add_argument("file", help="the DataFlash .bin file")
+    q.set_defaults(func=cmd_logs_check)
 
     args = ap.parse_args()
     if not hasattr(args, "func"):
