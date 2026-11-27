@@ -426,10 +426,16 @@ class FC:
             st["reached"].append(msg.seq)
 
     def wait_heartbeat(self, timeout=30.0):
-        if self.m.wait_heartbeat(timeout=timeout) is None:
-            return False
-        self.pump(0.5)
-        return True
+        """Wait for the FC's own HEARTBEAT (sysid 1, comp 1) through _handle, so mode / armed are set on return.
+        2026-11-26: mavutil's wait_heartbeat consumed the first heartbeat without _handle and the next one (1 Hz on
+        the real FC) often came after the 0.5 s pump, so start saw armed=False and refused (found in a 1x SITL run)."""
+        end = time.time() + timeout
+        while time.time() < end:
+            self.pump(0.2)
+            if self.state["hb"]:
+                self.pump(0.5)
+                return True
+        return False
 
     def request_streams(self):
         """Ask for the messages this tool needs (message ids, not stream ids)."""

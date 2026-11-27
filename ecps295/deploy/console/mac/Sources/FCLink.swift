@@ -238,8 +238,13 @@ final class FCLink {
         } else if missionState == 2, now - missionT > 1.5 {
             if missionItemTries < 3 {
                 missionItemTries += 1; missionT = now
-                // the MAVLink 1 form: some FCs answer only this one
-                send(enc.missionRequest(target: fcSys, comp: 1, seq: UInt16(missionNext)))
+                // retry with MISSION_REQUEST_INT; the MAVLink 1 form (some FCs answer only this one) only on the last
+                // try: ArduPilot answers it but logs "got MISSION_REQUEST; use MISSION_REQUEST_INT!" (2026-11-26 SITL)
+                if missionItemTries < 3 {
+                    send(enc.missionRequestInt(target: fcSys, comp: 1, seq: UInt16(missionNext)))
+                } else {
+                    send(enc.missionRequest(target: fcSys, comp: 1, seq: UInt16(missionNext)))
+                }
             } else {
                 missionNext += 1; missionItemTries = 0; missionT = now   // this item does not come: skip it
                 if missionNext >= missionCount { finishMission() }

@@ -12,6 +12,13 @@ import { L } from "./i18n.js";
 
 // Leaflet is vendored and loaded as a classic script (vendor/leaflet/leaflet.js) before this module.
 // The i18n helper is called L as well, so the map library is used through its own name.
+// MAV_CMD names for the mission list; RTL has no position and TAKEOFF / LAND may carry 0, 0 (= the current position):
+// the FC reports those as lat 0, lon 0, which must not be drawn (a line across the globe)
+const MISSION_CMD = { 16: "WP", 17: "LOITER", 19: "LOITER_T", 20: "RTL", 21: "LAND", 22: "TAKEOFF", 93: "DELAY", 177: "JUMP", 178: "SPEED" };
+function missionHasPos(it) {
+  return it.lat != null && it.lon != null && isFinite(it.lat) && isFinite(it.lon) && it.cmd !== 20
+    && !(Math.abs(it.lat) < 1e-6 && Math.abs(it.lon) < 1e-6);
+}
 const LM = globalThis.L;
 
 const TRACK_MIN = 10;             // minutes of track kept
@@ -116,14 +123,15 @@ export class GpsView {
     // fadeAnimation: false - Leaflet fades the tiles in with requestAnimationFrame, and WebKit throttles the
     // animation frames of a window that is not in the front: the tiles would stay at opacity 0 (a black map)
     // until the operator looks at the console again.
-    this.map = LM.map(el, { zoomControl: true, attributionControl: true, minZoom: 2, maxZoom: 19, fadeAnimation: false });
+    // maxZoom 23 (about 2 cm per pixel): the course mission is a 1.5 m square; the tiles stop at 19 and are scaled up
+    this.map = LM.map(el, { zoomControl: true, attributionControl: true, minZoom: 2, maxZoom: 23, fadeAnimation: false });
     this.map.setView([DEFAULT_VIEW.lat, DEFAULT_VIEW.lon], DEFAULT_VIEW.zoom);
     this.bases = {
       osm: LM.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19, fadeAnimation: false,
+        maxZoom: 23, maxNativeZoom: 19, fadeAnimation: false,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }),
       sat: LM.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        maxZoom: 19, fadeAnimation: false,
+        maxZoom: 23, maxNativeZoom: 19, fadeAnimation: false,
         attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics" }),
     };
     for (const k of Object.keys(this.bases)) {
@@ -279,7 +287,7 @@ export class GpsView {
     this.sidePanel(force);
   }
 
-  drawMission() {
+  drawMission() {  // items without a position (RTL, or TAKEOFF / LAND at 0, 0 = here) are listed but not drawn
     this.missionGroup.clearLayers();
     const m = (this.fc || {}).mission;
     const items = (m && m.items) || [];
@@ -291,7 +299,7 @@ export class GpsView {
     const cur = m.current != null && m.current >= 0 ? m.current : -1;
     const pts = [];
     for (const it of items) {
-      if (it.lat == null || it.lon == null) continue;
+      if (!missionHasPos(it)) continue;
       const ll = [it.lat, it.lon];
       pts.push(ll);
       const isCur = it.seq === cur;
@@ -304,8 +312,9 @@ export class GpsView {
     this.side.missionInfo.textContent = L(`${items.length} 个航点${cur >= 0 ? ` · 当前 ${cur + 1}` : ""}`, `${items.length} items${cur >= 0 ? ` · current ${cur + 1}` : ""}`);
     this.side.missionList.innerHTML = items.map((it) => {
       const isCur = it.seq === cur;
-      const p = it.lat != null ? `${it.lat.toFixed(6)}, ${it.lon.toFixed(6)}` : "—";
-      return `<div class="${isCur ? "cur" : ""}"><span class="n">${it.seq + 1}</span><span>${p}</span><span>${it.alt != null ? it.alt.toFixed(1) + " m" : ""}</span></div>`;
+      const p = missionHasPos(it) ? `${it.lat.toFixed(6)}, ${it.lon.toFixed(6)}` : "—";
+      const c = MISSION_CMD[it.cmd] || (it.cmd != null ? `CMD ${it.cmd}` : "");
+      return `<div class="${isCur ? "cur" : ""}"><span class="n">${it.seq + 1}</span><span>${c} ${p}</span><span>${it.alt != null ? it.alt.toFixed(1) + " m" : ""}</span></div>`;
     }).join("");
   }
 
