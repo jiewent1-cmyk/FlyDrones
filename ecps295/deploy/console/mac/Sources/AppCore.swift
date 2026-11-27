@@ -20,6 +20,7 @@ final class AppCore {
     private var logTail: [String] = []
     private let defaults = UserDefaults.standard
     var onLang: (() -> Void)?  // the UI language changed (called on main): menus and window title
+    var tab = "main"           // the page the UI shows (主界面 / GPS 地图)
 
     var host: String { defaults.string(forKey: "host") ?? "192.168.86.20" }
     var eclPort: UInt16 { UInt16(defaults.integer(forKey: "eclPort") == 0 ? 14700 : defaults.integer(forKey: "eclPort")) }
@@ -90,6 +91,7 @@ final class AppCore {
             "settings": ["host": host, "ecl": Int(eclPort), "mav": Int(mavPort), "streams": fc.extraStreams,
                          "cam": ecl.prefs["cam"] ?? "brain", "cam_hz": ecl.prefs["cam_hz"] ?? 5, "rec_auto": rec.auto,
                          "bw": ecl.userLevel ?? -1, "lang": Lang.current, "eclKeySet": ecl.authenticatedKeyReady],
+            "tab": tab,
         ]
     }
 
@@ -199,6 +201,13 @@ final class AppCore {
             fc.extraStreams = (obj["on"] as? Bool) ?? true
             defaults.set(fc.extraStreams, forKey: "extraStreams")
             reply(obj, true, "")
+        case "mission":  // read the FC's mission (the MAVLink mission protocol, read only)
+            fc.requestMission()
+            reply(obj, true, "")
+        case "tab":  // which page the UI shows (主界面 / GPS 地图)
+            tab = ((obj["name"] as? String) == "gps") ? "gps" : "main"
+            web.broadcast(text: jsonString(["k": "tab", "name": tab]))
+            reply(obj, true, "")
         case "lang":
             setLang((obj["lang"] as? String) ?? "zh")
             reply(obj, true, "")
@@ -220,6 +229,14 @@ final class AppCore {
         Lang.set(l)
         DispatchQueue.main.async { self.onLang?() }
         net.async { self.web.broadcast(text: jsonString(self.state())) }
+    }
+
+    /// The page the UI shows (主界面 / GPS 地图): the menu and the page both drive it.
+    func setTab(_ t: String) {
+        net.async {
+            self.tab = t == "gps" ? "gps" : "main"
+            self.web.broadcast(text: jsonString(["k": "tab", "name": self.tab]))
+        }
     }
 
     /// For the quit confirmation: the FC reports armed (and is heard).

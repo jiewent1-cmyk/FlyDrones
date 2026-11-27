@@ -164,6 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         main.addItem(viewItem)
         let view = NSMenu(title: L("显示", "View"))
         view.addItem(withTitle: L("重新载入界面", "Reload UI"), action: #selector(reloadUI), keyEquivalent: "r").target = self
+        view.addItem(withTitle: L("GPS 地图", "GPS map"), action: #selector(menuGpsTab), keyEquivalent: "").target = self
         view.addItem(withTitle: L("在浏览器中打开界面（调试）", "Open UI in Browser (Debug)"), action: #selector(openInBrowser), keyEquivalent: "").target = self
         view.addItem(withTitle: L("打开记录文件夹", "Open Recordings Folder"), action: #selector(openLogs), keyEquivalent: "").target = self
         view.addItem(.separator())
@@ -236,6 +237,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     }
 
     @objc func reloadUI() { web.load(URLRequest(url: core.web.pageURL)) }
+    @objc func menuGpsTab() { core.setTab("gps") }
     @objc func openInBrowser() { NSWorkspace.shared.open(core.web.pageURL) }
     @objc func openLogs() {
         let d = Recorder.base
