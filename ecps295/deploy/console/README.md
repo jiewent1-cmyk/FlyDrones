@@ -13,7 +13,7 @@
 | 位置 | 内容 |
 |---|---|
 | `mac/Sources/*.swift` | 原生外壳：窗口与菜单、Esc 急停（原生按键监听，页面卡死也有效）、MAVLink 编解码与飞控链路、机载遥测链路（ECL1）、急停逻辑、飞行记录、本机网页服务 |
-| `mac/web/` | 界面（three.js r170 来自 FlyDrones `docs/vendor`，MIT）：`brain.js` 大脑面板、`eyes.js` 相机、`map3d.js` 3D 建图、`flight.js` + `charts.js` 飞行参数、`app.js` 指引与急停交互、`i18n.js` 界面语言 |
+| `mac/web/` | 界面（three.js r170 来自 FlyDrones `docs/vendor`，MIT；Leaflet 1.9.4 见 `mac/web/vendor/leaflet/`，BSD-2）：`brain.js` 大脑面板、`eyes.js` 相机、`map3d.js` 3D 建图、`flight.js` + `charts.js` 飞行参数、`gps.js` GPS 地图页、`app.js` 指引与急停交互、`i18n.js` 界面语言 |
 | `mac/Info.plist`、`mac/AppIcon.icns` | 应用包信息、图标 |
 | `build.sh` | 只用 Command Line Tools（无需 Xcode）构建 `ECPS Console.app`；`--install` 装到 `/Applications` |
 | `tools/ecl_client.py` | ECL1 参考客户端（命令行看遥测、发指令、急停；`--lvl` 指定带宽档位，输出相机实收帧率、帧间隔和流量），也用于测试 |
@@ -24,6 +24,7 @@
 | `tools/track_mode_test.py` | 跟踪模式的离线测试（假飞控程序记录每次调用和所在线程：启停顺序、与选点前往的交接、急停、断链，不需要 Pi） |
 | `tools/cam_rate_test.py` | 相机帧率的离线测试（模拟带抖动、晚醒和漏拍的 20 Hz 控制周期，检查各档位、各帧率设定下实际发出的帧率，不需要 Pi） |
 | `tools/gen_mavmeta.py` | 由 pymavlink 生成 `MavMeta.swift`（报文布局与 CRC_EXTRA） |
+| `tools/gps_replay.py` | 假飞控：把实测 GPS 记录（CSV）当作 MAVLink 飞控回放，用来在没有无人机时检查 GPS 地图页 |
 | 机载端（在 `deploy/orangepi/`） | `companion/console_link.py`（链路 + 指引层，含 TRACK）、`companion/sitl_world.py`（仅 SITL 测试）、`ecps_companion.py --console`、`camera.py`（保留彩色帧）、`config/companion.yaml` 的 `console:` 段 |
 
 ## 链路 / Message flow
@@ -72,6 +73,50 @@ macOS 的首选语言。网页界面、菜单、对话框、窗口标题、急�
 实现：原生侧 `Lang` / `L("中文", "English")`（`Util.swift`），网页 `js/i18n.js`：`index.html` 里的固定文字用 `data-en`
 （提示文字用 `data-en-title`）写英文，脚本里的文字用 `L(...)`。网页从地址里的 `?lang=` 开始，之后跟随状态里的 `settings.lang`；
 切换命令是 `{"c": "lang", "lang": "en"}`。
+
+## GPS 地图页（2026-11-25）
+
+顶栏下的页签：「主界面 / GPS 地图」（菜单「显示 → GPS 地图」也切到这一页）。
+
+**两个位置，分开标**（重要）：飞控没有把 GPS 融进 EKF（`EK3_SRC1_POSXY 0`），伴机把 EKF 原点设成固定点（33.6430, -117.8420），
+所以「GPS 定位」和「飞控自己的位置」是两回事，页面分开画、分开写数值：
+
+| 标记 | 来源 | 含义 |
+|---|---|---|
+| 绿色圆点 + 精度圈 | `GPS_RAW_INT` | u-blox M10 的原始定位；fix < 3 时是灰色，没有 GPS 数据时隐藏。精度圈半径 = `h_acc` |
+| 粉色箭头 | `GPS_GLOBAL_ORIGIN` + `LOCAL_POSITION_NED` | 飞控自己的位置（光流推算：伴机设的 EKF 原点 + 光流位移），箭头方向 = `ATTITUDE` 的 yaw |
+| 黄色 H | `HOME_POSITION` | 起点 / 起飞点 |
+| 蓝色编号点 + 连线 | MAVLink 任务协议（只读） | 飞控当前任务，`MISSION_CURRENT` 指的那一项高亮 |
+
+侧栏数值：定位类型、卫星数、HDOP、`h_acc`、GPS 数据年龄、GPS→起点与飞控位置→起点的距离和方位、GPS 与飞控位置之差、
+高度（下视测距 / EKF 相对高度 / GPS 高度）、模式、解锁。按钮：跟随飞机、回到起点、清除轨迹、重读任务。
+另外两条轨迹（GPS 与飞控位置，最近 10 分钟）可以画、可以清。
+
+底图三选一：OpenStreetMap 街道图 / Esri 卫星图 / 无底图（公制网格）。**野外没有网络时**：瓦片加载不出来，页面自动切到
+「无底图」，画带米数标注的公制网格和比例尺，标记照常显示（也可以手动选）。Leaflet 1.9.4 已经放进
+`mac/web/vendor/leaflet/`（含许可文件），运行时不需要外网的库。
+
+只读：这一页只向飞控**要**数据（`MISSION_REQUEST_LIST` → `MISSION_REQUEST_INT` 逐条 → `MISSION_ACK` 收尾），
+**不上传任务、不改模式、不动飞控的任何设置**。任务在连上飞控后自动读一次，也可以随时点「重读任务」。
+读任务期间飞控处于「任务下载」状态，这时别让别的上位机同时上传任务。
+
+流速：控制台向飞控要 `GPS_RAW_INT` 5 Hz、`GLOBAL_POSITION_INT` 5 Hz（跟原有的光流 / 振动 / HUD / 电池一起，每 10 s 重发一次）；
+`HOME_POSITION` 和 `GPS_GLOBAL_ORIGIN` 飞控不自己发，用 `MAV_CMD_REQUEST_MESSAGE` 每 5 s 要一次。
+
+没有无人机时怎么检查这一页（`tools/gps_replay.py`，需要 pymavlink）：
+
+```sh
+# 1) 假飞控：把实测记录回放成 MAVLink（默认 CSV 是 2026-11-25 的室外实测记录）
+python3 tools/gps_replay.py --host 127.0.0.1 --port 14552 --push-port 14550 --sim-motion
+# 2) 控制台指向它：设置里填地址 127.0.0.1、MAVLink 端口 14550，或者用命令行参数（不写用户的设置）
+"ECPS Console.app/Contents/MacOS/ECPSConsole" -host 127.0.0.1 -mavPort 14550
+```
+
+`--push-port` 让假飞控把帧推到控制台的 MAVLink 监听端口（和 Pi 上 mavlink-router 推给 Mac 的方式一样）；`--sim-motion`
+给 GPS 加一点缓慢漂移，地图上能看到轨迹；还可以 `--csv`（换记录）、`--speed`、`--armed`、`--mode`、`--origin`、
+`--current`、`--duration`。控制台日志里能看到解码结果：`GPS: fix 3, 18 sats, hdop 1.29, h_acc 0.74 m, ...`、
+`mission: the FC has 5 items`、`mission: 5/5 items received`。截图见 `docs/img/gps_page.png`（中文）和
+`docs/img/gps_page_en.png`（英文）。
 
 ## 机载端部署（2026-10-17 03:16 已部署到 Pi 的 /opt/ecps295）
 

@@ -46,8 +46,26 @@ final class FCLink {
     private var newTexts: [[Any]] = []
     private var lastHbSent = 0.0
     private var lastStreamReq = -100.0
+    private var lastGpsReq = -100.0
+    private var lastMsgReq = -100.0
     private var reconnectAt = 0.0
     private var rateWin: [Double] = []
+
+    // the mission, read only (2026-11-25, GPS map page): the console asks the FC for its mission with the MAVLink
+    // mission protocol and draws it. It never uploads a mission, never changes the mode or anything else.
+    private var missionItems: [Int: [String: Any]] = [:]
+    private var missionCount = 0
+    private var missionCurrent = -1
+    private var missionState = 0     // 0 idle, 1 waiting for the count, 2 getting the items, 3 done
+    private var missionT = 0.0        // when the last request went out
+    private var missionTries = 0
+    private var missionNext = 0       // the item we ask for next
+    private var missionItemTries = 0
+    private var missionT0 = 0.0       // when the mission arrived
+    private var missionAsked = false  // ask once after connecting
+    private var lastFix = -1          // the last GPS fix type we logged
+    private var homeSeen = false
+    private var originSeen = false
 
     var onFrame: ((MavFrame) -> Void)?
     var onAck: ((UInt16, UInt8) -> Void)?
@@ -61,6 +79,8 @@ final class FCLink {
         conn?.cancel()
         conn = nil
         msgs = [:]; msgT = [:]; hbT = 0; mode = nil; armed = false; compHbT = 0; seqs = [:]
+        missionItems = [:]; missionCount = 0; missionCurrent = -1; missionState = 0; missionAsked = false
+        lastFix = -1; homeSeen = false; originSeen = false
         guard !host.isEmpty, let p = NWEndpoint.Port(rawValue: port) else { state = "no host"; return }
         let params = NWParameters.udp
         params.serviceClass = .interactiveVoice  // WMM AC_VO: the LAND / disarm commands jump the AP's queues
@@ -166,7 +186,70 @@ final class FCLink {
                 send(enc.commandLong(target: fcSys, comp: 1, command: 511, [Float(mid), Float(1e6 / hz)]))
             }
         }
+        // the GPS map page (2026-11-25): the GPS fix and the FC's global position. Always on (the page needs them),
+        // display-only: the companion uses LOCAL_POSITION_NED, not these.
+        if now - hbT < 3, now - lastGpsReq > 10 {
+            lastGpsReq = now
+            for (mid, hz) in [(24, 5.0), (33, 5.0)] as [(Int, Double)] {
+                send(enc.commandLong(target: fcSys, comp: 1, command: 511, [Float(mid), Float(1e6 / hz)]))
+            }
+        }
+        // the messages the FC does not stream by itself: the home point and the EKF origin (both on request)
+        if now - hbT < 3, now - lastMsgReq > 5 {
+            lastMsgReq = now
+            for mid in [242, 49] { send(enc.commandLong(target: fcSys, comp: 1, command: 512, [Float(mid)])) }
+        }
+        missionTick(now)
         rateWin = rateWin.filter { now - $0 < 2.0 }
+    }
+
+    // ------------------------------------------------------------------ mission (read only)
+    /// Ask the FC for its mission (MAVLink mission protocol). Called on demand and once after connecting.
+    func requestMission() {
+        missionItems = [:]; missionCount = 0; missionState = 1; missionTries = 1; missionNext = 0
+        missionT = mono()
+        send(enc.missionRequestList(target: fcSys, comp: 1))
+        Log.info("mission: list requested")
+    }
+
+    private func requestItem(_ seq: Int) {
+        missionNext = seq
+        missionItemTries = 1
+        missionT = mono()
+        send(enc.missionRequestInt(target: fcSys, comp: 1, seq: UInt16(seq)))
+    }
+
+    private func finishMission() {
+        send(enc.missionAck(target: fcSys, comp: 1))  // to the FC: closes its mission-download transaction
+        missionState = 3
+        missionT0 = mono()
+        Log.info("mission: \(missionItems.count)/\(missionCount) items received")
+    }
+
+    private func missionTick(_ now: Double) {
+        if missionState == 1, now - missionT > 2.0 {
+            if missionTries < 4 {
+                missionTries += 1; missionT = now
+                send(enc.missionRequestList(target: fcSys, comp: 1))
+            } else {
+                missionState = 0
+                Log.info("mission: the FC did not answer the list request")
+            }
+        } else if missionState == 2, now - missionT > 1.5 {
+            if missionItemTries < 3 {
+                missionItemTries += 1; missionT = now
+                // retry with MISSION_REQUEST_INT; the MAVLink 1 form (some FCs answer only this one) only on the last
+                // try: ArduPilot answers it but logs "got MISSION_REQUEST; use MISSION_REQUEST_INT!" (2026-11-26 SITL)
+                if missionItemTries < 3 {
+                    send(enc.missionRequestInt(target: fcSys, comp: 1, seq: UInt16(missionNext)))
+                } else {
+                    send(enc.missionRequest(target: fcSys, comp: 1, seq: UInt16(missionNext)))
+                }
+            } else {
+                missionNext += 1; missionItemTries = 0; missionT = now   // this item does not come: skip it
+                if missionNext >= missionCount { finishMission() }
+            }
+        }
     }
 
     private func handle(_ d: Data) {
@@ -196,9 +279,48 @@ final class FCLink {
                     hbT = now
                     mode = UInt32((m["custom_mode"] as? Double) ?? 0)
                     armed = (UInt8((m["base_mode"] as? Double) ?? 0) & 128) != 0
+                    if !missionAsked { missionAsked = true; requestMission() }   // once after connecting
                 }
                 msgs[spec.name] = m
                 msgT[spec.name] = now
+                // the mission protocol: the FC's answers to our read-only request
+                if spec.name == "MISSION_COUNT" {
+                    let c = Int((m["count"] as? Double) ?? 0)
+                    if missionState == 1 {
+                        missionCount = c
+                        missionState = 2
+                        Log.info("mission: the FC has \(c) items")
+                        if c > 0 { requestItem(0) } else { finishMission() }
+                    }
+                } else if spec.name == "MISSION_ITEM" {
+                    let seq = Int((m["seq"] as? Double) ?? 0)
+                    missionItems[seq] = m
+                    if missionState == 2 {
+                        missionNext = seq + 1
+                        missionItemTries = 0
+                        missionT = now
+                        if missionNext < missionCount { requestItem(missionNext) } else { finishMission() }
+                    }
+                } else if spec.name == "MISSION_CURRENT" {
+                    missionCurrent = Int((m["seq"] as? Double) ?? 0)
+                } else if spec.name == "GPS_RAW_INT" {
+                    let fix = fi("GPS_RAW_INT", "fix_type")
+                    if fix != lastFix {
+                        lastFix = fix
+                        Log.info(String(format: "GPS: fix %d, %d sats, hdop %.2f, h_acc %.2f m, %.7f %.7f",
+                                         fix, fi("GPS_RAW_INT", "satellites_visible"),
+                                         u16v("GPS_RAW_INT", "eph") / 100, fv("GPS_RAW_INT", "h_acc") / 1000,
+                                         fv("GPS_RAW_INT", "lat") / 1e7, fv("GPS_RAW_INT", "lon") / 1e7))
+                    }
+                } else if spec.name == "HOME_POSITION", !homeSeen {
+                    homeSeen = true
+                    Log.info(String(format: "home: %.7f %.7f", fv("HOME_POSITION", "latitude") / 1e7,
+                                     fv("HOME_POSITION", "longitude") / 1e7))
+                } else if spec.name == "GPS_GLOBAL_ORIGIN", !originSeen {
+                    originSeen = true
+                    Log.info(String(format: "EKF origin: %.7f %.7f", fv("GPS_GLOBAL_ORIGIN", "latitude") / 1e7,
+                                     fv("GPS_GLOBAL_ORIGIN", "longitude") / 1e7))
+                }
                 if spec.name == "COMMAND_ACK" {
                     let tgt = UInt8((m["target_system"] as? Double) ?? 0)
                     if tgt == 0 || tgt == enc.sysid {
@@ -238,6 +360,13 @@ final class FCLink {
     func age(_ name: String) -> Double? { msgT[name].map { mono() - $0 } }
 
     private func num(_ name: String, _ field: String) -> Double? { msgs[name]?[field] as? Double }
+
+    /// A field of the last message of that name (NaN when it is missing).
+    private func fv(_ name: String, _ field: String) -> Double { (msgs[name]?[field] as? Double) ?? .nan }
+    /// The same as an integer (0 when missing).
+    private func fi(_ name: String, _ field: String) -> Int { let v = fv(name, field); return v.isFinite ? Int(v) : 0 }
+    /// A uint16 field where 65535 means "unknown" (NaN then).
+    private func u16v(_ name: String, _ field: String) -> Double { let v = fv(name, field); return v >= 65535 ? .nan : v }
 
     func snapshot() -> [String: Any] {
         let now = mono()
@@ -303,6 +432,74 @@ final class FCLink {
         if let sim = msgs["SIM_STATE"] {
             s["sim"] = [jnum(((sim["lat_int"] as? Double) ?? 0) / 1e7, 7), jnum(((sim["lon_int"] as? Double) ?? 0) / 1e7, 7),
                         jnum(sim["alt"] as? Double, 2), jnum(sim["yaw"] as? Double, 3)]
+        }
+        // ---- GPS map page (2026-11-25). Two different positions: the raw GPS fix and the FC's own (flow) position.
+        if msgs["GPS_RAW_INT"] != nil {
+            s["gps"] = ["fix": fi("GPS_RAW_INT", "fix_type"),
+                        "lat": jnum(fv("GPS_RAW_INT", "lat") / 1e7, 7),
+                        "lon": jnum(fv("GPS_RAW_INT", "lon") / 1e7, 7),
+                        "alt": jnum(fv("GPS_RAW_INT", "alt") / 1000, 2),
+                        "sats": fi("GPS_RAW_INT", "satellites_visible"),
+                        "hdop": jnum(u16v("GPS_RAW_INT", "eph") / 100, 2),
+                        "epv": jnum(u16v("GPS_RAW_INT", "epv") / 100, 2),
+                        "hacc": jnum(fv("GPS_RAW_INT", "h_acc") / 1000, 2),
+                        "vacc": jnum(fv("GPS_RAW_INT", "v_acc") / 1000, 2),
+                        "vel": jnum(u16v("GPS_RAW_INT", "vel") / 100, 2),
+                        "cog": jnum(u16v("GPS_RAW_INT", "cog") / 100, 1),
+                        "age": jnum(age("GPS_RAW_INT"), 2)]
+        }
+        if msgs["HOME_POSITION"] != nil {
+            s["home"] = ["lat": jnum(fv("HOME_POSITION", "latitude") / 1e7, 7),
+                         "lon": jnum(fv("HOME_POSITION", "longitude") / 1e7, 7),
+                         "alt": jnum(fv("HOME_POSITION", "altitude") / 1000, 2),
+                         "age": jnum(age("HOME_POSITION"), 2)]
+        }
+        if msgs["GPS_GLOBAL_ORIGIN"] != nil {
+            s["origin"] = ["lat": jnum(fv("GPS_GLOBAL_ORIGIN", "latitude") / 1e7, 7),
+                           "lon": jnum(fv("GPS_GLOBAL_ORIGIN", "longitude") / 1e7, 7),
+                           "alt": jnum(fv("GPS_GLOBAL_ORIGIN", "altitude") / 1000, 2),
+                           "age": jnum(age("GPS_GLOBAL_ORIGIN"), 2)]
+        }
+        if msgs["GLOBAL_POSITION_INT"] != nil {
+            s["gpos"] = ["lat": jnum(fv("GLOBAL_POSITION_INT", "lat") / 1e7, 7),
+                         "lon": jnum(fv("GLOBAL_POSITION_INT", "lon") / 1e7, 7),
+                         "alt": jnum(fv("GLOBAL_POSITION_INT", "alt") / 1000, 2),
+                         "rel": jnum(fv("GLOBAL_POSITION_INT", "relative_alt") / 1000, 2),
+                         "hdg": jnum(u16v("GLOBAL_POSITION_INT", "hdg") / 100, 1),
+                         "age": jnum(age("GLOBAL_POSITION_INT"), 2)]
+        }
+        // the FC's own position: the EKF origin (the companion sets it) plus the local NED offset, i.e. the
+        // dead-reckoned flow position. The GPS is not fused into the EKF, so this is NOT the GPS position.
+        var fcLat = Double.nan, fcLon = Double.nan
+        let olat = fv("GPS_GLOBAL_ORIGIN", "latitude") / 1e7, olon = fv("GPS_GLOBAL_ORIGIN", "longitude") / 1e7
+        let n = fv("LOCAL_POSITION_NED", "x"), e = fv("LOCAL_POSITION_NED", "y")
+        if olat.isFinite && olon.isFinite && n.isFinite && e.isFinite {
+            fcLat = olat + n / 111319.49
+            fcLon = olon + e / (111319.49 * cos(olat * .pi / 180))
+        } else {
+            fcLat = fv("GLOBAL_POSITION_INT", "lat") / 1e7    // no origin yet: the FC's global estimate
+            fcLon = fv("GLOBAL_POSITION_INT", "lon") / 1e7
+        }
+        if fcLat.isFinite && fcLon.isFinite {
+            s["fcpos"] = ["lat": jnum(fcLat, 7), "lon": jnum(fcLon, 7),
+                          "n": jnum(n, 2), "e": jnum(e, 2),
+                          "age": jnum(age("LOCAL_POSITION_NED"), 2)]
+        }
+        // the mission (read only): the items the FC has, and the one it is flying
+        if missionCount > 0 || !missionItems.isEmpty {
+            var items: [[String: Any]] = []
+            for seq in missionItems.keys.sorted() {
+                guard let it = missionItems[seq] else { continue }
+                items.append(["seq": seq,
+                              "lat": jnum((it["x"] as? Double) ?? .nan, 7),
+                              "lon": jnum((it["y"] as? Double) ?? .nan, 7),
+                              "alt": jnum((it["z"] as? Double) ?? .nan, 2),
+                              "frame": Int((it["frame"] as? Double) ?? 0),
+                              "cmd": Int((it["command"] as? Double) ?? 0),
+                              "current": Int((it["current"] as? Double) ?? 0)])
+            }
+            s["mission"] = ["count": missionCount, "current": missionCurrent, "items": items,
+                            "age": jnum(missionT0 > 0 ? now - missionT0 : nil, 2)]
         }
         if !newTexts.isEmpty {
             s["texts"] = newTexts

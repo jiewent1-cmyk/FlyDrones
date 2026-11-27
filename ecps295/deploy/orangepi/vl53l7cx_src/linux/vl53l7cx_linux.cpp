@@ -24,7 +24,7 @@ static int xfer(int fd, struct i2c_msg *m, int n) {
 }
 
 uint8_t VL53L7CX::WrMulti(VL53L7CX_Platform *p, uint16_t reg, uint8_t *v, uint32_t size) {
-  static uint8_t buf[CHUNK + 2];
+  uint8_t buf[CHUNK + 2];  // per call: a static buffer was shared by the two sensor threads and corrupted concurrent firmware uploads
   for (uint32_t i = 0; i < size;) {
     uint32_t n = size - i > CHUNK ? CHUNK : size - i;
     uint16_t r = (uint16_t)(reg + i);

@@ -134,8 +134,9 @@ dyn.update(cfg.get("ecps_drone", {}) or {})
 stop = {"flag": False}  # set by SIGTERM / SIGINT; checked while waiting for the FC as well as by the control loop
 signal.signal(signal.SIGTERM, lambda *_: stop.update(flag=True))
 signal.signal(signal.SIGINT, lambda *_: stop.update(flag=True))
-# SITL fault injection only. Guided mode leaves SIGUSR1 at its normal process-termination behavior.
-if a.mode != "guided":
+# SITL fault injection only. Guided mode leaves SIGUSR1 at its normal process-termination behavior, except in simulator
+# tests that ask for it (--sitl and ECPS_TEST_SIGUSR1_TOF=1: scripts/sitl_hil_rog.py T9 / T10, front ToF frozen)
+if a.mode != "guided" or (a.sitl and os.environ.get("ECPS_TEST_SIGUSR1_TOF") == "1"):
     signal.signal(signal.SIGUSR1, lambda *_: [getattr(x, "_stop", None) and x._stop.set() for x in [tofs.get(0)] if x is not None])
 
 # ------------------------------------------------------------------ sensors
@@ -182,6 +183,7 @@ else:
     drone = RealDrone(url, cam, tofs, allow_cmd=(a.mode == "guided"), ext_height=bool(mv.get("ext_height", True)),
                       fc_sysid=int(mv.get("fc_sysid", 1)), stream_hz=float(mv.get("stream_hz", 20)),
                       handover_alt_m=float(mv.get("handover_alt_m", 0.3)),
+                      home_frame=bool(mv.get("home_frame", True)),
                       rangefinder_hz=float(mv.get("rangefinder_hz", 20)), guard=hw.get("guard", {}),
                       max_flight_s=max_flight_s, stop_check=lambda: stop["flag"],
                       ekf_origin=tuple(mv.get("ekf_origin", (33.6430, -117.8420, 20.0))), **dyn)
